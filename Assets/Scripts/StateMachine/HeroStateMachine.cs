@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
+using Unity.Netcode.Components;
 
 public class HeroStateMachine : NetworkBehaviour
 {
@@ -13,6 +14,8 @@ public class HeroStateMachine : NetworkBehaviour
     public enum HeroState { Idle, Moving, Attacking, Dead }
     private HeroState currentState = HeroState.Idle;
     private Coroutine attackRoutine;
+    [SerializeField] private float corpseSinkY = 0.5f;
+    [SerializeField] private float vanishDelay = 2f;
     private void Awake()
     {
         hero = GetComponent<HeroUnit>();
@@ -39,7 +42,7 @@ public class HeroStateMachine : NetworkBehaviour
             lookPos.y = transform.position.y;
             transform.LookAt(lookPos);
 
-            animator.SetTrigger("isAttacking");
+            GetComponent<NetworkAnimator>().SetTrigger("isAttacking");
 
             // Wait for hit timing (matches animation)
             yield return new WaitForSeconds(hero.heroData.attackDelay);
@@ -133,13 +136,73 @@ public class HeroStateMachine : NetworkBehaviour
         animator.SetBool("isRunning", true);
     }
 
-    
+
 
     public void Die()
     {
         currentState = HeroState.Dead;
-        animator.SetTrigger("isDead");
+
+        Debug.Log($" {hero.heroData.heroName} died at {transform.position}");
+
+        var netAnim = GetComponent<NetworkAnimator>();
+        if (netAnim != null)
+        {
+            Debug.Log(" Setting 'isDead' trigger on NetworkAnimator");
+            netAnim.SetTrigger("isDead");
+        }
+        else
+        {
+            Debug.LogWarning(" No NetworkAnimator found on this GameObject!");
+        }
+
         StopAllCoroutines();
-        GetComponent<Collider>().enabled = false;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = false;                //  Let gravity apply
+            rb.useGravity = true;
+            rb.linearVelocity = Vector3.zero;
+        }
+
+        animator.SetBool("isRunning", false);
+
+        // Delay collider disable until corpse hits ground
+        StartCoroutine(FreezeCorpseAfterFall());
     }
+    private IEnumerator FreezeCorpseAfterFall()
+    {
+        yield return new WaitForSeconds(1f); // allow time for fall
+
+        // Sink slightly for grounded look
+        Vector3 pos = transform.position;
+        pos.y -= corpseSinkY;
+        transform.position = pos;
+
+        // Freeze Rigidbody
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.isKinematic = true;
+            rb.linearVelocity = Vector3.zero;
+        }
+
+        // Disable Collider
+        Collider col = GetComponent<Collider>();
+        if (col != null)
+            col.enabled = false;
+
+        // Wait then despawn (on server only)
+        yield return new WaitForSeconds(vanishDelay);
+
+        if (IsServer)
+        {
+            NetworkObject netObj = GetComponent<NetworkObject>();
+            if (netObj != null && netObj.IsSpawned)
+            {
+                netObj.Despawn(); //  This will vanish the object on all clients
+            }
+        }
+    }
+
 }

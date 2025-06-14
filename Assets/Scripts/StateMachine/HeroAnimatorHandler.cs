@@ -1,3 +1,4 @@
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class HeroAnimatorHandler : MonoBehaviour
@@ -16,11 +17,11 @@ public class HeroAnimatorHandler : MonoBehaviour
 
     public void TriggerAttack()
     {
-        animator.SetTrigger("isAttacking");
+        GetComponent<NetworkAnimator>().SetTrigger("isAttacking");
     }
 
     public void TriggerDeath()
     {
-        animator.SetTrigger("isDead");
+        GetComponent<NetworkAnimator>().SetTrigger("isDead");
     }
 }
