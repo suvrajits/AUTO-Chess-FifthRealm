@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using System.Linq;
-
 
 public enum GamePhase { Placement, Battle, Results }
 
@@ -11,10 +11,15 @@ public class BattleManager : NetworkBehaviour
     public static BattleManager Instance { get; private set; }
 
     public GamePhase CurrentPhase { get; private set; } = GamePhase.Placement;
-
+    
+    [System.NonSerialized]
     public List<HeroUnit> allUnits = new();
     public NetworkVariable<bool> battleStarted = new(false);
     public bool IsBattleOngoing => CurrentPhase == GamePhase.Battle;
+
+    [Header("Battle Start Settings")]
+    [SerializeField] private float battleStartDelay = 5f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -26,14 +31,31 @@ public class BattleManager : NetworkBehaviour
         Instance = this;
     }
 
-    public void RegisterUnit(HeroUnit unit)
+    public override void OnNetworkSpawn()
     {
-        if (!IsServer) return;
-        allUnits.Add(unit);
+        if (IsServer)
+        {
+            Debug.Log($"🕒 Starting Battle Countdown for {battleStartDelay} sec...");
+            StartCoroutine(BattleStartCountdown());
+        }
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void StartBattleServerRpc()
+    private IEnumerator BattleStartCountdown()
+    {
+        float currentTime = battleStartDelay;
+
+        while (currentTime > 0f)
+        {
+            Debug.Log($"⏳ Battle begins in {Mathf.CeilToInt(currentTime)}s");
+            yield return new WaitForSeconds(1f);
+            currentTime -= 1f;
+        }
+
+        Debug.Log("🔥 Starting Battle!");
+        StartBattle();  // ✅ Now just calls a local method
+    }
+
+    private void StartBattle()
     {
         if (CurrentPhase != GamePhase.Placement) return;
 
@@ -42,53 +64,67 @@ public class BattleManager : NetworkBehaviour
         CurrentPhase = GamePhase.Battle;
         battleStarted.Value = true;
 
-        foreach (var unit in allUnits)
+        foreach (var unit in FindObjectsByType<HeroUnit>(FindObjectsSortMode.None))
         {
-            unit.BeginBattle(); // Calls logic in HeroUnit to start seeking targets
+            unit.BeginBattle();
         }
 
         StartCoroutine(CheckForBattleEnd());
     }
 
-    private IEnumerator<UnityEngine.WaitForSeconds> CheckForBattleEnd()
+    private IEnumerator CheckForBattleEnd()
     {
         while (true)
         {
             yield return new WaitForSeconds(1f);
 
-            bool p1Alive = allUnits.Exists(u => u.Faction == Faction.Player1 && u.IsAlive);
-            bool p2Alive = allUnits.Exists(u => u.Faction == Faction.Player2 && u.IsAlive);
+            int totalUnits = allUnits.Count;
+            int p1Count = allUnits.Count(u => u.Faction == Faction.Player1);
+            int p2Count = allUnits.Count(u => u.Faction == Faction.Player2);
+            int neutralCount = allUnits.Count(u => u.Faction == Faction.Neutral);
 
-            if (!p1Alive || !p2Alive)
+            int p1Alive = allUnits.Count(u => u.Faction == Faction.Player1 && u.IsAlive);
+            int p2Alive = allUnits.Count(u => u.Faction == Faction.Player2 && u.IsAlive);
+
+            Debug.Log($" Unit Stats → Total: {totalUnits} | P1: {p1Alive}/{p1Count} | P2: {p2Alive}/{p2Count} | Neutral: {neutralCount}");
+
+            if ((p1Alive == 0 || p2Alive == 0) && (p1Alive + p2Alive > 0)) // only trigger if someone is actually alive
             {
-                EndBattle(p1Alive, p2Alive);
+                EndBattle(p1Alive > 0, p2Alive > 0);
                 break;
             }
         }
     }
+
 
     private void EndBattle(bool p1Alive, bool p2Alive)
     {
         CurrentPhase = GamePhase.Results;
 
         if (p1Alive && !p2Alive)
-            Debug.Log(" Player 1 Wins!");
+            Debug.Log("✅ Player 1 Wins!");
         else if (p2Alive && !p1Alive)
-            Debug.Log(" Player 2 Wins!");
+            Debug.Log("✅ Player 2 Wins!");
         else
-            Debug.Log(" Draw!");
+            Debug.Log("🤝 Draw!");
 
-        // Reset or restart logic can go here
+        // TODO: Reset or go to result screen
     }
+
     public HeroUnit FindNearestEnemy(HeroUnit seeker)
     {
-        var allHeroes = Object.FindObjectsByType<HeroUnit>(FindObjectsSortMode.None);
-
-        return allHeroes
+        return allUnits
             .Where(unit => unit != seeker && unit.Faction != seeker.Faction && unit.IsAlive)
             .OrderBy(unit => Vector3.Distance(seeker.transform.position, unit.transform.position))
             .FirstOrDefault();
     }
 
+    public void RegisterUnit(HeroUnit unit, Faction faction)
+    {
+        if (!IsServer) return;
 
+        unit.SetFaction(faction); // ensure it's server-side
+        allUnits.Add(unit);
+        Debug.Log($"✅ Registered unit: {unit.name} for {unit.Faction}");
+    }
 }

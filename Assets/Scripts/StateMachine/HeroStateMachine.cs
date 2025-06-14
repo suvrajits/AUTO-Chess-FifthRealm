@@ -22,6 +22,7 @@ public class HeroStateMachine : NetworkBehaviour
     public void EnterCombat()
     {
         if (!IsServer || !hero.IsAlive) return;
+        Debug.Log($"[FSM] Entering combat for {hero.heroData.heroName}");
         StartCoroutine(CombatLoop());
     }
     private void HandleAttack()
@@ -60,6 +61,10 @@ public class HeroStateMachine : NetworkBehaviour
 
     private IEnumerator CombatLoop()
     {
+        if (!IsServer || hero == null || !hero.IsAlive || BattleManager.Instance.CurrentPhase != GamePhase.Battle)
+            yield break;
+        Debug.Log($"[FSM] Starting combat loop for {hero.heroData.heroName}");
+
         while (hero.IsAlive && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
         {
             switch (currentState)
@@ -104,6 +109,7 @@ public class HeroStateMachine : NetworkBehaviour
 
     private void MoveTowardTarget()
     {
+        Debug.DrawLine(transform.position, targetEnemy.transform.position, Color.yellow);
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
             currentState = HeroState.Idle;

@@ -5,61 +5,60 @@ using UnityEngine;
 public class HeroUnit : NetworkBehaviour
 {
     public HeroData heroData;
-
     public Vector2Int GridPosition { get; set; }
 
-    [SerializeField]
-    private Faction faction;
-    public Faction Faction => faction;
+    private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(Faction.Neutral,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+    public Faction Faction => faction.Value;
 
     public float CurrentHealth { get; private set; }
     public bool IsDead => CurrentHealth <= 0;
+    public bool IsAlive => !IsDead;
 
     public HeroAnimatorHandler AnimatorHandler { get; private set; }
     private HeroStateMachine stateMachine;
 
-    public bool IsBattleActive => BattleManager.Instance != null && BattleManager.Instance.IsBattleOngoing;
-
-    public bool IsAlive => CurrentHealth > 0;
-
     private void Start()
     {
+        AnimatorHandler = GetComponent<HeroAnimatorHandler>();
+        stateMachine = GetComponent<HeroStateMachine>();
+
         if (heroData == null)
         {
-            Debug.LogError("Missing HeroData!");
+            Debug.LogError("❌ Missing HeroData!");
             return;
         }
 
         CurrentHealth = heroData.maxHealth;
-        AnimatorHandler = GetComponent<HeroAnimatorHandler>();
-        stateMachine = GetComponent<HeroStateMachine>();
+        Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
 
-        Debug.Log($"[{faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
+        if (IsServer && IsAlive && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
+        {
+            stateMachine.EnterCombat();
+        }
+
+        Debug.Log($"[{heroData.heroName}] START on {(IsServer ? "Server" : "Client")} → Faction: {Faction}");
     }
 
-    /// <summary>
-    /// Server-only method to assign faction ownership
-    /// </summary>
+
     public void SetFaction(Faction f)
     {
         if (!IsServer)
         {
-            Debug.LogWarning("Only the server can set faction!");
+            Debug.LogWarning(" Only server can set faction");
             return;
         }
 
-        faction = f;
+        faction.Value = f;
     }
 
-    /// <summary>
-    /// Applies damage and triggers death if HP <= 0
-    /// </summary>
     public void ApplyDamage(float amount)
     {
         if (IsDead) return;
 
         CurrentHealth -= amount;
-        Debug.Log($"{heroData.heroName} took {amount} damage → {CurrentHealth} HP left");
+        Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
 
         if (CurrentHealth <= 0f)
         {
@@ -67,12 +66,12 @@ public class HeroUnit : NetworkBehaviour
         }
     }
 
-
     public void BeginBattle()
     {
-        if (!IsServer || !IsAlive) return;
-
-        // Initialize state machine here
-        GetComponent<HeroStateMachine>()?.EnterCombat();
+        if (IsServer && IsAlive)
+        {
+            Debug.Log($"[] {heroData.heroName} BeginBattle() called");
+            stateMachine.EnterCombat();
+        }
     }
 }

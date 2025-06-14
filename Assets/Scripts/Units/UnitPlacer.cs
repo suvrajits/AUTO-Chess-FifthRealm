@@ -98,11 +98,18 @@ public class UnitPlacer : NetworkBehaviour
         heroUnit.GridPosition = gridPos;
         heroUnit.heroData = heroData;
 
-        // Assign correct faction based on who placed the unit
+        // Determine correct faction
         Faction assignedFaction = (rpcParams.Receive.SenderClientId == 0) ? Faction.Player1 : Faction.Player2;
+
+        // Set faction BEFORE spawning (✅ guarantees sync)
         heroUnit.SetFaction(assignedFaction);
 
+        // Network spawn (now the NetworkVariable syncs with correct value)
         NetworkObject netObj = unitObj.GetComponent<NetworkObject>();
         netObj.SpawnWithOwnership(rpcParams.Receive.SenderClientId);
+
+        // Register unit (after it's fully spawned)
+        BattleManager.Instance.RegisterUnit(heroUnit, assignedFaction);
+
     }
 }
