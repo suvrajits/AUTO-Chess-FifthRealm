@@ -16,18 +16,42 @@ public class HeroStateMachine : NetworkBehaviour
     private Coroutine attackRoutine;
     [SerializeField] private float corpseSinkY = 0.5f;
     [SerializeField] private float vanishDelay = 2f;
+    private bool hasEnteredCombat = false;
+   
     private void Awake()
     {
         hero = GetComponent<HeroUnit>();
         animator = GetComponentInChildren<Animator>();
+      
     }
 
     public void EnterCombat()
     {
-        if (!IsServer || !hero.IsAlive) return;
+        if (!IsServer || !hero.IsAlive || hasEnteredCombat) return;
+        hasEnteredCombat = true;
         Debug.Log($"[FSM] Entering combat for {hero.heroData.heroName}");
+
+        //  Freeze Rigidbody XZ motion & all rotation
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            if (IsServer)
+            {
+                rb.constraints = RigidbodyConstraints.FreezeRotation |
+                                 RigidbodyConstraints.FreezePositionX |
+                                 RigidbodyConstraints.FreezePositionZ;
+                rb.useGravity = false;
+                rb.isKinematic = false;
+            }
+            else
+            {
+                rb.isKinematic = true; //  Don't simulate physics on clients
+            }
+        }
+
         StartCoroutine(CombatLoop());
     }
+
     private void HandleAttack()
     {
         if (attackRoutine == null)
@@ -112,9 +136,20 @@ public class HeroStateMachine : NetworkBehaviour
 
     private void MoveTowardTarget()
     {
-        Debug.DrawLine(transform.position, targetEnemy.transform.position, Color.yellow);
+        if (!IsServer) return;
+
+        // Freeze safety in case missed at EnterCombat
+        var rb = GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.constraints = RigidbodyConstraints.FreezeRotation |
+                             RigidbodyConstraints.FreezePositionX |
+                             RigidbodyConstraints.FreezePositionZ;
+        }
+
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
+            animator.SetBool("isRunning", false);
             currentState = HeroState.Idle;
             return;
         }
@@ -128,13 +163,17 @@ public class HeroStateMachine : NetworkBehaviour
             return;
         }
 
-        // Basic forward movement toward target
+        // Move forward
         Vector3 dir = (targetEnemy.transform.position - transform.position).normalized;
-        transform.position += dir * hero.heroData.moveSpeed * Time.deltaTime;
+        if (IsServer)
+        {
+            transform.position += dir * hero.heroData.moveSpeed * Time.deltaTime;
+        }
         transform.LookAt(targetEnemy.transform);
 
         animator.SetBool("isRunning", true);
     }
+
 
 
 
@@ -160,6 +199,7 @@ public class HeroStateMachine : NetworkBehaviour
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
+            rb.constraints = RigidbodyConstraints.None;
             rb.isKinematic = false;                //  Let gravity apply
             rb.useGravity = true;
             rb.linearVelocity = Vector3.zero;
@@ -183,6 +223,7 @@ public class HeroStateMachine : NetworkBehaviour
         var rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
+            rb.constraints = RigidbodyConstraints.FreezeAll;
             rb.isKinematic = true;
             rb.linearVelocity = Vector3.zero;
         }
@@ -197,12 +238,24 @@ public class HeroStateMachine : NetworkBehaviour
 
         if (IsServer)
         {
+            //  Replace hardcoded Y with tile-corrected Y
+            if (GridManager.Instance.tileMap.TryGetValue(hero.GridPosition, out var tile))
+            {
+                Vector3 pos1 = transform.position;
+                pos1.y = tile.transform.position.y;
+                transform.position = pos1;
+            }
+
             NetworkObject netObj = GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
             {
                 netObj.Despawn(); //  This will vanish the object on all clients
             }
         }
+    }
+    private void OnDisable()
+    {
+        StopAllCoroutines(); // In case object was disabled unexpectedly
     }
 
 }

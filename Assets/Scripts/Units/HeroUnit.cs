@@ -7,9 +7,12 @@ public class HeroUnit : NetworkBehaviour
     public HeroData heroData;
     public Vector2Int GridPosition { get; set; }
 
-    private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(Faction.Neutral,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server);
+    private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(
+        Faction.Neutral,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     public Faction Faction => faction.Value;
 
     public float CurrentHealth { get; private set; }
@@ -30,6 +33,9 @@ public class HeroUnit : NetworkBehaviour
             return;
         }
 
+        // 🟡 Snap to tile height
+        SnapToTileY();
+
         CurrentHealth = heroData.maxHealth;
         Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
 
@@ -41,12 +47,11 @@ public class HeroUnit : NetworkBehaviour
         Debug.Log($"[{heroData.heroName}] START on {(IsServer ? "Server" : "Client")} → Faction: {Faction}");
     }
 
-
     public void SetFaction(Faction f)
     {
         if (!IsServer)
         {
-            Debug.LogWarning(" Only server can set faction");
+            Debug.LogWarning("⚠️ Only server can set faction");
             return;
         }
 
@@ -72,6 +77,16 @@ public class HeroUnit : NetworkBehaviour
         {
             Debug.Log($"[] {heroData.heroName} BeginBattle() called");
             stateMachine.EnterCombat();
+        }
+    }
+
+    private void SnapToTileY()
+    {
+        if (GridManager.Instance != null && GridManager.Instance.tileMap.TryGetValue(GridPosition, out var tile))
+        {
+            Vector3 pos = transform.position;
+            pos.y = tile.transform.position.y;
+            transform.position = pos;
         }
     }
 }
