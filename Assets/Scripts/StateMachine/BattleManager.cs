@@ -148,6 +148,6 @@ public class BattleManager : NetworkBehaviour
 
         unit.SetFaction(faction); // ensure it's server-side
         allUnits.Add(unit);
-        Debug.Log($"✅ Registered unit: {unit.name} for {unit.Faction}");
+        Debug.Log($" Registered unit: {unit.name} for {unit.Faction}");
     }
 }

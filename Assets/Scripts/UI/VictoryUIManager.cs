@@ -13,9 +13,7 @@ public class VictoryUIManager : NetworkBehaviour
 
     private void Awake()
     {
-        panelGroup.alpha = 0f;
-        panelGroup.interactable = false;
-        panelGroup.blocksRaycasts = false;
+        HidePanel();
         playAgainButton.onClick.AddListener(OnPlayAgainClicked);
     }
 
@@ -27,38 +25,54 @@ public class VictoryUIManager : NetworkBehaviour
         panelGroup.blocksRaycasts = true;
     }
 
+    private void HidePanel()
+    {
+        panelGroup.alpha = 0f;
+        panelGroup.interactable = false;
+        panelGroup.blocksRaycasts = false;
+    }
+
     private void OnPlayAgainClicked()
     {
-        // Only host sends the restart signal to all clients
+        HidePanel(); // Hide UI on both players
+
+        // Always let host handle the restart trigger
         if (IsHost)
         {
-            RequestRestartGameServerRpc();
+            RestartGameClientRpc();
+        }
+        else
+        {
+            RequestRestartFromHostServerRpc();
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void RequestRestartGameServerRpc()
+    private void RequestRestartFromHostServerRpc(ServerRpcParams rpcParams = default)
     {
-        RestartGameClientRpc();
+        // Only host should handle the restart
+        if (IsHost)
+        {
+            RestartGameClientRpc();
+        }
     }
 
     [ClientRpc]
     private void RestartGameClientRpc()
     {
+        HidePanel(); // Hide panel for safety
         StartCoroutine(RestartGameCoroutine());
     }
 
     private IEnumerator RestartGameCoroutine()
     {
-        // Clean shutdown for all clients/host
-        if (NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer || NetworkManager.Singleton.IsClient)
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
         {
             NetworkManager.Singleton.Shutdown();
         }
 
-        yield return new WaitForSeconds(0.2f); // let shutdown complete
+        yield return new WaitForSeconds(0.2f);
 
-        // Reload current scene
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 }
