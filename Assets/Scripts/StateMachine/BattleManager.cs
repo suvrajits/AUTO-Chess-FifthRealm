@@ -101,14 +101,37 @@ public class BattleManager : NetworkBehaviour
     {
         CurrentPhase = GamePhase.Results;
 
+        string result;
         if (p1Alive && !p2Alive)
-            Debug.Log("✅ Player 1 Wins!");
+            result = "Player 1 Wins!";
         else if (p2Alive && !p1Alive)
-            Debug.Log("✅ Player 2 Wins!");
+            result = "Player 2 Wins!";
         else
-            Debug.Log("🤝 Draw!");
+            result = "Draw!";
 
-        // TODO: Reset or go to result screen
+        Debug.Log(" Battle Over: " + result);
+
+        // Freeze all units
+        foreach (var unit in allUnits)
+        {
+            unit.StopAllCoroutines();
+            unit.enabled = false;
+            var rb = unit.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = true;
+        }
+
+        // Show result on both clients
+        ShowVictoryUIClientRpc(result);
+    }
+
+    [ClientRpc]
+    private void ShowVictoryUIClientRpc(string result)
+    {
+        var ui = Object.FindFirstObjectByType<VictoryUIManager>();
+        if (ui != null)
+        {
+            ui.ShowResult(result);
+        }
     }
 
     public HeroUnit FindNearestEnemy(HeroUnit seeker)
