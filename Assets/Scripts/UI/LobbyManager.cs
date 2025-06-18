@@ -22,11 +22,14 @@ public class LobbyManager : MonoBehaviour
     public Button startGameButton;
     public Button readyButton;
     public Button leaveButton;
+   
 
     private Dictionary<string, GameObject> playerSlots = new();
     public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
     private bool IsHost => NetworkManager.Singleton.IsHost;
+
+    [SerializeField] private GameObject gameGridPrefab;
 
     private void Awake()
     {
@@ -82,8 +85,14 @@ public class LobbyManager : MonoBehaviour
 
         Debug.Log("[LobbyManager] Host starting game manually...");
 
-        Destroy(gameObject); // Clean transition
-        NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+        //Destroy(gameObject); // Clean transition
+
+        //NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+        lobbyPanel.SetActive(false);
+
+        GameObject instance = Instantiate(gameGridPrefab);
+        instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
+       
     }
 
 

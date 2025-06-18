@@ -121,6 +121,7 @@ public class RelayManager : MonoBehaviour
 
     public async Task<string> CreateRelayHostAsync()
     {
+        await UnityServicesManager.InitUnityServicesIfNeeded();
         await EnsureNetcodeShutdownAsync();
 
         if (!string.IsNullOrEmpty(cachedJoinCode))
