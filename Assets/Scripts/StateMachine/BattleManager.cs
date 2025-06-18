@@ -18,7 +18,7 @@ public class BattleManager : NetworkBehaviour
     public bool IsBattleOngoing => CurrentPhase == GamePhase.Battle;
 
     [Header("Battle Start Settings")]
-    [SerializeField] private float battleStartDelay = 5f;
+    [SerializeField] private float battleStartDelay = 10f;
 
     private void Awake()
     {
