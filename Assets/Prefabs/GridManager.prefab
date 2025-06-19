@@ -47,8 +47,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tilePrefab: {fileID: 7408603165626389945, guid: 403e7002c5a95474298f6288f029399b, type: 3}
-  width: 8
-  height: 8
+  gridSize: 8
   spacing: 1.05
 --- !u!114 &10294765990429612
 MonoBehaviour:
@@ -62,7 +61,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3102889578
+  GlobalObjectIdHash: 3462034862
   InScenePlacedSourceGlobalObjectIdHash: 3462034862
   DeferredDespawnTick: 0
   Ownership: 1
