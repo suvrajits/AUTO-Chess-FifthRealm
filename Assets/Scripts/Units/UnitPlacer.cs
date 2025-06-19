@@ -4,7 +4,7 @@ using UnityEngine;
 public class UnitPlacer : NetworkBehaviour
 {
     [Header("Unit Config")]
-    public HeroData heroData; // Assigned in Inspector
+    public HeroData heroData;
     public LayerMask tileLayer;
 
     private Camera mainCamera;
@@ -20,47 +20,36 @@ public class UnitPlacer : NetworkBehaviour
 
         if (Input.GetMouseButtonDown(0))
         {
-            TryPlaceUnit();
+            TryPlaceOrReplaceUnit();
         }
     }
 
-    private void TryPlaceUnit()
+    private void TryPlaceOrReplaceUnit()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, tileLayer))
         {
             GridTile tile = hit.collider.GetComponent<GridTile>();
-            if (tile == null)
-            {
-                Debug.LogWarning("⚠️ Hit object has no GridTile component.");
-                return;
-            }
+            if (tile == null) return;
 
-            // Only allow placing if you're viewing your own board AND the tile hit belongs to you
             ulong viewedClientId = CameraSwitcherUI.CurrentTargetId;
             ulong localClientId = NetworkManager.Singleton.LocalClientId;
 
             if (viewedClientId != localClientId)
             {
-                Debug.LogWarning("🚫 Cannot place units while spectating other players.");
+                Debug.LogWarning("🚫 Can't place units while spectating.");
                 return;
             }
 
             if (tile.OwnerClientId != localClientId)
             {
-                Debug.LogWarning($"⚠️ This tile belongs to another player (tile.Owner = {tile.OwnerClientId}, local = {localClientId})");
+                Debug.LogWarning($"🚫 This tile belongs to another player.");
                 return;
             }
 
-            Debug.Log($"🟢 Valid tile selected at {tile.GridPosition} by Player {localClientId}");
             SpawnUnitServerRpc(tile.GridPosition);
         }
-        else
-        {
-            Debug.LogWarning("❌ Raycast missed. No tile clicked.");
-        }
     }
-
 
     [ServerRpc]
     private void SpawnUnitServerRpc(Vector2Int gridPos, ServerRpcParams rpcParams = default)
@@ -79,6 +68,25 @@ public class UnitPlacer : NetworkBehaviour
             return;
         }
 
+        // 🧹 Remove existing unit if any
+        if (tile.IsOccupied)
+        {
+            var existingUnit = tile.OccupyingUnit;
+            if (existingUnit != null && existingUnit.OwnerClientId == senderId)
+            {
+                Debug.Log($"♻️ Replacing unit at {gridPos}");
+                BattleManager.Instance.UnregisterUnit(existingUnit); // 🧹 Remove from unit list
+                existingUnit.GetComponent<NetworkObject>()?.Despawn(true);
+                tile.RemoveUnit(); // clear tile occupancy
+            }
+            else
+            {
+                Debug.LogWarning(" Cannot replace another player's unit.");
+                return;
+            }
+        }
+
+
         Vector3 spawnPos = tile.transform.position + new Vector3(0, 0.55f, 0);
         Quaternion spawnRot = senderId % 2 == 0 ? Quaternion.identity : Quaternion.Euler(0, 180f, 0);
 
@@ -91,6 +99,7 @@ public class UnitPlacer : NetworkBehaviour
 
         unitObj.GetComponent<NetworkObject>().SpawnWithOwnership(senderId);
 
+        tile.AssignUnit(heroUnit); // ✅ Track unit
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
     }
 

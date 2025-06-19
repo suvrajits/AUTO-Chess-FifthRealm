@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
 using Unity.Netcode.Components;
@@ -241,10 +241,14 @@ public class HeroStateMachine : NetworkBehaviour
             //  Replace hardcoded Y with tile-corrected Y
             if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
             {
+                tile.RemoveUnit(); // 
+
                 Vector3 pos1 = transform.position;
                 pos1.y = tile.transform.position.y;
                 transform.position = pos1;
             }
+
+
 
             NetworkObject netObj = GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)

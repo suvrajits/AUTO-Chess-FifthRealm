@@ -150,4 +150,12 @@ public class BattleManager : NetworkBehaviour
         allUnits.Add(unit);
         Debug.Log($" Registered unit: {unit.name} for {unit.Faction}");
     }
+    public void UnregisterUnit(HeroUnit unit)
+    {
+        if (allUnits.Contains(unit))
+        {
+            allUnits.Remove(unit);
+            Debug.Log($" Unregistered unit: {unit.name}");
+        }
+    }
 }

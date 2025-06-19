@@ -1,13 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class GridTile : MonoBehaviour
 {
     public Vector2Int GridPosition { get; private set; }
+    public ulong OwnerClientId { get; private set; }
 
-    /// <summary>
-    /// The client ID of the player who owns this tile. Used to restrict placement.
-    /// </summary>
-    public ulong OwnerClientId { get; set; }
+    public bool IsOccupied => OccupyingUnit != null;
+
+    public HeroUnit OccupyingUnit { get; private set; }
 
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
@@ -24,9 +24,6 @@ public class GridTile : MonoBehaviour
         SetTileColor(ownerColor);
     }
 
-    /// <summary>
-    /// Sets the base color of the tile (for quadrant visualization).
-    /// </summary>
     public void SetTileColor(Color color)
     {
         if (tileRenderer == null)
@@ -39,20 +36,13 @@ public class GridTile : MonoBehaviour
         tileRenderer.SetPropertyBlock(propertyBlock);
     }
 
-    /// <summary>
-    /// Highlights the tile when hovered or selected (future extension).
-    /// </summary>
-    public void HighlightTile(Color highlightColor)
+    public void AssignUnit(HeroUnit unit)
     {
-        propertyBlock.SetColor("_BaseColor", highlightColor);
-        tileRenderer.SetPropertyBlock(propertyBlock);
+        OccupyingUnit = unit;
     }
 
-    /// <summary>
-    /// Resets the tile color to original ownership color.
-    /// </summary>
-    public void ResetTileColor(Color originalColor)
+    public void RemoveUnit()
     {
-        SetTileColor(originalColor);
+        OccupyingUnit = null;
     }
 }
