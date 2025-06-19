@@ -10,7 +10,7 @@ using UnityEngine.SceneManagement;
 using System.Threading.Tasks;
 using System;
 
-public class LobbyManager : MonoBehaviour
+public class LobbyManager : NetworkBehaviour
 {
     public static LobbyManager Instance;
 
@@ -27,7 +27,7 @@ public class LobbyManager : MonoBehaviour
     private Dictionary<string, GameObject> playerSlots = new();
     public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
-    private bool IsHost => NetworkManager.Singleton.IsHost;
+    private new bool IsHost => NetworkManager.Singleton.IsHost;
 
     [SerializeField] private GameObject gameGridPrefab;
 
@@ -89,10 +89,21 @@ public class LobbyManager : MonoBehaviour
 
         //NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         lobbyPanel.SetActive(false);
-
+        HideLobbyPanelClientRpc();
         GameObject instance = Instantiate(gameGridPrefab);
         instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
-       
+        
+
+    }
+
+    [ClientRpc]
+    private void HideLobbyPanelClientRpc()
+    {
+        if (lobbyPanel != null && lobbyPanel.activeSelf)
+        {
+            Debug.Log("[LobbyManager] Hiding lobby panel via ClientRpc");
+            lobbyPanel.SetActive(false);
+        }
     }
 
 

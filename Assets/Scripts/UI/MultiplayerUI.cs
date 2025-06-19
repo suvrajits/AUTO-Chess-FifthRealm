@@ -75,7 +75,7 @@ public class MultiplayerUI : MonoBehaviour
 
             if (success)
             {
-                networkMenuPanel.SetActive(false);
+                //networkMenuPanel.SetActive(false);
                 joinCodeText.text = "Join Success";
             }
             else
