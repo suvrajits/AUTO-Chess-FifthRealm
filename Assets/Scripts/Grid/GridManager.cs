@@ -7,11 +7,23 @@ public class GridManager : MonoBehaviour
 
     [Header("Grid Settings")]
     public GameObject tilePrefab;
-    public int width = 8;
-    public int height = 8;
+    public int gridSize = 8;
     public float spacing = 1.05f;
 
-    public Dictionary<Vector2Int, GridTile> tileMap = new();
+    public Dictionary<ulong, Dictionary<Vector2Int, GridTile>> playerTileMaps = new();
+
+    // Fixed player colors per client ID
+    public static readonly Dictionary<ulong, Color> PlayerColors = new()
+    {
+        { 0, Color.red },
+        { 1, Color.cyan },
+        { 2, Color.green },
+        { 3, Color.yellow },
+        { 4, Color.magenta },
+        { 5, Color.blue },
+        { 6, new Color(1f, 0.5f, 0f) }, // Orange
+        { 7, new Color(0.5f, 0f, 1f) }  // Purple
+    };
 
     private void Awake()
     {
@@ -20,33 +32,55 @@ public class GridManager : MonoBehaviour
 
     private void Start()
     {
-        GenerateGrid();
+        GenerateGridsForAllPlayers();
     }
 
-    private void GenerateGrid()
+    private void GenerateGridsForAllPlayers()
     {
-        MaterialPropertyBlock propertyBlock = new MaterialPropertyBlock();
+        int playerIndex = 0;
 
-        for (int x = 0; x < width; x++)
+        foreach (var playerId in PlayerColors.Keys)
         {
-            for (int z = 0; z < height; z++)
+            // Position each grid uniquely: max 4 across, 2 down
+            int row = playerIndex / 4;
+            int col = playerIndex % 4;
+
+            Vector3 offset = new Vector3(
+                col * (gridSize + 2) * spacing,
+                0,
+                row * (gridSize + 2) * spacing
+            );
+
+            GeneratePlayerGrid(playerId, offset);
+            playerIndex++;
+        }
+    }
+
+    private void GeneratePlayerGrid(ulong playerId, Vector3 offset)
+    {
+        Dictionary<Vector2Int, GridTile> tileMap = new();
+        Color color = PlayerColors[playerId];
+
+        for (int x = 0; x < gridSize; x++)
+        {
+            for (int z = 0; z < gridSize; z++)
             {
-                Vector3 pos = new Vector3(x * spacing, 0, z * spacing);
-                GameObject tileObj = Instantiate(tilePrefab, pos, Quaternion.identity, transform);
+                Vector2Int coord = new Vector2Int(x, z);
+                Vector3 worldPos = offset + new Vector3(x * spacing, 0, z * spacing);
+                GameObject tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
 
                 GridTile gridTile = tileObj.GetComponent<GridTile>();
-                Vector2Int coord = new Vector2Int(x, z);
-                gridTile.Init(coord);
-
+                gridTile.Init(coord, playerId, color);
                 tileMap[coord] = gridTile;
-
-                Renderer renderer = tileObj.GetComponent<Renderer>();
-                Color color = (z < height / 2) ? Color.cyan : Color.red;
-                propertyBlock.SetColor("_BaseColor", color);
-                renderer.SetPropertyBlock(propertyBlock);
-
-                Debug.Log($"Tile {coord} → {(z < height / 2 ? "CYAN" : "RED")}");
             }
         }
+
+        playerTileMaps[playerId] = tileMap;
+    }
+
+    public bool TryGetTile(ulong playerId, Vector2Int coord, out GridTile tile)
+    {
+        tile = null;
+        return playerTileMaps.TryGetValue(playerId, out var map) && map.TryGetValue(coord, out tile);
     }
 }

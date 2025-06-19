@@ -82,11 +82,11 @@ public class HeroUnit : NetworkBehaviour
 
     private void SnapToTileY()
     {
-        if (GridManager.Instance != null && GridManager.Instance.tileMap.TryGetValue(GridPosition, out var tile))
+        if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, GridPosition, out var tile))
         {
-            Vector3 pos = transform.position;
-            pos.y = tile.transform.position.y;
-            transform.position = pos;
+            Vector3 pos1 = transform.position;
+            pos1.y = tile.transform.position.y;
+            transform.position = pos1;
         }
     }
 }

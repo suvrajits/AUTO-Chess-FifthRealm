@@ -239,7 +239,7 @@ public class HeroStateMachine : NetworkBehaviour
         if (IsServer)
         {
             //  Replace hardcoded Y with tile-corrected Y
-            if (GridManager.Instance.tileMap.TryGetValue(hero.GridPosition, out var tile))
+            if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
             {
                 Vector3 pos1 = transform.position;
                 pos1.y = tile.transform.position.y;
