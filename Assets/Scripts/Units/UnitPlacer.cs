@@ -88,9 +88,8 @@ public class UnitPlacer : NetworkBehaviour
 
 
         Vector3 spawnPos = tile.transform.position + new Vector3(0, 0.55f, 0);
-        Quaternion spawnRot = senderId % 2 == 0 ? Quaternion.identity : Quaternion.Euler(0, 180f, 0);
 
-        GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, spawnRot);
+        GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, Quaternion.identity);
 
         HeroUnit heroUnit = unitObj.GetComponent<HeroUnit>();
         heroUnit.GridPosition = gridPos;
