@@ -238,25 +238,27 @@ public class HeroStateMachine : NetworkBehaviour
 
         if (IsServer)
         {
-            //  Replace hardcoded Y with tile-corrected Y
+            // ✅ Cleanup grid and unit tracking
             if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
             {
-                tile.RemoveUnit(); // 
-
+                tile.RemoveUnit(); // remove reference to this unit from tile
                 Vector3 pos1 = transform.position;
                 pos1.y = tile.transform.position.y;
                 transform.position = pos1;
             }
 
+            // ✅ Remove from BattleManager list
+            BattleManager.Instance.UnregisterUnit(hero);
 
-
+            // Despawn
             NetworkObject netObj = GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
             {
-                netObj.Despawn(); //  This will vanish the object on all clients
+                netObj.Despawn(); // will also remove from all clients
             }
         }
     }
+
     private void OnDisable()
     {
         StopAllCoroutines(); // In case object was disabled unexpectedly
