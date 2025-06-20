@@ -6,7 +6,7 @@ public class GridManager : NetworkBehaviour
 {
     [Header("Grid Settings")]
     public GameObject tilePrefab;
-    public int gridSize = 8;
+    public int gridSize = 6;
     public float spacing = 1.05f;
 
     private Dictionary<Vector2Int, GridTile> tileMap = new();

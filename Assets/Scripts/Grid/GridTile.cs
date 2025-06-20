@@ -13,6 +13,8 @@ public class GridTile : NetworkBehaviour
 
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
+    private NetworkVariable<Color> tileColor = new NetworkVariable<Color>(
+    writePerm: NetworkVariableWritePermission.Server);
 
     public void Init(Vector2Int position, ulong ownerClientId, Color ownerColor)
     {
@@ -23,7 +25,10 @@ public class GridTile : NetworkBehaviour
         tileRenderer = GetComponent<Renderer>();
         propertyBlock = new MaterialPropertyBlock();
 
-        ApplyColorOverride(ownerColor);
+        if (IsServer)
+            tileColor.Value = ownerColor;
+
+        ApplyColorOverride(tileColor.Value);
     }
 
     public void ApplyColorOverride(Color color)
@@ -46,5 +51,9 @@ public class GridTile : NetworkBehaviour
     public void RemoveUnit()
     {
         OccupyingUnit = null;
+    }
+    private void OnEnable()
+    {
+        tileColor.OnValueChanged += (_, newColor) => ApplyColorOverride(newColor);
     }
 }

@@ -1497,6 +1497,7 @@ GameObject:
   - component: {fileID: 1786454434}
   - component: {fileID: 1786454435}
   - component: {fileID: 1786454436}
+  - component: {fileID: 1786454437}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1585,6 +1586,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   spectateButton: {fileID: 1304362899}
+--- !u!114 &1786454437
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1786454429}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0c790bc04ecfde499df4f9ada69241a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  gridSpawnAnchors:
+  - {fileID: 1201767359}
+  - {fileID: 1251080917}
+  - {fileID: 1918074423}
+  - {fileID: 80252483}
+  - {fileID: 974579062}
+  - {fileID: 2105057353}
+  - {fileID: 1183194481}
+  - {fileID: 616780906}
 --- !u!1 &1918074422
 GameObject:
   m_ObjectHideFlags: 0

@@ -29,18 +29,16 @@ public class UnitPlacer : NetworkBehaviour
         {
             if (!hit.collider.TryGetComponent(out GridTile tile)) return;
 
-            ulong viewedClientId = CameraSwitcherUI.CurrentTargetId;
-            ulong localClientId = NetworkManager.Singleton.LocalClientId;
-
-            if (viewedClientId != localClientId || tile.OwnerClientId != localClientId)
+            if (tile.TileOwnerClientId != NetworkManager.Singleton.LocalClientId)
             {
-                Debug.LogWarning("🚫 Invalid unit placement.");
+                Debug.LogWarning("🚫 Cannot place unit on another player’s tile.");
                 return;
             }
 
             SpawnUnitServerRpc(tile.GridPosition);
         }
     }
+
 
     [ServerRpc]
     private void SpawnUnitServerRpc(Vector2Int gridPos, ServerRpcParams rpcParams = default)
