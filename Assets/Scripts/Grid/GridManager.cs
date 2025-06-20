@@ -49,7 +49,7 @@ public class GridManager : NetworkBehaviour
     {
         if (tileMap.TryGetValue(coord, out var tile))
         {
-            tile.ApplyColorOverride(color);
+            tile.SetTileColor(color);
         }
     }
 
@@ -75,5 +75,9 @@ public class GridManager : NetworkBehaviour
             7 => new Color(0.5f, 0f, 1f),
             _ => Color.white
         };
+    }
+    public IEnumerable<GridTile> GetAllTiles()
+    {
+        return tileMap.Values;
     }
 }

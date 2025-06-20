@@ -11,29 +11,44 @@ public class PlayerNetworkState : NetworkBehaviour
     private GridManager gridManager;
 
     [HideInInspector] public Transform[] gridSpawnAnchors; // Assigned from BootstrapGridAssigner
+    [SerializeField] private GameObject gridManagerPrefab;
 
     public override void OnNetworkSpawn()
     {
         if (!IsServer) return;
 
-        gridManager = GetComponentInChildren<GridManager>(true);
-        if (gridManager == null)
-        {
-            Debug.LogError($"❌ GridManager not found on PlayerPrefab (ClientId: {OwnerClientId})");
-            return;
-        }
+        var gridObj = Instantiate(gridManagerPrefab);
+        var gridNetObj = gridObj.GetComponent<NetworkObject>();
+        gridNetObj.SpawnWithOwnership(OwnerClientId); // 🧠 Ensure ownership
 
-        // 🧭 Use anchor if available, fallback if not
+        gridManager = gridObj.GetComponent<GridManager>();
         Vector3 spawnPos = GetGridSpawnPosition();
-
         gridManager.transform.position = spawnPos;
         gridManager.Init(OwnerClientId);
+
         AllPlayerGrids[OwnerClientId] = gridManager;
 
         Vector3 center = gridManager.GetGridCenter();
         transform.SetPositionAndRotation(center + new Vector3(0f, -0.8f, 3.25f), Quaternion.Euler(0f, 180f, 0f));
 
         Debug.Log($"🧩 Grid initialized for Player {OwnerClientId} at {spawnPos}");
+
+        RegisterGridClientRpc(OwnerClientId, gridManager.NetworkObjectId);
+    }
+
+    [ClientRpc]
+    private void RegisterGridClientRpc(ulong ownerId, ulong gridNetId)
+    {
+        if (IsServer) return; // server already assigned
+
+        var gridObj = NetworkManager.Singleton.SpawnManager.SpawnedObjects[gridNetId];
+        var grid = gridObj.GetComponent<GridManager>();
+
+        if (grid != null && !AllPlayerGrids.ContainsKey(ownerId))
+        {
+            AllPlayerGrids[ownerId] = grid;
+            Debug.Log($"✅ Client registered GridManager for Player {ownerId}");
+        }
     }
 
     private Vector3 GetGridSpawnPosition()
