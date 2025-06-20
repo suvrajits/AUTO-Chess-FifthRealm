@@ -1,86 +1,79 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
-public class GridManager : MonoBehaviour
+public class GridManager : NetworkBehaviour
 {
-    public static GridManager Instance;
-
     [Header("Grid Settings")]
     public GameObject tilePrefab;
     public int gridSize = 8;
     public float spacing = 1.05f;
 
-    public Dictionary<ulong, Dictionary<Vector2Int, GridTile>> playerTileMaps = new();
+    private Dictionary<Vector2Int, GridTile> tileMap = new();
+    public ulong OwnerId { get; private set; }
 
-    // Fixed player colors per client ID
-    public static readonly Dictionary<ulong, Color> PlayerColors = new()
+    public void Init(ulong ownerClientId)
     {
-        { 0, Color.red },
-        { 1, Color.cyan },
-        { 2, Color.green },
-        { 3, Color.yellow },
-        { 4, Color.magenta },
-        { 5, Color.blue },
-        { 6, new Color(1f, 0.5f, 0f) }, // Orange
-        { 7, new Color(0.5f, 0f, 1f) }  // Purple
-    };
-
-    private void Awake()
-    {
-        Instance = this;
+        OwnerId = ownerClientId;
+        GenerateGrid();
     }
 
-    private void Start()
+    private void GenerateGrid()
     {
-        GenerateGridsForAllPlayers();
-    }
-
-    private void GenerateGridsForAllPlayers()
-    {
-        int playerIndex = 0;
-
-        foreach (var playerId in PlayerColors.Keys)
-        {
-            // Position each grid uniquely: max 4 across, 2 down
-            int row = playerIndex / 4;
-            int col = playerIndex % 4;
-
-            Vector3 offset = new Vector3(
-                col * (gridSize + 2) * spacing,
-                0,
-                row * (gridSize + 2) * spacing
-            );
-
-            GeneratePlayerGrid(playerId, offset);
-            playerIndex++;
-        }
-    }
-
-    private void GeneratePlayerGrid(ulong playerId, Vector3 offset)
-    {
-        Dictionary<Vector2Int, GridTile> tileMap = new();
-        Color color = PlayerColors[playerId];
+        Color color = GetPlayerColor(OwnerId);
 
         for (int x = 0; x < gridSize; x++)
         {
             for (int z = 0; z < gridSize; z++)
             {
                 Vector2Int coord = new Vector2Int(x, z);
-                Vector3 worldPos = offset + new Vector3(x * spacing, 0, z * spacing);
-                GameObject tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
+                Vector3 localPos = new Vector3(x * spacing, 0, z * spacing);
+                GameObject tileObj = Instantiate(tilePrefab, transform.position + localPos, Quaternion.identity, transform);
 
-                GridTile gridTile = tileObj.GetComponent<GridTile>();
-                gridTile.Init(coord, playerId, color);
-                tileMap[coord] = gridTile;
+                var netObj = tileObj.GetComponent<NetworkObject>();
+                if (netObj != null)
+                    netObj.Spawn();
+
+                GridTile tile = tileObj.GetComponent<GridTile>();
+                tile.Init(coord, OwnerId, color);
+                tileMap[coord] = tile;
+
+                // 🟡 Sync color on clients
+                SyncTileColorClientRpc(coord, color);
             }
         }
-
-        playerTileMaps[playerId] = tileMap;
     }
 
-    public bool TryGetTile(ulong playerId, Vector2Int coord, out GridTile tile)
+    [ClientRpc]
+    private void SyncTileColorClientRpc(Vector2Int coord, Color color)
     {
-        tile = null;
-        return playerTileMaps.TryGetValue(playerId, out var map) && map.TryGetValue(coord, out tile);
+        if (tileMap.TryGetValue(coord, out var tile))
+        {
+            tile.ApplyColorOverride(color);
+        }
+    }
+
+    public bool TryGetTile(Vector2Int coord, out GridTile tile) => tileMap.TryGetValue(coord, out tile);
+
+    public Vector3 GetGridCenter()
+    {
+        float halfSize = (gridSize - 1) * spacing / 2f;
+        return transform.position + new Vector3(halfSize, 0, halfSize);
+    }
+
+    private Color GetPlayerColor(ulong id)
+    {
+        return id switch
+        {
+            0 => Color.red,
+            1 => Color.cyan,
+            2 => Color.green,
+            3 => Color.yellow,
+            4 => Color.magenta,
+            5 => Color.blue,
+            6 => new Color(1f, 0.5f, 0f),
+            7 => new Color(0.5f, 0f, 1f),
+            _ => Color.white
+        };
     }
 }

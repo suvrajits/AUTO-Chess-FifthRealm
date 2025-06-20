@@ -18,5 +18,5 @@ MonoBehaviour:
   attackRange: 1
   attackSpeed: 0.8
   moveSpeed: 3
-  heroPrefab: {fileID: 1394088728094463138, guid: dc30b76239a01a24cb106ab80da13e83, type: 3}
+  heroPrefab: {fileID: 2409289276455697036, guid: cbe146db5487105498e39fb1e88e07f6, type: 3}
   attackDelay: 0.25

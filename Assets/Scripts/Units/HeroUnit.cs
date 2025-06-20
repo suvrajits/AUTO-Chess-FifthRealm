@@ -7,14 +7,13 @@ public class HeroUnit : NetworkBehaviour
     public HeroData heroData;
     public Vector2Int GridPosition { get; set; }
 
-    private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(
+    private NetworkVariable<Faction> faction = new(
         Faction.Neutral,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
 
     public Faction Faction => faction.Value;
-
     public float CurrentHealth { get; private set; }
     public bool IsDead => CurrentHealth <= 0;
     public bool IsAlive => !IsDead;
@@ -22,41 +21,52 @@ public class HeroUnit : NetworkBehaviour
     public HeroAnimatorHandler AnimatorHandler { get; private set; }
     private HeroStateMachine stateMachine;
 
-    private void Start()
-    {
-        AnimatorHandler = GetComponent<HeroAnimatorHandler>();
-        stateMachine = GetComponent<HeroStateMachine>();
+    private GridTile assignedTile;
 
-        if (heroData == null)
+    public void OnSpawnInitialized(GridTile tile, HeroData data, Faction? fact = null)
+    {
+        if (tile == null || data == null)
         {
-            Debug.LogError("❌ Missing HeroData!");
+            Debug.LogError("❌ tile or data is null in OnSpawnInitialized");
             return;
         }
 
-        // 🟡 Snap to tile height
-        SnapToTileY();
+        heroData = data;
+        GridPosition = tile.GridPosition;
+        assignedTile = tile;
+
+        // Assign required components
+        if (AnimatorHandler == null) AnimatorHandler = GetComponent<HeroAnimatorHandler>();
+        if (stateMachine == null) stateMachine = GetComponent<HeroStateMachine>();
+
+        if (AnimatorHandler == null || stateMachine == null)
+        {
+            Debug.LogError("❌ Missing HeroAnimatorHandler or HeroStateMachine");
+            return;
+        }
+
+        if (IsServer)
+            faction.Value = fact ?? Faction.Neutral;
 
         CurrentHealth = heroData.maxHealth;
-        Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
 
-        if (IsServer && IsAlive && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
+        // Snap to tile Y position
+        transform.position = tile.transform.position + Vector3.up * 0.01f;
+
+        if (TryGetComponent(out Rigidbody rb))
         {
+            rb.useGravity = false;
+            rb.isKinematic = true;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+        }
+
+        Debug.Log($"✅ [{Faction}] {heroData.heroName} initialized at {GridPosition} with {CurrentHealth} HP");
+
+        if (IsServer && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
             stateMachine.EnterCombat();
-        }
-
-        Debug.Log($"[{heroData.heroName}] START on {(IsServer ? "Server" : "Client")} → Faction: {Faction}");
     }
 
-    public void SetFaction(Faction f)
-    {
-        if (!IsServer)
-        {
-            Debug.LogWarning("⚠️ Only server can set faction");
-            return;
-        }
 
-        faction.Value = f;
-    }
 
     public void ApplyDamage(float amount)
     {
@@ -66,28 +76,17 @@ public class HeroUnit : NetworkBehaviour
         Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
 
         if (CurrentHealth <= 0f)
-        {
             stateMachine.Die();
-        }
     }
 
     public void BeginBattle()
     {
         if (IsServer && IsAlive)
-        {
-            Debug.Log($"[] {heroData.heroName} BeginBattle() called");
             stateMachine.EnterCombat();
-        }
     }
 
-    private void SnapToTileY()
+    public void SetFaction(Faction f)
     {
-        if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, GridPosition, out var tile))
-        {
-            Vector3 pos1 = transform.position;
-            pos1.y = tile.transform.position.y;
-            transform.position = pos1;
-        }
-
+        if (IsServer) faction.Value = f;
     }
 }

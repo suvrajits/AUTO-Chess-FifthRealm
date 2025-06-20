@@ -29,7 +29,10 @@ public class LobbyManager : NetworkBehaviour
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
     private new bool IsHost => NetworkManager.Singleton.IsHost;
 
-    [SerializeField] private GameObject gameGridPrefab;
+    private void Start()
+    {
+        
+    }
 
     private void Awake()
     {
@@ -82,16 +85,16 @@ public class LobbyManager : NetworkBehaviour
     public void StartGame()
     {
         if (!IsHost) return;
-
+        HideLobbyPanelClientRpc();
         Debug.Log("[LobbyManager] Host starting game manually...");
 
         //Destroy(gameObject); // Clean transition
 
         //NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         lobbyPanel.SetActive(false);
-        HideLobbyPanelClientRpc();
-        GameObject instance = Instantiate(gameGridPrefab);
-        instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
+        
+        //GameObject instance = Instantiate(gameGridPrefab);
+        //instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
         
 
     }

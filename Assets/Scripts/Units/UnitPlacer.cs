@@ -14,14 +14,12 @@ public class UnitPlacer : NetworkBehaviour
         mainCamera = Camera.main;
     }
 
-    void Update()
+    private void Update()
     {
         if (!IsOwner || mainCamera == null) return;
 
         if (Input.GetMouseButtonDown(0))
-        {
             TryPlaceOrReplaceUnit();
-        }
     }
 
     private void TryPlaceOrReplaceUnit()
@@ -29,21 +27,14 @@ public class UnitPlacer : NetworkBehaviour
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, tileLayer))
         {
-            GridTile tile = hit.collider.GetComponent<GridTile>();
-            if (tile == null) return;
+            if (!hit.collider.TryGetComponent(out GridTile tile)) return;
 
             ulong viewedClientId = CameraSwitcherUI.CurrentTargetId;
             ulong localClientId = NetworkManager.Singleton.LocalClientId;
 
-            if (viewedClientId != localClientId)
+            if (viewedClientId != localClientId || tile.OwnerClientId != localClientId)
             {
-                Debug.LogWarning("🚫 Can't place units while spectating.");
-                return;
-            }
-
-            if (tile.OwnerClientId != localClientId)
-            {
-                Debug.LogWarning($"🚫 This tile belongs to another player.");
+                Debug.LogWarning("🚫 Invalid unit placement.");
                 return;
             }
 
@@ -56,65 +47,71 @@ public class UnitPlacer : NetworkBehaviour
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
 
-        if (heroData == null || heroData.heroPrefab == null)
+        if (heroData?.heroPrefab == null)
         {
-            Debug.LogError("❌ HeroData or HeroPrefab not assigned!");
+            Debug.LogError("❌ HeroData or HeroPrefab missing");
             return;
         }
 
-        if (!GridManager.Instance.TryGetTile(senderId, gridPos, out GridTile tile))
+        if (!PlayerNetworkState.AllPlayerGrids.TryGetValue(senderId, out var gridManager) ||
+            !gridManager.TryGetTile(gridPos, out GridTile tile) || tile == null)
         {
-            Debug.LogWarning($"⚠️ Tile not found at {gridPos} for Player {senderId}");
+            Debug.LogError("❌ Valid GridTile not found for placement.");
             return;
         }
 
-        // 🧹 Remove existing unit if any
         if (tile.IsOccupied)
         {
-            var existingUnit = tile.OccupyingUnit;
-            if (existingUnit != null && existingUnit.OwnerClientId == senderId)
+            var existing = tile.OccupyingUnit;
+            if (existing != null && existing.OwnerClientId == senderId)
             {
-                Debug.Log($"♻️ Replacing unit at {gridPos}");
-                BattleManager.Instance.UnregisterUnit(existingUnit); // 🧹 Remove from unit list
-                existingUnit.GetComponent<NetworkObject>()?.Despawn(true);
-                tile.RemoveUnit(); // clear tile occupancy
+                BattleManager.Instance.UnregisterUnit(existing);
+                existing.GetComponent<NetworkObject>().Despawn(true);
+                tile.RemoveUnit();
             }
             else
             {
-                Debug.LogWarning(" Cannot replace another player's unit.");
+                Debug.LogWarning("🚫 Cannot replace another player’s unit.");
                 return;
             }
         }
 
-
-        Vector3 spawnPos = tile.transform.position + new Vector3(0, 0.55f, 0);
-
-        GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, Quaternion.identity);
-
-        HeroUnit heroUnit = unitObj.GetComponent<HeroUnit>();
-        heroUnit.GridPosition = gridPos;
-        heroUnit.heroData = heroData;
-        heroUnit.SetFaction(FactionForClient(senderId));
-
-        unitObj.GetComponent<NetworkObject>().SpawnWithOwnership(senderId);
-
-        tile.AssignUnit(heroUnit); // ✅ Track unit
-        BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
-    }
-
-    private Faction FactionForClient(ulong clientId)
-    {
-        return clientId switch
+        GameObject unitObj = Instantiate(heroData.heroPrefab);
+        NetworkObject netObj = unitObj.GetComponent<NetworkObject>();
+        if (netObj == null)
         {
-            0 => Faction.Player1,
-            1 => Faction.Player2,
-            2 => Faction.Player3,
-            3 => Faction.Player4,
-            4 => Faction.Player5,
-            5 => Faction.Player6,
-            6 => Faction.Player7,
-            7 => Faction.Player8,
-            _ => Faction.Neutral
-        };
+            Debug.LogError("❌ Hero prefab missing NetworkObject");
+            return;
+        }
+
+        netObj.SpawnWithOwnership(senderId);
+
+        if (!unitObj.TryGetComponent(out HeroUnit heroUnit))
+        {
+            Debug.LogError("❌ HeroUnit component not found after spawn.");
+            return;
+        }
+
+        // DEFER tile assign until OnSpawnInitialized
+        heroUnit.OnSpawnInitialized(tile, heroData, FactionForClient(senderId));
+        
+        tile.AssignUnit(heroUnit);
+
+        BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
+
+        Debug.Log($"✅ {heroData.heroName} placed at {gridPos} for Player {senderId}");
     }
+
+    private Faction FactionForClient(ulong clientId) => clientId switch
+    {
+        0 => Faction.Player1,
+        1 => Faction.Player2,
+        2 => Faction.Player3,
+        3 => Faction.Player4,
+        4 => Faction.Player5,
+        5 => Faction.Player6,
+        6 => Faction.Player7,
+        7 => Faction.Player8,
+        _ => Faction.Neutral
+    };
 }

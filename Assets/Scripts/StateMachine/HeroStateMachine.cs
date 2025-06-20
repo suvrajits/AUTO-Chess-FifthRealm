@@ -238,13 +238,17 @@ public class HeroStateMachine : NetworkBehaviour
 
         if (IsServer)
         {
-            // ✅ Cleanup grid and unit tracking
-            if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
+            GridManager gridManager = hero.GetComponentInParent<GridManager>();
+            if (gridManager != null && gridManager.TryGetTile(hero.GridPosition, out var tile))
             {
                 tile.RemoveUnit(); // remove reference to this unit from tile
                 Vector3 pos1 = transform.position;
                 pos1.y = tile.transform.position.y;
                 transform.position = pos1;
+            }
+            else
+            {
+                Debug.LogWarning($"❌ Could not find GridManager or tile during corpse cleanup for {hero.name}");
             }
 
             // ✅ Remove from BattleManager list
