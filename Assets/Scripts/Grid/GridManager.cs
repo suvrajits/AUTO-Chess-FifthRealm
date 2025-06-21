@@ -37,22 +37,19 @@ public class GridManager : MonoBehaviour
 
     private void GenerateGridsForAllPlayers()
     {
-        int playerIndex = 0;
-
-        foreach (var playerId in PlayerColors.Keys)
+        foreach (var kvp in PlayerColors)
         {
-            // Position each grid uniquely: max 4 across, 2 down
-            int row = playerIndex / 4;
-            int col = playerIndex % 4;
+            ulong playerId = kvp.Key;
+            int index = (int)playerId;
 
-            Vector3 offset = new Vector3(
-                col * (gridSize + 2) * spacing,
-                0,
-                row * (gridSize + 2) * spacing
-            );
+            Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);
+            if (anchor == null)
+            {
+                Debug.LogWarning($"⚠️ No anchor set for player {index} in SpawnAnchorRegistry.");
+                continue;
+            }
 
-            GeneratePlayerGrid(playerId, offset);
-            playerIndex++;
+            GeneratePlayerGrid(playerId, anchor.position);
         }
     }
 

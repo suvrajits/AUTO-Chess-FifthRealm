@@ -11,20 +11,16 @@ public class PlayerNetworkState : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Define offsets for each player's grid
-        const int gridSize = 8;
-        const float tileSize = 1f; // Adjust if your tile size differs
-        Vector3 baseOffset = new Vector3(0f, 1f, 0f); // Slight Y lift
-
-        // Calculate horizontal offset so each player's grid is side by side
-        int playerIndex = (int)OwnerClientId;
-        float xOffset = playerIndex * gridSize * tileSize;
-
-        // Place the player near the center of their grid (adjust Z to your needs)
-        Vector3 spawnPos = new Vector3(xOffset + (gridSize / 2f), 1f, gridSize + 1f);
-        Quaternion spawnRot = Quaternion.Euler(0f, 180f, 0f); // Look toward center (optional)
-
-        transform.SetPositionAndRotation(spawnPos + baseOffset, spawnRot);
+        int index = (int)OwnerClientId;
+        Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);
+        if (anchor != null)
+        {
+            transform.SetPositionAndRotation(anchor.position + new Vector3(0, 1f, 0), Quaternion.Euler(0f, 180f, 0f));
+        }
+        else
+        {
+            Debug.LogWarning($"❌ No spawn anchor found for player {index}");
+        }
     }
 
 
