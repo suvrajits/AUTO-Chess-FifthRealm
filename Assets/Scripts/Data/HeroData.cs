@@ -4,12 +4,15 @@ using UnityEngine;
 
 public class HeroData : ScriptableObject
 {
+    public int heroId;
     public string heroName;
     public float maxHealth;
     public float attackDamage;
     public float attackRange;
     public float attackSpeed;
     public float moveSpeed;
+    public Sprite heroIcon;
+    public string description;
     public GameObject heroPrefab; // Prefab reference for this hero
     [Tooltip("Delay between animation start and hit frame in seconds")]
     public float attackDelay = 0.25f;

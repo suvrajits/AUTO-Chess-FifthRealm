@@ -3,10 +3,7 @@ using UnityEngine;
 
 public class UnitPlacer : NetworkBehaviour
 {
-    [Header("Unit Config")]
-    public HeroData heroData;
     public LayerMask tileLayer;
-
     private Camera mainCamera;
 
     private void Start()
@@ -26,6 +23,15 @@ public class UnitPlacer : NetworkBehaviour
 
     private void TryPlaceOrReplaceUnit()
     {
+        HeroData selectedHero = UnitSelectionManager.Instance.GetSelectedHero();
+    
+        if (selectedHero == null)
+        {
+            Debug.LogWarning("❌ No hero selected for placement.");
+            return;
+        }
+
+
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, tileLayer))
         {
@@ -43,22 +49,24 @@ public class UnitPlacer : NetworkBehaviour
 
             if (tile.OwnerClientId != localClientId)
             {
-                Debug.LogWarning($"🚫 This tile belongs to another player.");
+                Debug.LogWarning("🚫 This tile belongs to another player.");
                 return;
             }
 
-            SpawnUnitServerRpc(tile.GridPosition);
+            SpawnUnitServerRpc(tile.GridPosition, selectedHero.heroId);
         }
     }
 
     [ServerRpc]
-    private void SpawnUnitServerRpc(Vector2Int gridPos, ServerRpcParams rpcParams = default)
+    private void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
+        Debug.Log($"⚔️ [Server] Spawning unit with heroId: {heroId}");
 
+        HeroData heroData = UnitDatabase.Instance.GetHeroById(heroId);
         if (heroData == null || heroData.heroPrefab == null)
         {
-            Debug.LogError("❌ HeroData or HeroPrefab not assigned!");
+            Debug.LogError($"❌ HeroData not found or invalid prefab for heroId: {heroId}");
             return;
         }
 
@@ -68,27 +76,23 @@ public class UnitPlacer : NetworkBehaviour
             return;
         }
 
-        // 🧹 Remove existing unit if any
         if (tile.IsOccupied)
         {
             var existingUnit = tile.OccupyingUnit;
             if (existingUnit != null && existingUnit.OwnerClientId == senderId)
             {
-                Debug.Log($"♻️ Replacing unit at {gridPos}");
-                BattleManager.Instance.UnregisterUnit(existingUnit); // 🧹 Remove from unit list
+                BattleManager.Instance.UnregisterUnit(existingUnit);
                 existingUnit.GetComponent<NetworkObject>()?.Despawn(true);
-                tile.RemoveUnit(); // clear tile occupancy
+                tile.RemoveUnit();
             }
             else
             {
-                Debug.LogWarning(" Cannot replace another player's unit.");
+                Debug.LogWarning("🚫 Cannot replace another player's unit.");
                 return;
             }
         }
 
-
         Vector3 spawnPos = tile.transform.position + new Vector3(0, 0.55f, 0);
-
         GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, Quaternion.identity);
 
         HeroUnit heroUnit = unitObj.GetComponent<HeroUnit>();
@@ -98,7 +102,7 @@ public class UnitPlacer : NetworkBehaviour
 
         unitObj.GetComponent<NetworkObject>().SpawnWithOwnership(senderId);
 
-        tile.AssignUnit(heroUnit); // ✅ Track unit
+        tile.AssignUnit(heroUnit);
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
     }
 
