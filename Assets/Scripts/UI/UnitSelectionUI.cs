@@ -18,6 +18,12 @@ public class UnitSelectionUI : MonoBehaviour
     {
         cardTemplate.SetActive(false);
 
+        if (UnitDatabase.Instance == null || UnitDatabase.Instance.allHeroes == null)
+        {
+            Debug.LogError("❌ UnitDatabase.Instance is not initialized.");
+            return;
+        }
+
         var allHeroes = UnitDatabase.Instance.allHeroes;
 
         for (int i = 0; i < allHeroes.Count; i++)
@@ -28,7 +34,7 @@ public class UnitSelectionUI : MonoBehaviour
             cardObj.SetActive(true);
 
             HeroCardUI cardUI = cardObj.GetComponent<HeroCardUI>();
-            cardUI.Setup(hero, this, i); // 👈 Pass reference to self for callback
+            cardUI.Setup(hero, this, i);
 
             Button btn = cardObj.GetComponent<Button>();
             instantiatedButtons.Add(btn);
