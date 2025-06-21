@@ -10,6 +10,9 @@ public class GridManager : MonoBehaviour
     public int gridSize = 8;
     public float spacing = 1.05f;
 
+    // Offset to apply relative to each spawn anchor
+    private readonly Vector3 gridOffset = new Vector3(-2.7f, 1.2f, -6f);
+
     public Dictionary<ulong, Dictionary<Vector2Int, GridTile>> playerTileMaps = new();
 
     // Fixed player colors per client ID
@@ -49,7 +52,8 @@ public class GridManager : MonoBehaviour
                 continue;
             }
 
-            GeneratePlayerGrid(playerId, anchor.position);
+            Vector3 finalOffset = anchor.position + gridOffset;
+            GeneratePlayerGrid(playerId, finalOffset);
         }
     }
 
