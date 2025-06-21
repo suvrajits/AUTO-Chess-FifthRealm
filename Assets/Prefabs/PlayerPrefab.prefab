@@ -315,7 +315,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  heroData: {fileID: 11400000, guid: 03b6bf3d84edb54409b9c83fcf526c2a, type: 2}
+  heroData: {fileID: 11400000, guid: 2273ac9f483ae6b459b622508f21531c, type: 2}
   tileLayer:
     serializedVersion: 2
     m_Bits: 64
