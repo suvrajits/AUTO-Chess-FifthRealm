@@ -11,7 +11,7 @@ public class GridManager : MonoBehaviour
     public float spacing = 1.05f;
 
     // Offset to apply relative to each spawn anchor
-    private readonly Vector3 gridOffset = new Vector3(-2.7f, 1.2f, -6f);
+    private readonly Vector3 gridOffset = new Vector3(-2.7f, 1f, -7.5f);
 
     public Dictionary<ulong, Dictionary<Vector2Int, GridTile>> playerTileMaps = new();
 

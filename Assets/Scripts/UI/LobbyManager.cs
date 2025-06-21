@@ -16,6 +16,7 @@ public class LobbyManager : NetworkBehaviour
 
     [Header("UI References")]
     public GameObject lobbyPanel;
+    public GameObject heroSelectionPanel;
     public TMP_Text joinCodeText;
     public Transform playerListContent;
     public GameObject playerSlotPrefab;
@@ -43,6 +44,7 @@ public class LobbyManager : NetworkBehaviour
         if (!string.IsNullOrEmpty(joinCode))
         {
             lobbyPanel.SetActive(true);
+            heroSelectionPanel.SetActive(false);
             return joinCode;
         }
 
@@ -89,6 +91,7 @@ public class LobbyManager : NetworkBehaviour
 
         //NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         lobbyPanel.SetActive(false);
+        heroSelectionPanel.SetActive(true);
         HideLobbyPanelClientRpc();
         GameObject instance = Instantiate(gameGridPrefab);
         instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
@@ -104,6 +107,7 @@ public class LobbyManager : NetworkBehaviour
             Debug.Log("[LobbyManager] Hiding lobby panel via ClientRpc");
             lobbyPanel.SetActive(false);
         }
+        heroSelectionPanel.SetActive(true);
     }
 
 
