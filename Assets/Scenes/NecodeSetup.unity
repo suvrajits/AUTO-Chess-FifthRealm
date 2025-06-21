@@ -1653,6 +1653,63 @@ MonoBehaviour:
   buttonContainer: {fileID: 1916876793}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   selectedColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+--- !u!1001 &1608591848
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      propertyPath: m_Name
+      value: Mage_Tpose
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: eeb619fb537355f47931e57c446b8113, type: 3}
 --- !u!1 &1615456414
 GameObject:
   m_ObjectHideFlags: 0
@@ -2191,6 +2248,7 @@ MonoBehaviour:
   allHeroes:
   - {fileID: 11400000, guid: 2273ac9f483ae6b459b622508f21531c, type: 2}
   - {fileID: 11400000, guid: 03b6bf3d84edb54409b9c83fcf526c2a, type: 2}
+  - {fileID: 11400000, guid: d005830f401e9c84ba84aa28fc7a2812, type: 2}
 --- !u!1 &1829503512 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 7278990801568769790, guid: 6dce722da263b85469fefaa0216f6e3c, type: 3}
@@ -2782,3 +2840,4 @@ SceneRoots:
   - {fileID: 723137918}
   - {fileID: 936101006}
   - {fileID: 1322461057}
+  - {fileID: 1608591848}
