@@ -34,6 +34,11 @@ public class BattleManager : NetworkBehaviour
         isBattleOngoing = true;
         CurrentPhase = GamePhase.Battle;
 
+        foreach (var unit in teamAUnits.Concat(teamBUnits))
+        {
+            unit.GetComponent<HeroStateMachine>().EnterCombat();
+        }
+
         Debug.Log("⚔️ Battle started!");
     }
 
@@ -51,7 +56,7 @@ public class BattleManager : NetworkBehaviour
         {
             if (unit != null && unit.IsAlive)
             {
-                unit.PerformCombatTick(); // This should contain AI logic
+                unit.PerformCombatTick(); // Handles high-level per-frame logic
             }
         }
     }
@@ -67,72 +72,41 @@ public class BattleManager : NetworkBehaviour
         CurrentPhase = GamePhase.Results;
 
         Debug.Log($"🏆 Battle ended! Winner: {(teamAAlive ? "Team A" : teamBAlive ? "Team B" : "Draw")}");
-
-        BattleGroundManager.Instance.OnBattleEnded(); // Teleport survivors back
+        BattleGroundManager.Instance.OnBattleEnded();
     }
 
-    public bool IsBattleOver()
-    {
-        return !isBattleOngoing;
-    }
+    public bool IsBattleOver() => !isBattleOngoing;
 
     public List<HeroUnit> GetAllAliveUnits()
     {
-        return teamAUnits.Concat(teamBUnits)
-            .Where(u => u != null && u.IsAlive)
-            .ToList();
+        return teamAUnits.Concat(teamBUnits).Where(u => u != null && u.IsAlive).ToList();
     }
+
     public HeroUnit FindNearestEnemy(HeroUnit requester)
     {
-        var enemies = GetAllAliveUnits()
-            .Where(u => u != null && u != requester && u.OwnerClientId != requester.OwnerClientId)
-            .ToList();
+        var enemies = GetAllAliveUnits().Where(u => u.OwnerClientId != requester.OwnerClientId).ToList();
 
         if (enemies.Count == 0) return null;
 
-        HeroUnit closest = null;
-        float minDistance = float.MaxValue;
-
-        foreach (var enemy in enemies)
-        {
-            float dist = Vector3.Distance(requester.transform.position, enemy.transform.position);
-            if (dist < minDistance)
-            {
-                minDistance = dist;
-                closest = enemy;
-            }
-        }
-
-        return closest;
+        return enemies
+            .OrderBy(e => Vector3.Distance(requester.transform.position, e.transform.position))
+            .FirstOrDefault();
     }
+
     public void UnregisterUnit(HeroUnit unit)
     {
-        if (unit == null) return;
-
-        if (teamAUnits.Contains(unit))
-            teamAUnits.Remove(unit);
-
-        if (teamBUnits.Contains(unit))
-            teamBUnits.Remove(unit);
+        teamAUnits.Remove(unit);
+        teamBUnits.Remove(unit);
     }
+
     public void RegisterUnit(HeroUnit unit, Faction faction)
     {
         if (unit == null) return;
-        unit.SetFaction(faction);
 
-        if (unit.OwnerClientId % 2 == 0) // You can customize this logic
-        {
-            if (!teamAUnits.Contains(unit))
-                teamAUnits.Add(unit);
-        }
-        else
-        {
-            if (!teamBUnits.Contains(unit))
-                teamBUnits.Add(unit);
-        }
+        unit.SetFaction(faction);
+        var list = unit.OwnerClientId % 2 == 0 ? teamAUnits : teamBUnits;
+        if (!list.Contains(unit)) list.Add(unit);
 
         Debug.Log($"🟢 Registered unit: {unit.heroData.heroName} (ClientId: {unit.OwnerClientId})");
     }
-
-
 }

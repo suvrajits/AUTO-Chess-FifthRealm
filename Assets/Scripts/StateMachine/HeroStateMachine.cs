@@ -33,14 +33,11 @@ public class HeroStateMachine : NetworkBehaviour
 
         Debug.Log($"[FSM] Entering combat for {hero.heroData.heroName}");
 
-        // Freeze rigidbody motion and use gravity toggle
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.constraints = RigidbodyConstraints.FreezeRotation |
-                             RigidbodyConstraints.FreezePositionX |
-                             RigidbodyConstraints.FreezePositionZ;
-            rb.useGravity = false;
+            rb.constraints = RigidbodyConstraints.FreezeRotation;
+            rb.useGravity = true;
             rb.isKinematic = false;
         }
 
@@ -58,11 +55,9 @@ public class HeroStateMachine : NetworkBehaviour
                 case HeroState.Idle:
                     FindTarget();
                     break;
-
                 case HeroState.Moving:
                     MoveTowardTarget();
                     break;
-
                 case HeroState.Attacking:
                     HandleAttack();
                     break;
@@ -93,23 +88,22 @@ public class HeroStateMachine : NetworkBehaviour
     {
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
-            animator.SetBool("isRunning", false);
             currentState = HeroState.Idle;
+            animator.SetBool("isRunning", false);
             return;
         }
 
         float distance = Vector3.Distance(transform.position, targetEnemy.transform.position);
         if (distance <= hero.heroData.attackRange)
         {
-            animator.SetBool("isRunning", false);
             currentState = HeroState.Attacking;
+            animator.SetBool("isRunning", false);
             return;
         }
 
-        // Move forward and rotate
-        Vector3 dir = (targetEnemy.transform.position - transform.position).normalized;
-        transform.position += dir * hero.heroData.moveSpeed * Time.deltaTime;
-        transform.LookAt(targetEnemy.transform);
+        Vector3 direction = (targetEnemy.transform.position - transform.position).normalized;
+        transform.position += direction * hero.heroData.moveSpeed * Time.deltaTime;
+        transform.LookAt(new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z));
 
         animator.SetBool("isRunning", true);
     }
@@ -117,16 +111,16 @@ public class HeroStateMachine : NetworkBehaviour
     private void HandleAttack()
     {
         if (attackRoutine == null)
+        {
             attackRoutine = StartCoroutine(AttackCoroutine());
+        }
     }
 
     private IEnumerator AttackCoroutine()
     {
         while (targetEnemy != null && targetEnemy.IsAlive && hero.IsAlive)
         {
-            Vector3 lookPos = targetEnemy.transform.position;
-            lookPos.y = transform.position.y;
-            transform.LookAt(lookPos);
+            transform.LookAt(new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z));
 
             if (netAnimator != null)
                 netAnimator.SetTrigger("isAttacking");
