@@ -7,90 +7,49 @@ public class HeroStateMachine : NetworkBehaviour
 {
     private HeroUnit hero;
     private Animator animator;
+    private NetworkAnimator netAnimator;
 
     private HeroUnit targetEnemy;
-    private float attackCooldown = 0f;
+    private Coroutine attackRoutine;
 
     public enum HeroState { Idle, Moving, Attacking, Dead }
     private HeroState currentState = HeroState.Idle;
-    private Coroutine attackRoutine;
+
     [SerializeField] private float corpseSinkY = 0.5f;
     [SerializeField] private float vanishDelay = 2f;
     private bool hasEnteredCombat = false;
-   
+
     private void Awake()
     {
         hero = GetComponent<HeroUnit>();
         animator = GetComponentInChildren<Animator>();
-      
+        netAnimator = GetComponent<NetworkAnimator>();
     }
 
     public void EnterCombat()
     {
         if (!IsServer || !hero.IsAlive || hasEnteredCombat) return;
         hasEnteredCombat = true;
+
         Debug.Log($"[FSM] Entering combat for {hero.heroData.heroName}");
 
-        //  Freeze Rigidbody XZ motion & all rotation
-        var rb = GetComponent<Rigidbody>();
+        // Freeze rigidbody motion and use gravity toggle
+        Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
-            if (IsServer)
-            {
-                rb.constraints = RigidbodyConstraints.FreezeRotation |
-                                 RigidbodyConstraints.FreezePositionX |
-                                 RigidbodyConstraints.FreezePositionZ;
-                rb.useGravity = false;
-                rb.isKinematic = false;
-            }
-            else
-            {
-                rb.isKinematic = true; //  Don't simulate physics on clients
-            }
+            rb.constraints = RigidbodyConstraints.FreezeRotation |
+                             RigidbodyConstraints.FreezePositionX |
+                             RigidbodyConstraints.FreezePositionZ;
+            rb.useGravity = false;
+            rb.isKinematic = false;
         }
 
         StartCoroutine(CombatLoop());
     }
 
-    private void HandleAttack()
-    {
-        if (attackRoutine == null)
-            attackRoutine = StartCoroutine(AttackCoroutine());
-    }
-    private IEnumerator AttackCoroutine()
-    {
-        while (targetEnemy != null && targetEnemy.IsAlive && hero.IsAlive)
-        {
-            // Rotate toward target
-            Vector3 lookPos = targetEnemy.transform.position;
-            lookPos.y = transform.position.y;
-            transform.LookAt(lookPos);
-
-            GetComponent<NetworkAnimator>().SetTrigger("isAttacking");
-
-            // Wait for hit timing (matches animation)
-            yield return new WaitForSeconds(hero.heroData.attackDelay);
-
-            // Apply damage if still valid
-            if (targetEnemy != null && targetEnemy.IsAlive)
-            {
-                targetEnemy.ApplyDamage(hero.heroData.attackDamage);
-            }
-
-            // Wait full cooldown before next attack
-            yield return new WaitForSeconds(1f / hero.heroData.attackSpeed);
-        }
-
-        attackRoutine = null;
-        currentState = HeroState.Idle;
-    }
-
-
     private IEnumerator CombatLoop()
     {
-        if (!IsServer || hero == null || !hero.IsAlive || BattleManager.Instance.CurrentPhase != GamePhase.Battle)
-            yield break;
-        Debug.Log($"[FSM] Starting combat loop for {hero.heroData.heroName}");
+        Debug.Log($"[FSM] Combat loop started for {hero.heroData.heroName}");
 
         while (hero.IsAlive && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
         {
@@ -111,41 +70,13 @@ public class HeroStateMachine : NetworkBehaviour
 
             yield return null;
         }
+
+        Debug.Log($"[FSM] Combat loop ended for {hero.heroData.heroName}");
     }
 
     private void FindTarget()
     {
         targetEnemy = BattleManager.Instance.FindNearestEnemy(hero);
-
-        if (targetEnemy == null)
-        {
-            animator.SetBool("isRunning", false);
-            return;
-        }
-
-        float distance = Vector3.Distance(transform.position, targetEnemy.transform.position);
-        if (distance <= hero.heroData.attackRange)
-        {
-            currentState = HeroState.Attacking;
-        }
-        else
-        {
-            currentState = HeroState.Moving;
-        }
-    }
-
-    private void MoveTowardTarget()
-    {
-        if (!IsServer) return;
-
-        // Freeze safety in case missed at EnterCombat
-        var rb = GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.constraints = RigidbodyConstraints.FreezeRotation |
-                             RigidbodyConstraints.FreezePositionX |
-                             RigidbodyConstraints.FreezePositionZ;
-        }
 
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
@@ -155,7 +86,19 @@ public class HeroStateMachine : NetworkBehaviour
         }
 
         float distance = Vector3.Distance(transform.position, targetEnemy.transform.position);
+        currentState = distance <= hero.heroData.attackRange ? HeroState.Attacking : HeroState.Moving;
+    }
 
+    private void MoveTowardTarget()
+    {
+        if (targetEnemy == null || !targetEnemy.IsAlive)
+        {
+            animator.SetBool("isRunning", false);
+            currentState = HeroState.Idle;
+            return;
+        }
+
+        float distance = Vector3.Distance(transform.position, targetEnemy.transform.position);
         if (distance <= hero.heroData.attackRange)
         {
             animator.SetBool("isRunning", false);
@@ -163,36 +106,55 @@ public class HeroStateMachine : NetworkBehaviour
             return;
         }
 
-        // Move forward
+        // Move forward and rotate
         Vector3 dir = (targetEnemy.transform.position - transform.position).normalized;
-        if (IsServer)
-        {
-            transform.position += dir * hero.heroData.moveSpeed * Time.deltaTime;
-        }
+        transform.position += dir * hero.heroData.moveSpeed * Time.deltaTime;
         transform.LookAt(targetEnemy.transform);
 
         animator.SetBool("isRunning", true);
     }
 
+    private void HandleAttack()
+    {
+        if (attackRoutine == null)
+            attackRoutine = StartCoroutine(AttackCoroutine());
+    }
 
+    private IEnumerator AttackCoroutine()
+    {
+        while (targetEnemy != null && targetEnemy.IsAlive && hero.IsAlive)
+        {
+            Vector3 lookPos = targetEnemy.transform.position;
+            lookPos.y = transform.position.y;
+            transform.LookAt(lookPos);
 
+            if (netAnimator != null)
+                netAnimator.SetTrigger("isAttacking");
+
+            yield return new WaitForSeconds(hero.heroData.attackDelay);
+
+            if (targetEnemy != null && targetEnemy.IsAlive)
+            {
+                targetEnemy.ApplyDamage(hero.heroData.attackDamage);
+            }
+
+            yield return new WaitForSeconds(1f / hero.heroData.attackSpeed);
+        }
+
+        attackRoutine = null;
+        currentState = HeroState.Idle;
+    }
 
     public void Die()
     {
+        if (currentState == HeroState.Dead) return;
         currentState = HeroState.Dead;
 
-        Debug.Log($" {hero.heroData.heroName} died at {transform.position}");
+        Debug.Log($"💀 {hero.heroData.heroName} died at {transform.position}");
 
-        var netAnim = GetComponent<NetworkAnimator>();
-        if (netAnim != null)
-        {
-            Debug.Log(" Setting 'isDead' trigger on NetworkAnimator");
-            netAnim.SetTrigger("isDead");
-        }
-        else
-        {
-            Debug.LogWarning(" No NetworkAnimator found on this GameObject!");
-        }
+        animator.SetBool("isRunning", false);
+        if (netAnimator != null)
+            netAnimator.SetTrigger("isDead");
 
         StopAllCoroutines();
 
@@ -200,68 +162,51 @@ public class HeroStateMachine : NetworkBehaviour
         if (rb != null)
         {
             rb.constraints = RigidbodyConstraints.None;
-            rb.isKinematic = false;                //  Let gravity apply
             rb.useGravity = true;
-            rb.linearVelocity = Vector3.zero;
+            rb.isKinematic = false;
         }
 
-        animator.SetBool("isRunning", false);
-
-        // Delay collider disable until corpse hits ground
         StartCoroutine(FreezeCorpseAfterFall());
     }
+
     private IEnumerator FreezeCorpseAfterFall()
     {
-        yield return new WaitForSeconds(1f); // allow time for fall
+        yield return new WaitForSeconds(1f);
 
-        // Sink slightly for grounded look
         Vector3 pos = transform.position;
         pos.y -= corpseSinkY;
         transform.position = pos;
 
-        // Freeze Rigidbody
-        var rb = GetComponent<Rigidbody>();
+        Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.constraints = RigidbodyConstraints.FreezeAll;
             rb.isKinematic = true;
-            rb.linearVelocity = Vector3.zero;
         }
 
-        // Disable Collider
         Collider col = GetComponent<Collider>();
         if (col != null)
             col.enabled = false;
 
-        // Wait then despawn (on server only)
         yield return new WaitForSeconds(vanishDelay);
 
         if (IsServer)
         {
-            // ✅ Cleanup grid and unit tracking
             if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
             {
-                tile.RemoveUnit(); // remove reference to this unit from tile
-                Vector3 pos1 = transform.position;
-                pos1.y = tile.transform.position.y;
-                transform.position = pos1;
+                tile.RemoveUnit();
             }
 
-            // ✅ Remove from BattleManager list
             BattleManager.Instance.UnregisterUnit(hero);
 
-            // Despawn
-            NetworkObject netObj = GetComponent<NetworkObject>();
+            var netObj = GetComponent<NetworkObject>();
             if (netObj != null && netObj.IsSpawned)
-            {
-                netObj.Despawn(); // will also remove from all clients
-            }
+                netObj.Despawn();
         }
     }
 
     private void OnDisable()
     {
-        StopAllCoroutines(); // In case object was disabled unexpectedly
+        StopAllCoroutines();
     }
-
 }

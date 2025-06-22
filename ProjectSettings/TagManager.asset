@@ -5,6 +5,7 @@ TagManager:
   serializedVersion: 3
   tags:
   - Tile
+  - BattleManager
   layers:
   - Default
   - TransparentFX

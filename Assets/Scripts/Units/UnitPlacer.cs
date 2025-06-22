@@ -104,6 +104,7 @@ public class UnitPlacer : NetworkBehaviour
 
         tile.AssignUnit(heroUnit);
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
+
     }
 
     private Faction FactionForClient(ulong clientId)

@@ -119,7 +119,7 @@ public class RelayManager : MonoBehaviour
         }
     }
 
-    public async Task<string> CreateRelayHostAsync()
+    public async Task<string> CreateRelayHostAsync(int maxPlayers = 8)
     {
         await UnityServicesManager.InitUnityServicesIfNeeded();
         await EnsureNetcodeShutdownAsync();
@@ -132,12 +132,11 @@ public class RelayManager : MonoBehaviour
 
         try
         {
-            cachedAllocation = await RelayService.Instance.CreateAllocationAsync(2);
+            cachedAllocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
             cachedJoinCode = await RelayService.Instance.GetJoinCodeAsync(cachedAllocation.AllocationId);
 
             var relayServerData = new RelayServerData(cachedAllocation, "dtls");
             var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-        
             transport.SetRelayServerData(relayServerData);
 
             NetworkManager.Singleton.StartHost();

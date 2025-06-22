@@ -1,7 +1,7 @@
 ﻿using Unity.Netcode;
 using UnityEngine;
 
-[RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler))]
+[RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler), typeof(AICombatController))]
 public class HeroUnit : NetworkBehaviour
 {
     public HeroData heroData;
@@ -21,6 +21,17 @@ public class HeroUnit : NetworkBehaviour
 
     public HeroAnimatorHandler AnimatorHandler { get; private set; }
     private HeroStateMachine stateMachine;
+    private AICombatController aiController;
+
+    public GridTile currentTile;
+    public float moveSpeed = 2f;
+
+    private bool isInCombat = false;
+
+    private void Awake()
+    {
+        aiController = GetComponent<AICombatController>();
+    }
 
     private void Start()
     {
@@ -33,15 +44,17 @@ public class HeroUnit : NetworkBehaviour
             return;
         }
 
-        // 🟡 Snap to tile height
-        SnapToTileY();
+        if (currentTile != null)
+            SnapToTileY(currentTile);
 
         CurrentHealth = heroData.maxHealth;
+        moveSpeed = heroData.moveSpeed;
+
         Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
 
-        if (IsServer && IsAlive && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
+        if (IsServer && IsAlive)
         {
-            stateMachine.EnterCombat();
+            stateMachine.EnterCombat(); // Skip GamePhase for now, re-add later
         }
 
         Debug.Log($"[{heroData.heroName}] START on {(IsServer ? "Server" : "Client")} → Faction: {Faction}");
@@ -67,27 +80,63 @@ public class HeroUnit : NetworkBehaviour
 
         if (CurrentHealth <= 0f)
         {
+            Die();
+        }
+    }
+
+    public void TakeDamage(int amount)
+    {
+        ApplyDamage(amount); // Compatibility with AICombatController
+    }
+
+    public void Die()
+    {
+        CurrentHealth = 0;
+        Debug.Log($"☠️ {heroData.heroName} has died.");
+
+        if (stateMachine != null)
             stateMachine.Die();
-        }
+
+        RemoveFromTile();
+
+        if (BattleManager.Instance != null)
+            BattleManager.Instance.UnregisterUnit(this);
     }
 
-    public void BeginBattle()
+    public void SetCombatState(bool enabled)
     {
-        if (IsServer && IsAlive)
-        {
-            Debug.Log($"[] {heroData.heroName} BeginBattle() called");
+        isInCombat = enabled;
+
+        if (enabled)
             stateMachine.EnterCombat();
-        }
     }
 
-    private void SnapToTileY()
+    public void PerformCombatTick()
     {
-        if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, GridPosition, out var tile))
-        {
-            Vector3 pos1 = transform.position;
-            pos1.y = tile.transform.position.y;
-            transform.position = pos1;
-        }
+        if (!IsServer || !IsAlive || !isInCombat) return;
+        aiController.TickAI();
+    }
 
+    public void SnapToTileY(GridTile tile)
+    {
+        if (tile == null) return;
+
+        currentTile = tile;
+        GridPosition = tile.GridPosition;
+
+        Vector3 pos = tile.transform.position;
+        pos.y += 0.1f;
+        transform.position = pos;
+
+        tile.AssignUnit(this);
+    }
+
+    public void RemoveFromTile()
+    {
+        if (currentTile != null)
+        {
+            currentTile.RemoveUnit();
+            currentTile = null;
+        }
     }
 }
