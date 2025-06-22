@@ -1,27 +1,33 @@
-using Unity.Netcode.Components;
 using UnityEngine;
+using Unity.Netcode;
+using Unity.Netcode.Components;
 
-public class HeroAnimatorHandler : MonoBehaviour
+[RequireComponent(typeof(NetworkAnimator))]
+public class HeroAnimatorHandler : NetworkBehaviour
 {
     private Animator animator;
+    private NetworkAnimator netAnimator;
 
     private void Awake()
     {
         animator = GetComponentInChildren<Animator>();
+        netAnimator = GetComponent<NetworkAnimator>();
     }
 
     public void SetRunning(bool isRunning)
     {
-        animator.SetBool("isRunning", isRunning);
+        animator?.SetBool("isRunning", isRunning);
     }
 
     public void TriggerAttack()
     {
-        GetComponent<NetworkAnimator>().SetTrigger("isAttacking");
+        if (netAnimator != null && IsServer)
+            netAnimator.SetTrigger("isAttacking");
     }
 
     public void TriggerDeath()
     {
-        GetComponent<NetworkAnimator>().SetTrigger("isDead");
+        if (netAnimator != null && IsServer)
+            netAnimator.SetTrigger("isDead");
     }
 }

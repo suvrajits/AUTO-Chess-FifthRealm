@@ -1,13 +1,11 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
 using System.Collections;
-using Unity.Netcode.Components;
 
 public class HeroStateMachine : NetworkBehaviour
 {
     private HeroUnit hero;
-    private Animator animator;
-    private NetworkAnimator netAnimator;
+    private HeroAnimatorHandler animHandler;
 
     private HeroUnit targetEnemy;
     private Coroutine attackRoutine;
@@ -22,8 +20,7 @@ public class HeroStateMachine : NetworkBehaviour
     private void Awake()
     {
         hero = GetComponent<HeroUnit>();
-        animator = GetComponentInChildren<Animator>();
-        netAnimator = GetComponent<NetworkAnimator>();
+        animHandler = GetComponent<HeroAnimatorHandler>();
     }
 
     public void EnterCombat()
@@ -75,7 +72,7 @@ public class HeroStateMachine : NetworkBehaviour
 
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
-            animator.SetBool("isRunning", false);
+            animHandler.SetRunning(false);
             currentState = HeroState.Idle;
             return;
         }
@@ -88,8 +85,8 @@ public class HeroStateMachine : NetworkBehaviour
     {
         if (targetEnemy == null || !targetEnemy.IsAlive)
         {
+            animHandler.SetRunning(false);
             currentState = HeroState.Idle;
-            animator.SetBool("isRunning", false);
             return;
         }
 
@@ -97,33 +94,33 @@ public class HeroStateMachine : NetworkBehaviour
         if (distance <= hero.heroData.attackRange)
         {
             currentState = HeroState.Attacking;
-            animator.SetBool("isRunning", false);
+            animHandler.SetRunning(false);
             return;
         }
 
         Vector3 direction = (targetEnemy.transform.position - transform.position).normalized;
         transform.position += direction * hero.heroData.moveSpeed * Time.deltaTime;
-        transform.LookAt(new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z));
 
-        animator.SetBool("isRunning", true);
+        Vector3 lookPos = new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z);
+        transform.LookAt(lookPos);
+
+        animHandler.SetRunning(true);
     }
 
     private void HandleAttack()
     {
         if (attackRoutine == null)
-        {
             attackRoutine = StartCoroutine(AttackCoroutine());
-        }
     }
 
     private IEnumerator AttackCoroutine()
     {
         while (targetEnemy != null && targetEnemy.IsAlive && hero.IsAlive)
         {
-            transform.LookAt(new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z));
+            Vector3 lookPos = new Vector3(targetEnemy.transform.position.x, transform.position.y, targetEnemy.transform.position.z);
+            transform.LookAt(lookPos);
 
-            if (netAnimator != null)
-                netAnimator.SetTrigger("isAttacking");
+            animHandler.TriggerAttack();
 
             yield return new WaitForSeconds(hero.heroData.attackDelay);
 
@@ -146,9 +143,8 @@ public class HeroStateMachine : NetworkBehaviour
 
         Debug.Log($"💀 {hero.heroData.heroName} died at {transform.position}");
 
-        animator.SetBool("isRunning", false);
-        if (netAnimator != null)
-            netAnimator.SetTrigger("isDead");
+        animHandler.SetRunning(false);
+        animHandler.TriggerDeath();
 
         StopAllCoroutines();
 

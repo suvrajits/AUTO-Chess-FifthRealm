@@ -21,5 +21,5 @@ MonoBehaviour:
   moveSpeed: 3
   heroIcon: {fileID: 21300000, guid: 6135695f67b7a6a4f8f723c7caccd2c5, type: 3}
   description: 
-  heroPrefab: {fileID: 8887022295175393442, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
+  heroPrefab: {fileID: 1578704834589959522, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
   attackDelay: 0.25
