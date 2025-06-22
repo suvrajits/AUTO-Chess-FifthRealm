@@ -17,8 +17,8 @@ public class BattleManager : NetworkBehaviour
 
     private List<HeroUnit> teamAUnits = new();
     private List<HeroUnit> teamBUnits = new();
-    private bool isBattleOngoing = false;
 
+    private bool isBattleOngoing = false;
     public GamePhase CurrentPhase { get; private set; } = GamePhase.Waiting;
 
     private void Awake()
@@ -26,6 +26,9 @@ public class BattleManager : NetworkBehaviour
         Instance = this;
     }
 
+    /// <summary>
+    /// Starts the battle between Team A and Team B
+    /// </summary>
     public void BeginCombat(List<HeroUnit> teamA, List<HeroUnit> teamB)
     {
         teamAUnits = teamA.Where(u => u != null && u.IsAlive).ToList();
@@ -33,11 +36,6 @@ public class BattleManager : NetworkBehaviour
 
         isBattleOngoing = true;
         CurrentPhase = GamePhase.Battle;
-
-        foreach (var unit in teamAUnits.Concat(teamBUnits))
-        {
-            unit.GetComponent<HeroStateMachine>().EnterCombat();
-        }
 
         Debug.Log("⚔️ Battle started!");
     }
@@ -50,17 +48,23 @@ public class BattleManager : NetworkBehaviour
         CheckVictoryCondition();
     }
 
+    /// <summary>
+    /// Calls TickAI() for every alive unit on both teams.
+    /// </summary>
     private void RunCombatFrame()
     {
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
             if (unit != null && unit.IsAlive)
             {
-                unit.PerformCombatTick(); // Handles high-level per-frame logic
+                unit.GetComponent<AICombatController>()?.TickAI();
             }
         }
     }
 
+    /// <summary>
+    /// Determines if one team has been wiped out.
+    /// </summary>
     private void CheckVictoryCondition()
     {
         bool teamAAlive = teamAUnits.Any(u => u != null && u.IsAlive);
@@ -71,8 +75,10 @@ public class BattleManager : NetworkBehaviour
         isBattleOngoing = false;
         CurrentPhase = GamePhase.Results;
 
-        Debug.Log($"🏆 Battle ended! Winner: {(teamAAlive ? "Team A" : teamBAlive ? "Team B" : "Draw")}");
-        BattleGroundManager.Instance.OnBattleEnded();
+        string result = teamAAlive ? "Team A" : teamBAlive ? "Team B" : "Draw";
+        Debug.Log($"🏆 Battle ended! Winner: {result}");
+
+        BattleGroundManager.Instance?.OnBattleEnded();
     }
 
     public bool IsBattleOver() => !isBattleOngoing;
@@ -104,6 +110,7 @@ public class BattleManager : NetworkBehaviour
         if (unit == null) return;
 
         unit.SetFaction(faction);
+
         var list = unit.OwnerClientId % 2 == 0 ? teamAUnits : teamBUnits;
         if (!list.Contains(unit)) list.Add(unit);
 

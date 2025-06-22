@@ -1,18 +1,17 @@
-﻿using Unity.Netcode;
-using UnityEngine;
+﻿using UnityEngine;
+using Unity.Netcode;
 
-[RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler), typeof(AICombatController))]
+[RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler))]
 public class HeroUnit : NetworkBehaviour
 {
     public HeroData heroData;
-    public Vector2Int GridPosition { get; set; }
+    public Vector2Int GridPosition { get; private set; }
 
     private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(
         Faction.Neutral,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
-
     public Faction Faction => faction.Value;
 
     public float CurrentHealth { get; private set; }
@@ -21,105 +20,64 @@ public class HeroUnit : NetworkBehaviour
 
     public HeroAnimatorHandler AnimatorHandler { get; private set; }
     private HeroStateMachine stateMachine;
-    private AICombatController aiController;
 
-    public GridTile currentTile;
+    [HideInInspector] public GridTile currentTile;
     public float moveSpeed = 2f;
 
     private bool isInCombat = false;
+    private bool hasSpawned = false;
 
     private void Awake()
     {
-        aiController = GetComponent<AICombatController>();
-    }
-
-    private void Start()
-    {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
+    }
 
-        if (heroData == null)
+    public override void OnNetworkSpawn()
+    {
+        base.OnNetworkSpawn();
+
+        if (IsServer)
         {
-            Debug.LogError("❌ Missing HeroData!");
-            return;
+            if (heroData == null)
+                Debug.LogError("❌ HeroData missing on server instance!");
+
+            CurrentHealth = heroData.maxHealth;
+            moveSpeed = heroData.moveSpeed;
+
+            if (currentTile != null)
+                SnapToTileY(currentTile);
+
+            Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} (Owner: {OwnerClientId}) with {CurrentHealth} HP");
+
+            if (IsAlive)
+            {
+                GetComponent<AICombatController>()?.TickAI();
+            }
         }
 
-        if (currentTile != null)
-            SnapToTileY(currentTile);
-
-        CurrentHealth = heroData.maxHealth;
-        moveSpeed = heroData.moveSpeed;
-
-        Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} with {CurrentHealth} HP");
-
-        if (IsServer && IsAlive)
-        {
-            stateMachine.EnterCombat(); // Skip GamePhase for now, re-add later
-        }
-
-        Debug.Log($"[{heroData.heroName}] START on {(IsServer ? "Server" : "Client")} → Faction: {Faction}");
+        hasSpawned = true;
     }
 
     public void SetFaction(Faction f)
     {
         if (!IsServer)
         {
-            Debug.LogWarning("⚠️ Only server can set faction");
+            Debug.LogWarning("⚠️ Only the server can assign factions.");
             return;
         }
 
         faction.Value = f;
     }
 
-    public void ApplyDamage(float amount)
-    {
-        if (IsDead) return;
-
-        CurrentHealth -= amount;
-        Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
-
-        if (CurrentHealth <= 0f)
-        {
-            Die();
-        }
-    }
-
-    public void TakeDamage(int amount)
-    {
-        ApplyDamage(amount); // Compatibility with AICombatController
-    }
-
-    public void Die()
-    {
-        CurrentHealth = 0;
-        Debug.Log($"☠️ {heroData.heroName} has died.");
-
-        if (stateMachine != null)
-            stateMachine.Die();
-
-        RemoveFromTile();
-
-        if (BattleManager.Instance != null)
-            BattleManager.Instance.UnregisterUnit(this);
-    }
-
-    public void SetCombatState(bool enabled)
-    {
-        isInCombat = enabled;
-
-        if (enabled)
-            stateMachine.EnterCombat();
-    }
-
-    public void PerformCombatTick()
-    {
-        if (!IsServer || !IsAlive || !isInCombat) return;
-        aiController.TickAI();
-    }
-
     public void SnapToTileY(GridTile tile)
     {
         if (tile == null) return;
+
+        if (currentTile != null)
+        {
+            currentTile.RemoveUnit();
+        }
 
         currentTile = tile;
         GridPosition = tile.GridPosition;
@@ -138,5 +96,45 @@ public class HeroUnit : NetworkBehaviour
             currentTile.RemoveUnit();
             currentTile = null;
         }
+    }
+
+    public void ApplyDamage(float amount)
+    {
+        if (!IsAlive || amount <= 0f) return;
+
+        CurrentHealth -= amount;
+        Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
+
+        if (CurrentHealth <= 0f)
+            Die();
+    }
+
+    public void TakeDamage(int amount)
+    {
+        ApplyDamage(amount);
+    }
+
+    public void Die()
+    {
+        if (IsDead) return;
+
+        CurrentHealth = 0;
+        Debug.Log($"☠️ {heroData.heroName} has died.");
+
+        stateMachine?.Die();
+        RemoveFromTile();
+
+        if (IsServer)
+        {
+            BattleManager.Instance?.UnregisterUnit(this);
+        }
+    }
+
+    public void SetCombatState(bool enabled)
+    {
+        isInCombat = enabled;
+
+        /*if (enabled)
+            stateMachine.EnterCombat();*/
     }
 }

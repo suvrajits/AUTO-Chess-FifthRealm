@@ -96,13 +96,12 @@ public class UnitPlacer : NetworkBehaviour
         GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, Quaternion.identity);
 
         HeroUnit heroUnit = unitObj.GetComponent<HeroUnit>();
-        heroUnit.GridPosition = gridPos;
+        heroUnit.SnapToTileY(tile);
         heroUnit.heroData = heroData;
         heroUnit.SetFaction(FactionForClient(senderId));
 
         unitObj.GetComponent<NetworkObject>().SpawnWithOwnership(senderId);
 
-        tile.AssignUnit(heroUnit);
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
 
     }

@@ -320,10 +320,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df96c4ae64345146990366e9f43af3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  unit: {fileID: -5710238435373472103}
-  attackRange: 1.5
-  attackCooldown: 1
-  attackDamage: 10
 --- !u!95 &4665600993191587971 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}

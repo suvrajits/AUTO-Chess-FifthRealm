@@ -1,39 +1,41 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent(typeof(HeroUnit))]
 public class AICombatController : MonoBehaviour
 {
-    public HeroUnit unit;
-    public float attackRange = 1.5f;
-    public float attackCooldown = 1.0f;
-    public int attackDamage = 10;
+    private HeroUnit unit;
+    private HeroData data;
 
     private float cooldownTimer = 0f;
+    private Coroutine attackRoutine;
 
     private void Awake()
     {
-        if (unit == null)
-            unit = GetComponent<HeroUnit>();
+        unit = GetComponent<HeroUnit>();
+        data = unit.heroData;
+
+        if (data == null)
+            Debug.LogError($"❌ AICombatController: Missing HeroData on {name}");
     }
 
     public void TickAI()
     {
-        if (!unit.IsAlive) return;
+        if (!unit.IsAlive || data == null) return;
 
         HeroUnit target = FindClosestEnemy();
-
-        if (target == null || !target.IsAlive)
-            return;
+        if (target == null || !target.IsAlive) return;
 
         float distance = Vector3.Distance(unit.transform.position, target.transform.position);
 
-        if (distance > attackRange)
+        if (distance > data.attackRange)
         {
             MoveToward(target);
         }
         else
         {
-            TryAttack(target);
+            if (attackRoutine == null)
+                attackRoutine = StartCoroutine(AttackSequence(target));
         }
     }
 
@@ -62,19 +64,51 @@ public class AICombatController : MonoBehaviour
 
     private void MoveToward(HeroUnit target)
     {
+        if (target == null) return;
+
         Vector3 dir = (target.transform.position - unit.transform.position).normalized;
         unit.transform.position += dir * unit.moveSpeed * Time.deltaTime;
-    }
 
-    private void TryAttack(HeroUnit target)
-    {
-        if (cooldownTimer > 0)
+        Vector3 lookDir = (target.transform.position - unit.transform.position);
+        if (lookDir != Vector3.zero)
         {
-            cooldownTimer -= Time.deltaTime;
-            return;
+            lookDir.y = 0;
+            unit.transform.forward = lookDir.normalized;
         }
 
-        target.TakeDamage(attackDamage);
-        cooldownTimer = attackCooldown;
+        unit.AnimatorHandler?.SetRunning(true);
+    }
+
+    private IEnumerator AttackSequence(HeroUnit target)
+    {
+        while (target != null && target.IsAlive && unit.IsAlive)
+        {
+            unit.AnimatorHandler?.SetRunning(false);
+            FaceTarget(target);
+            unit.AnimatorHandler?.TriggerAttack();
+
+            yield return new WaitForSeconds(data.attackDelay);
+
+            if (target != null && target.IsAlive)
+            {
+                target.TakeDamage((int)data.attackDamage);
+            }
+
+            yield return new WaitForSeconds(1f / data.attackSpeed);
+        }
+
+        attackRoutine = null;
+    }
+
+    private void FaceTarget(HeroUnit target)
+    {
+        if (target == null) return;
+
+        Vector3 dir = (target.transform.position - unit.transform.position).normalized;
+        dir.y = 0;
+        if (dir != Vector3.zero)
+        {
+            unit.transform.rotation = Quaternion.Slerp(unit.transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 10f);
+        }
     }
 }

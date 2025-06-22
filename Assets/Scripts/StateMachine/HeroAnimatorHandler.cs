@@ -1,33 +1,33 @@
-using UnityEngine;
-using Unity.Netcode;
+﻿using UnityEngine;
 using Unity.Netcode.Components;
 
-[RequireComponent(typeof(NetworkAnimator))]
-public class HeroAnimatorHandler : NetworkBehaviour
+public class HeroAnimatorHandler : MonoBehaviour
 {
     private Animator animator;
     private NetworkAnimator netAnimator;
 
+    private static readonly int IsRunningHash = Animator.StringToHash("isRunning");
+    private static readonly int IsAttackingHash = Animator.StringToHash("isAttacking");
+    private static readonly int IsDeadHash = Animator.StringToHash("isDead");
+
     private void Awake()
     {
-        animator = GetComponentInChildren<Animator>();
+        animator = GetComponent<Animator>();
         netAnimator = GetComponent<NetworkAnimator>();
     }
 
     public void SetRunning(bool isRunning)
     {
-        animator?.SetBool("isRunning", isRunning);
+        animator?.SetBool(IsRunningHash, isRunning);
     }
 
     public void TriggerAttack()
     {
-        if (netAnimator != null && IsServer)
-            netAnimator.SetTrigger("isAttacking");
+        netAnimator?.SetTrigger(IsAttackingHash);
     }
 
     public void TriggerDeath()
     {
-        if (netAnimator != null && IsServer)
-            netAnimator.SetTrigger("isDead");
+        netAnimator?.SetTrigger(IsDeadHash);
     }
 }
