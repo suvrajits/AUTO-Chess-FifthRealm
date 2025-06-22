@@ -30,4 +30,11 @@ public class HeroAnimatorHandler : MonoBehaviour
     {
         netAnimator?.SetTrigger(IsDeadHash);
     }
+    public void PlayIdle()
+    {
+        animator.SetBool("isRunning", false);
+        animator.ResetTrigger("isAttacking");
+        animator.ResetTrigger("isDead");
+    }
+
 }

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using Unity.Netcode;
+using System.Collections;
 
 [RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler))]
 public class HeroUnit : NetworkBehaviour
@@ -137,4 +138,19 @@ public class HeroUnit : NetworkBehaviour
         /*if (enabled)
             stateMachine.EnterCombat();*/
     }
+
+    public IEnumerator TeleportBackToHomeTile()
+    {
+        if (currentTile == null)
+        {
+            Debug.LogWarning($"⚠️ {name} has no CurrentTile to return to.");
+            yield break;
+        }
+
+        transform.position = currentTile.transform.position + Vector3.up * 0.5f;
+        AnimatorHandler?.PlayIdle();
+        yield return null;
+    }
+
+
 }

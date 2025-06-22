@@ -8,7 +8,7 @@ public class AICombatController : MonoBehaviour
     private HeroData data;
 
     private float cooldownTimer = 0f;
-    private Coroutine attackRoutine;
+    private bool isInBattle = false;
 
     private void Awake()
     {
@@ -19,9 +19,21 @@ public class AICombatController : MonoBehaviour
             Debug.LogError($"❌ AICombatController: Missing HeroData on {name}");
     }
 
+    public void SetBattleMode(bool enabled)
+    {
+        isInBattle = enabled;
+
+        if (!enabled)
+        {
+            cooldownTimer = 0f;
+            unit.AnimatorHandler?.SetRunning(false);
+            unit.AnimatorHandler?.PlayIdle();
+        }
+    }
+
     public void TickAI()
     {
-        if (!unit.IsAlive || data == null) return;
+        if (!isInBattle || !unit.IsAlive || data == null) return;
 
         HeroUnit target = FindClosestEnemy();
         if (target == null || !target.IsAlive) return;
@@ -34,8 +46,7 @@ public class AICombatController : MonoBehaviour
         }
         else
         {
-            if (attackRoutine == null)
-                attackRoutine = StartCoroutine(AttackSequence(target));
+            TryAttack(target);
         }
     }
 
@@ -64,8 +75,6 @@ public class AICombatController : MonoBehaviour
 
     private void MoveToward(HeroUnit target)
     {
-        if (target == null) return;
-
         Vector3 dir = (target.transform.position - unit.transform.position).normalized;
         unit.transform.position += dir * unit.moveSpeed * Time.deltaTime;
 
@@ -79,36 +88,38 @@ public class AICombatController : MonoBehaviour
         unit.AnimatorHandler?.SetRunning(true);
     }
 
-    private IEnumerator AttackSequence(HeroUnit target)
+    private void TryAttack(HeroUnit target)
     {
-        while (target != null && target.IsAlive && unit.IsAlive)
+        if (cooldownTimer > 0)
         {
-            unit.AnimatorHandler?.SetRunning(false);
-            FaceTarget(target);
-            unit.AnimatorHandler?.TriggerAttack();
-
-            yield return new WaitForSeconds(data.attackDelay);
-
-            if (target != null && target.IsAlive)
-            {
-                target.TakeDamage((int)data.attackDamage);
-            }
-
-            yield return new WaitForSeconds(1f / data.attackSpeed);
+            cooldownTimer -= Time.deltaTime;
+            return;
         }
 
-        attackRoutine = null;
+        Vector3 lookDir = (target.transform.position - unit.transform.position);
+        if (lookDir != Vector3.zero)
+        {
+            lookDir.y = 0;
+            unit.transform.forward = lookDir.normalized;
+        }
+
+        unit.AnimatorHandler?.SetRunning(false);
+        unit.AnimatorHandler?.TriggerAttack();
+
+        StartCoroutine(DelayedHit(target, data.attackDelay));
+        cooldownTimer = data.attackSpeed;
     }
 
-    private void FaceTarget(HeroUnit target)
+    private IEnumerator DelayedHit(HeroUnit target, float delay)
     {
-        if (target == null) return;
+        yield return new WaitForSeconds(delay);
 
-        Vector3 dir = (target.transform.position - unit.transform.position).normalized;
-        dir.y = 0;
-        if (dir != Vector3.zero)
+        if (target != null && target.IsAlive)
         {
-            unit.transform.rotation = Quaternion.Slerp(unit.transform.rotation, Quaternion.LookRotation(dir), Time.deltaTime * 10f);
+            target.TakeDamage((int)data.attackDamage);
         }
+
+        // Reset to idle after attack
+        unit.AnimatorHandler?.SetRunning(false);
     }
 }
