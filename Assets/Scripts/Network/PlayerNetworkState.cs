@@ -6,6 +6,7 @@ public class PlayerNetworkState : NetworkBehaviour
 {
     // 🧠 Global registry for camera switching
     public static Dictionary<ulong, Camera> AllPlayerCameras = new();
+    public static Dictionary<ulong, PlayerNetworkState> AllPlayers = new();
 
     private Camera playerCamera;
 
@@ -21,8 +22,10 @@ public class PlayerNetworkState : NetworkBehaviour
         {
             Debug.LogWarning($"❌ No spawn anchor found for player {index}");
         }
-    }
 
+        if (!AllPlayers.ContainsKey(OwnerClientId))
+            AllPlayers.Add(OwnerClientId, this);
+    }
 
     private void Start()
     {
@@ -60,6 +63,24 @@ public class PlayerNetworkState : NetworkBehaviour
             Debug.Log($"🧹 Camera removed from registry for Player {OwnerClientId}");
         }
 
+        if (AllPlayers.ContainsKey(OwnerClientId))
+        {
+            AllPlayers.Remove(OwnerClientId);
+        }
+
         base.OnDestroy();
+    }
+
+    // ✅ Called by BattleGroundManager to move the Player prefab
+    public void TeleportTo(Vector3 position, Quaternion rotation)
+    {
+        transform.SetPositionAndRotation(position, rotation);
+        Debug.Log($"🚀 Teleported Player {OwnerClientId} to {position}");
+    }
+
+    // ✅ For safe lookups
+    public static PlayerNetworkState GetPlayerByClientId(ulong clientId)
+    {
+        return AllPlayers.TryGetValue(clientId, out var player) ? player : null;
     }
 }

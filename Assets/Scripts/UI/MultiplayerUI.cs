@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Threading.Tasks;
@@ -75,8 +75,27 @@ public class MultiplayerUI : MonoBehaviour
 
             if (success)
             {
-                //networkMenuPanel.SetActive(false);
-                joinCodeText.text = "Join Success";
+                // Wait until PlayerNetworkState is registered
+                ulong localId = NetworkManager.Singleton.LocalClientId;
+                float timeout = 20f;
+                float timer = 0f;
+
+                while (!PlayerNetworkState.AllPlayers.ContainsKey(localId) && timer < timeout)
+                {
+                    await Task.Delay(100);
+                    timer += 0.1f;
+                }
+
+                if (PlayerNetworkState.AllPlayers.ContainsKey(localId))
+                {
+                    joinCodeText.text = "Join Success";
+                    Debug.Log($"✅ Client player prefab initialized for {localId}");
+                }
+                else
+                {
+                    joinCodeText.text = "Player spawn timeout.";
+                    Debug.LogError("❌ Player prefab failed to initialize in time.");
+                }
             }
             else
             {
@@ -91,6 +110,7 @@ public class MultiplayerUI : MonoBehaviour
 
         SetButtonsInteractable(true);
     }
+
     private void SetButtonsInteractable(bool state)
     {
         if (hostButton != null) hostButton.interactable = state;

@@ -14,6 +14,12 @@ public class BattleGroundManager : NetworkBehaviour
     public int gridSizeY = 8;
     private GridTile[,] battleGrid;
 
+    [Header("Player Spectator Spots")]
+    public Transform[] spectatorAnchors; // Set size to 4 in Inspector
+
+    private Dictionary<ulong, Vector3> originalPlayerPositions = new();
+    private Dictionary<ulong, Quaternion> originalPlayerRotations = new();
+
     [Header("Battle Units")]
     private List<HeroUnit> teamAUnits = new();
     private List<HeroUnit> teamBUnits = new();
@@ -52,15 +58,13 @@ public class BattleGroundManager : NetworkBehaviour
                     continue;
                 }
 
-                tile.Init(new Vector2Int(x, y), 0, Color.gray); // Neutral tile, dummy owner
+                tile.Init(new Vector2Int(x, y), 0, Color.gray);
                 tile.GetComponent<NetworkObject>().Spawn();
-
                 battleGrid[x, y] = tile;
             }
         }
     }
-    
-    // Called by RoundManager or MatchManager
+
     [ServerRpc(RequireOwnership = false)]
     public void StartBattleServerRpc()
     {
@@ -71,14 +75,20 @@ public class BattleGroundManager : NetworkBehaviour
 
         TeleportToBattleGrid(teamAUnits, true);
         TeleportToBattleGrid(teamBUnits, false);
+        TeleportPlayersToSpectatorSpots();
 
-        Invoke(nameof(BeginCombat), 2f); // Optional delay for visual prep
+        Invoke(nameof(InvokeBattleStart), 2f); // Rename if needed
+
     }
+    private void InvokeBattleStart()
+    {
+        BattleManager.Instance.BeginCombat(teamAUnits, teamBUnits);
+    }
+
 
     private void PickTeams()
     {
         List<HeroUnit> allUnits = BattleManager.Instance.GetAllAliveUnits();
-
         var players = allUnits.GroupBy(u => u.OwnerClientId).ToList();
 
         if (players.Count >= 4)
@@ -102,12 +112,10 @@ public class BattleGroundManager : NetworkBehaviour
             HeroUnit unit = units[i];
             if (unit == null) continue;
 
-            GridTile originalTile = unit.currentTile;
-            if (originalTile != null)
-                originalTileMemory[unit] = originalTile;
+            if (unit.currentTile != null)
+                originalTileMemory[unit] = unit.currentTile;
 
             int col = Mathf.Clamp(i, 0, gridSizeX - 1);
-
             GridTile targetTile = battleGrid[col, row];
             if (targetTile == null)
             {
@@ -120,10 +128,35 @@ public class BattleGroundManager : NetworkBehaviour
         }
     }
 
-    private void BeginCombat()
+    private void TeleportPlayersToSpectatorSpots()
     {
-        BattleManager.Instance.BeginCombat(teamAUnits, teamBUnits);
+        HashSet<ulong> battleParticipants = new();
+        teamAUnits.ForEach(u => battleParticipants.Add(u.OwnerClientId));
+        teamBUnits.ForEach(u => battleParticipants.Add(u.OwnerClientId));
+
+        int anchorIndex = 0;
+
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            ulong clientId = client.ClientId;
+            if (!battleParticipants.Contains(clientId)) continue;
+
+            var playerObj = client.PlayerObject;
+            if (playerObj == null) continue;
+
+            var player = playerObj.GetComponent<PlayerNetworkState>();
+            if (player == null) continue;
+
+            Transform anchor = spectatorAnchors[Mathf.Clamp(anchorIndex, 0, spectatorAnchors.Length - 1)];
+
+            originalPlayerPositions[clientId] = player.transform.position;
+            originalPlayerRotations[clientId] = player.transform.rotation;
+
+            player.TeleportTo(anchor.position, anchor.rotation);
+            anchorIndex++;
+        }
     }
+
 
     public void OnBattleEnded()
     {
@@ -140,17 +173,31 @@ public class BattleGroundManager : NetworkBehaviour
                 unit.SnapToTileY(homeTile);
                 unit.SetCombatState(false);
             }
-            else
-            {
-                Debug.LogWarning($" Could not find original tile for unit {unit.name}");
-            }
         }
 
+        TeleportPlayersBackToOriginalPositions();
         CleanupArena();
 
         originalTileMemory.Clear();
         teamAUnits.Clear();
         teamBUnits.Clear();
+    }
+
+    private void TeleportPlayersBackToOriginalPositions()
+    {
+        foreach (var kvp in originalPlayerPositions)
+        {
+            ulong clientId = kvp.Key;
+            var player = PlayerNetworkState.GetPlayerByClientId(clientId);
+            if (player == null) continue;
+
+            Vector3 pos = originalPlayerPositions[clientId];
+            Quaternion rot = originalPlayerRotations[clientId];
+            player.TeleportTo(pos, rot);
+        }
+
+        originalPlayerPositions.Clear();
+        originalPlayerRotations.Clear();
     }
 
     private void CleanupArena()
