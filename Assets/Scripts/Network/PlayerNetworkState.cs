@@ -83,4 +83,13 @@ public class PlayerNetworkState : NetworkBehaviour
     {
         return AllPlayers.TryGetValue(clientId, out var player) ? player : null;
     }
+    [ClientRpc]
+    public void TeleportClientRpc(Vector3 position, Quaternion rotation)
+    {
+        if (!IsOwner) return;
+
+        transform.SetPositionAndRotation(position, rotation);
+        Debug.Log($"🚀 [ClientRpc] Teleported local player {OwnerClientId} to {position}");
+    }
+
 }

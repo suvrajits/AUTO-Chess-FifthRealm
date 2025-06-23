@@ -14,8 +14,8 @@ public class BattleGroundManager : NetworkBehaviour
     public int gridSizeY = 8;
     private GridTile[,] battleGrid;
 
-    [Header("Player Spectator Spots")]
-    public Transform[] spectatorAnchors; // Set size to 4 in Inspector
+    [Header("Unified Player View")]
+    public Transform sharedSpectatorAnchor;
 
     private Dictionary<ulong, Vector3> originalPlayerPositions = new();
     private Dictionary<ulong, Quaternion> originalPlayerRotations = new();
@@ -75,7 +75,7 @@ public class BattleGroundManager : NetworkBehaviour
 
         TeleportToBattleGrid(teamAUnits, true);
         TeleportToBattleGrid(teamBUnits, false);
-        TeleportPlayersToSpectatorSpots();
+        TeleportPlayersToSpectatorSpot();
 
         Invoke(nameof(InvokeBattleStart), 2f); // Rename if needed
 
@@ -128,13 +128,11 @@ public class BattleGroundManager : NetworkBehaviour
         }
     }
 
-    private void TeleportPlayersToSpectatorSpots()
+    private void TeleportPlayersToSpectatorSpot()
     {
         HashSet<ulong> battleParticipants = new();
         teamAUnits.ForEach(u => battleParticipants.Add(u.OwnerClientId));
         teamBUnits.ForEach(u => battleParticipants.Add(u.OwnerClientId));
-
-        int anchorIndex = 0;
 
         foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
         {
@@ -147,13 +145,11 @@ public class BattleGroundManager : NetworkBehaviour
             var player = playerObj.GetComponent<PlayerNetworkState>();
             if (player == null) continue;
 
-            Transform anchor = spectatorAnchors[Mathf.Clamp(anchorIndex, 0, spectatorAnchors.Length - 1)];
-
             originalPlayerPositions[clientId] = player.transform.position;
             originalPlayerRotations[clientId] = player.transform.rotation;
 
-            player.TeleportTo(anchor.position, anchor.rotation);
-            anchorIndex++;
+            player.TeleportClientRpc(sharedSpectatorAnchor.position, sharedSpectatorAnchor.rotation);
+
         }
     }
 
