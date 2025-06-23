@@ -34,6 +34,8 @@ public class AICombatController : MonoBehaviour
     public void TickAI()
     {
         if (!isInBattle || !unit.IsAlive || data == null) return;
+        
+        unit.SnapToGroundedTile(); //  Keep centered + upright every frame
 
         HeroUnit target = FindClosestEnemy();
         if (target == null || !target.IsAlive) return;

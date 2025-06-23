@@ -144,6 +144,13 @@ public class HeroUnit : NetworkBehaviour
 
     public IEnumerator TeleportBackToHomeTile()
     {
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb)
+        {
+            rb.isKinematic = true;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+        }
+
         if (currentTile == null)
         {
             Debug.LogWarning($"⚠️ {name} has no CurrentTile to return to.");
@@ -154,6 +161,18 @@ public class HeroUnit : NetworkBehaviour
         AnimatorHandler?.PlayIdle();
         yield return null;
     }
+    public void SnapToGroundedTile()
+    {
 
+        if (currentTile == null) return;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        if (rb)
+        {
+            rb.isKinematic = true; // 🔒 disables physics
+            rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationZ; // 👣 upright & grounded
+        }
+
+    }
 
 }
