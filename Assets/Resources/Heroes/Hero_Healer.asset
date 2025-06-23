@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
   m_Name: Hero_Healer
   m_EditorClassIdentifier: 
-  heroId: 1
-  heroName: Mage
-  maxHealth: 120
-  attackDamage: 20
-  attackRange: 1
-  attackSpeed: 0.8
-  moveSpeed: 3
+  heroId: 4
+  heroName: Healer
+  maxHealth: 160
+  attackDamage: 5
+  attackRange: 3.5
+  attackSpeed: 1
+  moveSpeed: 2.6
   heroIcon: {fileID: 21300000, guid: 3c828d4e6a8fc684b808b8dfc413e7bf, type: 3}
   description: 
-  heroPrefab: {fileID: 8887022295175393442, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
-  attackDelay: 0.25
+  heroPrefab: {fileID: 1283152093216832500, guid: e4e6accebd93e004385b0d138e758d61, type: 3}
+  attackDelay: 0.3

@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
   m_Name: Hero_Raze_Assassin
   m_EditorClassIdentifier: 
-  heroId: 1
-  heroName: Mage
-  maxHealth: 120
-  attackDamage: 20
+  heroId: 8
+  heroName: Raze Assassin
+  maxHealth: 230
+  attackDamage: 85
   attackRange: 1
-  attackSpeed: 0.8
-  moveSpeed: 3
+  attackSpeed: 1.7
+  moveSpeed: 5.2
   heroIcon: {fileID: 21300000, guid: 6eb4fb8134c6c284ab05c072d5631512, type: 3}
   description: 
-  heroPrefab: {fileID: 8887022295175393442, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
-  attackDelay: 0.25
+  heroPrefab: {fileID: 6542240709122820643, guid: 20d43ed3960cb3c479357affa7bfb991, type: 3}
+  attackDelay: 0.22

@@ -14,11 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heroId: 1
   heroName: Knight
-  maxHealth: 120
-  attackDamage: 20
+  maxHealth: 250
+  attackDamage: 30
   attackRange: 1
-  attackSpeed: 0.8
-  moveSpeed: 3
+  attackSpeed: 1
+  moveSpeed: 2.5
   heroIcon: {fileID: 21300000, guid: 1afb35716f04a894c8b6c0a268ae6d44, type: 3}
   description: 
   heroPrefab: {fileID: 1578704834589959522, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
