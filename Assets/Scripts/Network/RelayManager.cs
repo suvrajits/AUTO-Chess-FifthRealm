@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Netcode;
@@ -16,6 +17,9 @@ public class RelayManager : MonoBehaviour
     private string cachedJoinCode;
     private Allocation cachedAllocation;
 
+    private float joinCodeLifetime = 540f; // 9 minutes
+    private float joinCodeTimer = 0f;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -26,6 +30,20 @@ public class RelayManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void Update()
+    {
+        if (cachedAllocation != null && NetworkManager.Singleton.IsHost)
+        {
+            joinCodeTimer += Time.deltaTime;
+
+            if (joinCodeTimer >= joinCodeLifetime)
+            {
+                Debug.LogWarning("🔁 Join code expired. Reallocating new Relay session...");
+                _ = RefreshRelayJoinCodeAsync();
+            }
+        }
     }
 
     private bool IsNetworkRunning()
@@ -51,18 +69,14 @@ public class RelayManager : MonoBehaviour
             transport.SetRelayServerData(relayServerData);
 
             Debug.Log($"Relay setup complete with Join Code: {cachedJoinCode}");
-            Debug.Log($"[Netcode State] Before Host Start — IsHost: {NetworkManager.Singleton.IsHost}, IsClient: {NetworkManager.Singleton.IsClient}, IsServer: {NetworkManager.Singleton.IsServer}");
 
             if (!IsNetworkRunning())
             {
                 NetworkManager.Singleton.StartHost();
                 Debug.Log("[RelayManager] Host started.");
             }
-            else
-            {
-                Debug.LogWarning("[RelayManager] Network already running — host not started.");
-            }
 
+            joinCodeTimer = 0f;
             return cachedJoinCode;
         }
         catch (Exception e)
@@ -72,36 +86,11 @@ public class RelayManager : MonoBehaviour
         }
     }
 
-    public async Task<JoinAllocation> JoinRelayAsync(string joinCode)
+    public async Task<string> CreateRelayHostAsync(int maxPlayers = 8)
     {
+        await UnityServicesManager.InitUnityServicesIfNeeded();
         await EnsureNetcodeShutdownAsync();
-
-        try
-        {
-            Debug.Log("[RelayManager] Attempting to join with code: " + joinCode);
-            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-
-            var relayServerData = new RelayServerData(joinAllocation, "dtls");
-            var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
-            transport.SetRelayServerData(relayServerData);
-
-            if (!NetworkManager.Singleton.IsClient && !NetworkManager.Singleton.IsHost && !NetworkManager.Singleton.IsServer)
-            {
-                NetworkManager.Singleton.StartClient();
-                Debug.Log("[RelayManager] Client started.");
-            }
-            else
-            {
-                Debug.LogWarning("[RelayManager] Client already running.");
-            }
-
-            return joinAllocation;
-        }
-        catch (RelayServiceException ex)
-        {
-            Debug.LogError("[RelayManager] Failed to join relay: " + ex.Message);
-            throw;
-        }
+        return await CreateRelayAsync(maxPlayers);
     }
 
     private async Task EnsureNetcodeShutdownAsync()
@@ -111,43 +100,40 @@ public class RelayManager : MonoBehaviour
 
         if (NetworkManager.Singleton.IsListening)
         {
-            Debug.Log("[RelayManager] Shutting down NetworkManager...");
             NetworkManager.Singleton.Shutdown();
-
-            // Give time for complete shutdown and scene unbinding
             await Task.Delay(500);
         }
     }
 
-    public async Task<string> CreateRelayHostAsync(int maxPlayers = 8)
+    private async Task RefreshRelayJoinCodeAsync()
     {
-        await UnityServicesManager.InitUnityServicesIfNeeded();
-        await EnsureNetcodeShutdownAsync();
+        ResetRelay();
+        string newJoinCode = await CreateRelayHostAsync();
+        Debug.Log($"✅ New Join Code: {newJoinCode}");
+        joinCodeTimer = 0f;
 
-        if (!string.IsNullOrEmpty(cachedJoinCode))
-        {
-            Debug.Log("[RelayManager] Returning cached join code: " + cachedJoinCode);
-            return cachedJoinCode;
-        }
+        MultiplayerUI.Instance?.UpdateJoinCodeUI(newJoinCode);
+    }
+
+    public async Task<JoinAllocation> JoinRelayAsync(string joinCode)
+    {
+        await EnsureNetcodeShutdownAsync();
 
         try
         {
-            cachedAllocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
-            cachedJoinCode = await RelayService.Instance.GetJoinCodeAsync(cachedAllocation.AllocationId);
+            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            var relayServerData = new RelayServerData(cachedAllocation, "dtls");
+            var relayServerData = new RelayServerData(joinAllocation, "dtls");
             var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
             transport.SetRelayServerData(relayServerData);
 
-            NetworkManager.Singleton.StartHost();
-            Debug.Log("[RelayManager] Host started with join code: " + cachedJoinCode);
-
-            return cachedJoinCode;
+            NetworkManager.Singleton.StartClient();
+            return joinAllocation;
         }
-        catch (Exception e)
+        catch (RelayServiceException ex)
         {
-            Debug.LogError("[RelayManager] Failed to create Relay Host: " + e.Message);
-            return null;
+            Debug.LogError("[RelayManager] Failed to join relay: " + ex.Message);
+            throw;
         }
     }
 
@@ -159,9 +145,10 @@ public class RelayManager : MonoBehaviour
         if (NetworkManager.Singleton.IsListening)
         {
             NetworkManager.Singleton.Shutdown();
-            Debug.Log("[RelayManager] Shutdown complete.");
         }
 
         Debug.Log("[RelayManager] Relay reset complete.");
     }
+
+    public string GetJoinCode() => cachedJoinCode;
 }

@@ -1,27 +1,57 @@
-using Unity.Services.Core;
+﻿using Unity.Services.Core;
 using Unity.Services.Authentication;
 using System.Threading.Tasks;
 using UnityEngine;
 
 public class UnityServicesManager : MonoBehaviour
 {
-    public static bool IsInitialized = false;
+    public static bool IsInitialized { get; private set; } = false;
+    public static UnityServicesManager Instance;
 
-    private async void Awake()
+    private void Awake()
     {
-        await InitUnityServicesIfNeeded();
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+        DontDestroyOnLoad(gameObject);
+
+        _ = InitUnityServicesIfNeeded();
     }
 
     public static async Task InitUnityServicesIfNeeded()
     {
         if (IsInitialized) return;
 
-        await UnityServices.InitializeAsync();
+        try
+        {
+            Debug.Log("[UnityServices] Initializing...");
 
-        if (!AuthenticationService.Instance.IsSignedIn)
-            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+            await UnityServices.InitializeAsync();
 
-        IsInitialized = true;
-        Debug.Log("[UnityServices] Initialized and signed in anonymously.");
+            if (!AuthenticationService.Instance.IsSignedIn)
+            {
+                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                Debug.Log($"[UnityServices] Signed in as anonymous user: {AuthenticationService.Instance.PlayerId}");
+            }
+
+            IsInitialized = true;
+            Debug.Log("[UnityServices]  Initialization complete.");
+        }
+        catch (AuthenticationException authEx)
+        {
+            Debug.LogError($"[UnityServices]  Auth Error: {authEx.Message}");
+        }
+        catch (ServicesInitializationException initEx)
+        {
+            Debug.LogError($"[UnityServices]  Initialization Error: {initEx.Message}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[UnityServices]  Unknown Error: {ex.Message}");
+        }
     }
 }

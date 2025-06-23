@@ -1,14 +1,15 @@
-﻿using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
-using System.Collections;
-using System.Linq; // Needed for .All()
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using System.Threading.Tasks;
-using System;
+using UnityEngine.UI;
 
 public class LobbyManager : NetworkBehaviour
 {
@@ -23,14 +24,17 @@ public class LobbyManager : NetworkBehaviour
     public Button startGameButton;
     public Button readyButton;
     public Button leaveButton;
-   
 
     private Dictionary<string, GameObject> playerSlots = new();
     public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
-    private new bool IsHost => NetworkManager.Singleton.IsHost;
 
     [SerializeField] private GameObject gameGridPrefab;
+
+    private Lobby currentLobby;
+    private float heartbeatInterval = 15f;
+
+    private new bool IsHost => NetworkManager.Singleton.IsHost;
 
     private void Awake()
     {
@@ -40,11 +44,29 @@ public class LobbyManager : NetworkBehaviour
 
     public async Task<string> HostGameFromUI()
     {
+        await UnityServicesManager.InitUnityServicesIfNeeded();
+
         string joinCode = await RelayManager.Instance.CreateRelayHostAsync();
         if (!string.IsNullOrEmpty(joinCode))
         {
+            // 🧩 Create Lobby on UGS
+            var options = new CreateLobbyOptions
+            {
+                IsPrivate = false,
+                Data = new Dictionary<string, DataObject>
+                {
+                    { "JoinCode", new DataObject(DataObject.VisibilityOptions.Public, joinCode) }
+                }
+            };
+
+            currentLobby = await LobbyService.Instance.CreateLobbyAsync("BattleLobby", 8, options);
+            Debug.Log($"🟢 Lobby created: {currentLobby.Id} - JoinCode: {joinCode}");
+
+            StartHeartbeatLoop();
+
             lobbyPanel.SetActive(true);
             heroSelectionPanel.SetActive(false);
+
             return joinCode;
         }
 
@@ -59,62 +81,79 @@ public class LobbyManager : NetworkBehaviour
             {
                 Debug.LogWarning("[LobbyManager] Netcode already active. Shutting down...");
                 NetworkManager.Singleton.Shutdown();
-                await Task.Delay(500); // wait for shutdown
+                await Task.Delay(500);
             }
 
             var joinAllocation = await RelayManager.Instance.JoinRelayAsync(joinCode);
 
-            Debug.Log("[LobbyManager] Starting client after successful join.");
+            Debug.Log("[LobbyManager] Joined relay. Starting client...");
             return true;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[LobbyManager] Failed to join game: {ex.Message}");
+            Debug.LogError($"❌ Join failed: {ex.Message}");
             return false;
         }
     }
 
+    private async void StartHeartbeatLoop()
+    {
+        while (currentLobby != null)
+        {
+            try
+            {
+                await LobbyService.Instance.SendHeartbeatPingAsync(currentLobby.Id);
+                Debug.Log($"💓 Heartbeat sent to Lobby: {currentLobby.Id}");
+            }
+            catch (LobbyServiceException ex)
+            {
+                Debug.LogWarning($"⚠️ Heartbeat failed: {ex.Message}");
+            }
+
+            await Task.Delay(TimeSpan.FromSeconds(heartbeatInterval));
+        }
+    }
 
     public void ToggleReadyState()
     {
         Debug.Log("Toggling Ready State (simulate)");
-        // TODO: Update your playerData, and UI visuals here.
+        // Update ready UI here if needed.
     }
 
     public void StartGame()
     {
         if (!IsHost) return;
 
-        Debug.Log("[LobbyManager] Host starting game manually...");
+        Debug.Log("[LobbyManager] Host starting game...");
 
-        //Destroy(gameObject); // Clean transition
-
-        //NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         lobbyPanel.SetActive(false);
         heroSelectionPanel.SetActive(true);
         HideLobbyPanelClientRpc();
-        GameObject instance = Instantiate(gameGridPrefab);
-        instance.GetComponent<NetworkObject>().Spawn(); // 👈 Important!
-        
 
+        GameObject instance = Instantiate(gameGridPrefab);
+        instance.GetComponent<NetworkObject>().Spawn();
     }
 
     [ClientRpc]
     private void HideLobbyPanelClientRpc()
     {
         if (lobbyPanel != null && lobbyPanel.activeSelf)
-        {
-            Debug.Log("[LobbyManager] Hiding lobby panel via ClientRpc");
             lobbyPanel.SetActive(false);
-        }
+
         heroSelectionPanel.SetActive(true);
     }
 
-
     public void LeaveLobby()
     {
-        Debug.Log("Leaving lobby...");
+        Debug.Log("👋 Leaving lobby...");
         lobbyPanel.SetActive(false);
+
+        if (currentLobby != null)
+        {
+            try { LobbyService.Instance.DeleteLobbyAsync(currentLobby.Id); } catch { }
+            currentLobby = null;
+        }
+
         NetworkManager.Singleton.Shutdown();
     }
 
@@ -124,15 +163,13 @@ public class LobbyManager : NetworkBehaviour
 
         GameObject slot = Instantiate(playerSlotPrefab, playerListContent);
         slot.GetComponentInChildren<TMP_Text>().text = playerId + (isReady ? " ✅" : " ❌");
-        playerSlots.Add(playerId, slot);
+        playerSlots[playerId] = slot;
     }
 
     public void UpdateReadyState(string playerId, bool isReady)
     {
         if (playerSlots.TryGetValue(playerId, out var slot))
-        {
             slot.GetComponentInChildren<TMP_Text>().text = playerId + (isReady ? " ✅" : " ❌");
-        }
     }
 
     public void ClearLobbyUI()
@@ -146,23 +183,18 @@ public class LobbyManager : NetworkBehaviour
     public void RegisterLocalPlayer(PlayerStatus player)
     {
         ConnectedPlayers.Add(player);
-        AddPlayerSlotUI(player); // updates UI
+        AddPlayerSlotUI(player);
     }
 
     public void UpdatePlayerReadyState(PlayerStatus player, bool isReady)
     {
         RefreshPlayerSlotUI(player);
-
         if (IsHost && AllPlayersReady())
-        {
             StartCoroutine(BeginGameAfterDelay(1.5f));
-        }
     }
 
-    private bool AllPlayersReady()
-    {
-        return ConnectedPlayers.Count > 0 && ConnectedPlayers.All(p => p.IsReady.Value);
-    }
+    private bool AllPlayersReady() => ConnectedPlayers.Count > 0 && ConnectedPlayers.All(p => p.IsReady.Value);
+
     private void AddPlayerSlotUI(PlayerStatus player)
     {
         GameObject slot = Instantiate(playerSlotPrefab, playerListContent);
@@ -174,34 +206,28 @@ public class LobbyManager : NetworkBehaviour
 
         UpdateReadyVisual(slot, player.IsReady.Value);
     }
+
     private void RefreshPlayerSlotUI(PlayerStatus player)
     {
         if (playerSlotInstances.TryGetValue(player.OwnerClientId, out GameObject slot))
-        {
             UpdateReadyVisual(slot, player.IsReady.Value);
-        }
     }
 
     private void UpdateReadyVisual(GameObject slot, bool isReady)
     {
-        var img = slot.GetComponentInChildren<UnityEngine.UI.Image>();
+        var img = slot.GetComponentInChildren<Image>();
         if (img != null)
             img.color = isReady ? Color.green : Color.red;
     }
+
     private IEnumerator BeginGameAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
 
-        if (!IsHost)
-        {
-            Debug.LogWarning("[LobbyManager] Only host should initiate scene load.");
-            yield break;
-        }
+        if (!IsHost) yield break;
 
-        Debug.Log("[LobbyManager] All players ready. Cleaning up and loading GameScene...");
-
-        Destroy(gameObject); // Cleanly remove LobbyManager and its UI
+        Debug.Log("[LobbyManager] Starting game scene...");
+        Destroy(gameObject);
         NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
     }
-
 }
