@@ -189,7 +189,7 @@ public class BattleGroundManager : NetworkBehaviour
 
             Vector3 pos = originalPlayerPositions[clientId];
             Quaternion rot = originalPlayerRotations[clientId];
-            player.TeleportTo(pos, rot);
+            player.TeleportClientRpc(pos, rot);
         }
 
         originalPlayerPositions.Clear();
