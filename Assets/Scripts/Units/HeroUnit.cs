@@ -16,7 +16,8 @@ public class HeroUnit : NetworkBehaviour
     public Faction Faction => faction.Value;
 
     public float CurrentHealth { get; private set; }
-    public bool IsDead => CurrentHealth <= 0;
+    private bool hasDied = false;
+    public bool IsDead => hasDied || CurrentHealth <= 0;
     public bool IsAlive => !IsDead;
 
     public HeroAnimatorHandler AnimatorHandler { get; private set; }
@@ -27,7 +28,7 @@ public class HeroUnit : NetworkBehaviour
 
     private bool isInCombat = false;
     private bool hasSpawned = false;
-
+ 
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -99,28 +100,30 @@ public class HeroUnit : NetworkBehaviour
         }
     }
 
-    public void ApplyDamage(float amount)
+    public void ApplyDamage(int amount)
     {
-        if (!IsAlive || amount <= 0f) return;
+        if (!IsAlive || amount <= 0) return;
 
         CurrentHealth -= amount;
         Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
 
-        if (CurrentHealth <= 0f)
+        if (CurrentHealth <= 0)
             Die();
     }
 
     public void TakeDamage(int amount)
     {
+        Debug.Log($"🎯 {heroData.heroName} received {amount} damage.");
         ApplyDamage(amount);
     }
 
     public void Die()
     {
-        if (IsDead) return;
-
+        
+        if (hasDied) return;
+        Debug.Log($"☠️ {heroData.heroName} has died from hero unit.");
         CurrentHealth = 0;
-        Debug.Log($"☠️ {heroData.heroName} has died.");
+        hasDied = true;
 
         stateMachine?.Die();
         RemoveFromTile();

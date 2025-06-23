@@ -114,7 +114,7 @@ public class AICombatController : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (target != null && target.IsAlive)
+        if (target != null)
         {
             target.TakeDamage((int)data.attackDamage);
         }

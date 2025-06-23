@@ -18,8 +18,9 @@ public class HeroStateMachine : NetworkBehaviour
 
     public void Die()
     {
-        if (!hero.IsAlive) return;
-
+        Debug.Log("hero died from hero state machine");
+        
+        
         animHandler.SetRunning(false);
         animHandler.TriggerDeath();
 
@@ -35,6 +36,7 @@ public class HeroStateMachine : NetworkBehaviour
 
         StartCoroutine(FreezeCorpseAfterFall());
     }
+
 
     private IEnumerator FreezeCorpseAfterFall()
     {
