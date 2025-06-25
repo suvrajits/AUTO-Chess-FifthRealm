@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1918069822264901141
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8092459705574514529}
+  m_Layer: 0
+  m_Name: HealthBarAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8092459705574514529
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1918069822264901141}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.067, z: 0}
+  m_LocalScale: {x: 0.875, y: 0.875, z: 0.875}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 318141317836652044}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &279498787913357799
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -74,7 +105,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2e0a187043fe2474b995da64268ef760, type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 8092459705574514529}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e0a187043fe2474b995da64268ef760, type: 3}
       insertIndex: -1
@@ -107,6 +141,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6104696489980125467}
   m_SourcePrefab: {fileID: 100100000, guid: 2e0a187043fe2474b995da64268ef760, type: 3}
+--- !u!4 &318141317836652044 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2e0a187043fe2474b995da64268ef760, type: 3}
+  m_PrefabInstance: {fileID: 279498787913357799}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1090314742711936182 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 2e0a187043fe2474b995da64268ef760, type: 3}
@@ -291,6 +330,8 @@ MonoBehaviour:
   heroData: {fileID: 11400000, guid: 811a8b6207c2a134a8e3b21599bd26f3, type: 2}
   currentTile: {fileID: 0}
   moveSpeed: 2
+  healthBarPrefab: {fileID: 4304183774239167572, guid: 69d6ab55886d92e47836aebd0df172ef, type: 3}
+  healthBarAnchor: {fileID: 8092459705574514529}
 --- !u!114 &8252576053759660590
 MonoBehaviour:
   m_ObjectHideFlags: 0

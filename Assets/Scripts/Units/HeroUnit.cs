@@ -15,7 +15,13 @@ public class HeroUnit : NetworkBehaviour
     );
     public Faction Faction => faction.Value;
 
-    public float CurrentHealth { get; private set; }
+    private NetworkVariable<float> currentHealth = new NetworkVariable<float>(
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    public float CurrentHealth => currentHealth.Value;
     private bool hasDied = false;
     public bool IsDead => hasDied || CurrentHealth <= 0;
     public bool IsAlive => !IsDead;
@@ -28,7 +34,11 @@ public class HeroUnit : NetworkBehaviour
 
     private bool isInCombat = false;
     private bool hasSpawned = false;
- 
+
+    public GameObject healthBarPrefab;             // Assign in Inspector
+    public Transform healthBarAnchor;              // Assign in Inspector
+    private HeroHealthBarUI healthBarUIInstance;   // Internal reference
+    private Quaternion originalRotation;
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -44,7 +54,7 @@ public class HeroUnit : NetworkBehaviour
             if (heroData == null)
                 Debug.LogError("❌ HeroData missing on server instance!");
 
-            CurrentHealth = heroData.maxHealth;
+            currentHealth.Value = heroData.maxHealth;
             moveSpeed = heroData.moveSpeed;
 
             if (currentTile != null)
@@ -59,6 +69,38 @@ public class HeroUnit : NetworkBehaviour
         }
 
         hasSpawned = true;
+
+        // ✅ Instantiate and initialize health bar
+        if (healthBarPrefab != null && healthBarAnchor != null)
+        {
+            GameObject hb = Instantiate(healthBarPrefab, healthBarAnchor.position, Quaternion.identity, healthBarAnchor);
+            healthBarUIInstance = hb.GetComponent<HeroHealthBarUI>();
+
+            if (healthBarUIInstance != null)
+            {
+                healthBarUIInstance.Init(heroData.maxHealth);
+                healthBarUIInstance.SetHealth(CurrentHealth);
+            }
+        }
+
+        // ✅ Subscribe to health updates for local UI
+        currentHealth.OnValueChanged += OnHealthChanged;
+    }
+
+    private void OnDestroy()
+    {
+        if (currentHealth != null)
+        {
+            currentHealth.OnValueChanged -= OnHealthChanged;
+        }
+    }
+
+    private void OnHealthChanged(float oldValue, float newValue)
+    {
+        if (healthBarUIInstance != null)
+        {
+            healthBarUIInstance.SetHealth(newValue);
+        }
     }
 
     public void SetFaction(Faction f)
@@ -87,6 +129,7 @@ public class HeroUnit : NetworkBehaviour
         Vector3 pos = tile.transform.position;
         pos.y += 0.1f;
         transform.position = pos;
+        originalRotation = transform.rotation;
 
         tile.AssignUnit(this);
     }
@@ -104,10 +147,10 @@ public class HeroUnit : NetworkBehaviour
     {
         if (!IsAlive || amount <= 0) return;
 
-        CurrentHealth -= amount;
-        Debug.Log($"💥 {heroData.heroName} took {amount} damage → {CurrentHealth} HP");
+        currentHealth.Value = Mathf.Max(0, currentHealth.Value - amount);
+        Debug.Log($"💥 {heroData.heroName} took {amount} damage → {currentHealth.Value} HP");
 
-        if (CurrentHealth <= 0)
+        if (currentHealth.Value <= 0)
             Die();
     }
 
@@ -119,11 +162,11 @@ public class HeroUnit : NetworkBehaviour
 
     public void Die()
     {
-        
         if (hasDied) return;
+
         Debug.Log($"☠️ {heroData.heroName} has died from hero unit.");
-        CurrentHealth = 0;
         hasDied = true;
+        currentHealth.Value = 0;
 
         stateMachine?.Die();
         RemoveFromTile();
@@ -137,13 +180,12 @@ public class HeroUnit : NetworkBehaviour
     public void SetCombatState(bool enabled)
     {
         isInCombat = enabled;
-
-        /*if (enabled)
-            stateMachine.EnterCombat();*/
     }
 
     public IEnumerator TeleportBackToHomeTile()
     {
+        RestoreHealthToMax();
+
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb)
         {
@@ -158,21 +200,27 @@ public class HeroUnit : NetworkBehaviour
         }
 
         transform.position = currentTile.transform.position + Vector3.up * 0.5f;
+        transform.rotation = originalRotation;
         AnimatorHandler?.PlayIdle();
         yield return null;
     }
+
     public void SnapToGroundedTile()
     {
-
         if (currentTile == null) return;
 
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb)
         {
-            rb.isKinematic = true; // 🔒 disables physics
-            rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationZ; // 👣 upright & grounded
+            rb.isKinematic = true;
+            rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationZ;
         }
-
     }
+    public void RestoreHealthToMax()
+    {
+        if (!IsServer) return;
 
+        currentHealth.Value = heroData.maxHealth;
+        Debug.Log($"❤️‍🩹 {heroData.heroName}'s health restored to {currentHealth.Value}.");
+    }
 }

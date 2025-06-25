@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3891870753964218107
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6395169175964692962}
+  m_Layer: 0
+  m_Name: HealthBarAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6395169175964692962
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3891870753964218107}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.2, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 2207747890457968600}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1813198574341593139
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -74,7 +105,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6293cccae3d19f9489d52de38d5181a2, type: 3}
+      insertIndex: 0
+      addedObject: {fileID: 6395169175964692962}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6293cccae3d19f9489d52de38d5181a2, type: 3}
       insertIndex: -1
@@ -320,6 +354,13 @@ MonoBehaviour:
   heroData: {fileID: 11400000, guid: 03b6bf3d84edb54409b9c83fcf526c2a, type: 2}
   currentTile: {fileID: 0}
   moveSpeed: 2
+  healthBarPrefab: {fileID: 4304183774239167572, guid: 69d6ab55886d92e47836aebd0df172ef, type: 3}
+  healthBarAnchor: {fileID: 6395169175964692962}
+--- !u!4 &2207747890457968600 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6293cccae3d19f9489d52de38d5181a2, type: 3}
+  m_PrefabInstance: {fileID: 1813198574341593139}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &5207097776401327522 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 6293cccae3d19f9489d52de38d5181a2, type: 3}
