@@ -26,13 +26,13 @@ public class HeroStateMachine : NetworkBehaviour
 
         StopAllCoroutines();
 
-        Rigidbody rb = GetComponent<Rigidbody>();
+        /*Rigidbody rb = GetComponent<Rigidbody>();
         if (rb)
         {
             rb.constraints = RigidbodyConstraints.None;
             rb.useGravity = true;
             rb.isKinematic = false;
-        }
+        }*/
 
         StartCoroutine(FreezeCorpseAfterFall());
     }
@@ -43,12 +43,12 @@ public class HeroStateMachine : NetworkBehaviour
         yield return new WaitForSeconds(1f);
         transform.position -= new Vector3(0, corpseSinkY, 0);
 
-        Rigidbody rb = GetComponent<Rigidbody>();
+        /*Rigidbody rb = GetComponent<Rigidbody>();
         if (rb)
         {
             rb.constraints = RigidbodyConstraints.FreezeAll;
             rb.isKinematic = true;
-        }
+        }*/
 
         Collider col = GetComponent<Collider>();
         if (col) col.enabled = false;
