@@ -9,7 +9,8 @@ public class PlayerNetworkState : NetworkBehaviour
     public static Dictionary<ulong, PlayerNetworkState> AllPlayers = new();
 
     private Camera playerCamera;
-
+    public GoldManager GoldManager { get; private set; }
+    public static PlayerNetworkState LocalPlayer { get; private set; }
     public override void OnNetworkSpawn()
     {
         int index = (int)OwnerClientId;
@@ -25,6 +26,10 @@ public class PlayerNetworkState : NetworkBehaviour
 
         if (!AllPlayers.ContainsKey(OwnerClientId))
             AllPlayers.Add(OwnerClientId, this);
+
+        if (IsOwner)
+            LocalPlayer = this;
+
     }
 
     private void Start()
@@ -53,6 +58,10 @@ public class PlayerNetworkState : NetworkBehaviour
         {
             Debug.LogWarning($"❌ Camera not found on Player prefab (Client {OwnerClientId})");
         }
+    }
+    private void Awake()
+    {
+        GoldManager = GetComponent<GoldManager>();
     }
 
     public override void OnDestroy()

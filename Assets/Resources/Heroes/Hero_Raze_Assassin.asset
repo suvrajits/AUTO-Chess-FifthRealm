@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heroId: 8
   heroName: Raze Assassin
-  maxHealth: 230
-  attackDamage: 85
+  maxHealth: 300
+  attackDamage: 70
   attackRange: 1
-  attackSpeed: 1.7
+  attackSpeed: 1.6
   moveSpeed: 5.2
   heroIcon: {fileID: 21300000, guid: 6eb4fb8134c6c284ab05c072d5631512, type: 3}
   description: 
   heroPrefab: {fileID: 6542240709122820643, guid: 20d43ed3960cb3c479357affa7bfb991, type: 3}
-  attackDelay: 0.22
+  attackDelay: 4.8

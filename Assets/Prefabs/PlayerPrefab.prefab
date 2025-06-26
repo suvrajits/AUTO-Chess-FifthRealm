@@ -168,6 +168,7 @@ GameObject:
   - component: {fileID: 6580057356572303317}
   - component: {fileID: 5420571145694361456}
   - component: {fileID: -4601239351915714638}
+  - component: {fileID: -3920840050917071578}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -334,3 +335,19 @@ MonoBehaviour:
   tilePrefab: {fileID: 7408603165626389945, guid: a34ba8afb99001940aa606b480008d90, type: 3}
   gridSize: 8
   spacing: 1.05
+--- !u!114 &-3920840050917071578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5248960081774751608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3a14950a063b9540bee35171f470db8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxGold: 50
+  CurrentGold:
+    m_InternalValue: 10

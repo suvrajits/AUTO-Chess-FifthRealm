@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heroId: 4
   heroName: Healer
-  maxHealth: 160
+  maxHealth: 280
   attackDamage: 5
   attackRange: 3.5
-  attackSpeed: 1
+  attackSpeed: 1.3
   moveSpeed: 2.6
   heroIcon: {fileID: 21300000, guid: 3c828d4e6a8fc684b808b8dfc413e7bf, type: 3}
   description: 
   heroPrefab: {fileID: 1283152093216832500, guid: e4e6accebd93e004385b0d138e758d61, type: 3}
-  attackDelay: 0.3
+  attackDelay: 5.5
