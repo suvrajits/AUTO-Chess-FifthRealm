@@ -121,21 +121,37 @@ public class RelayManager : MonoBehaviour
 
         try
         {
-            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+            Debug.Log($"🌐 Joining relay with code: {joinCode}");
 
+            await UnityServicesManager.InitUnityServicesIfNeeded();
+
+            var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
             var relayServerData = new RelayServerData(joinAllocation, "dtls");
+
             var transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
             transport.SetRelayServerData(relayServerData);
 
+            // 🧠 Register callback BEFORE starting
+            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+
             NetworkManager.Singleton.StartClient();
+
+            Debug.Log("✅ Relay join requested. Awaiting spawn...");
+
             return joinAllocation;
         }
         catch (RelayServiceException ex)
         {
-            Debug.LogError("[RelayManager] Failed to join relay: " + ex.Message);
+            Debug.LogError($"❌ Relay join failed: {ex.Message}");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"❌ Unexpected join error: {ex.Message}");
             throw;
         }
     }
+
 
     public void ResetRelay()
     {
@@ -151,4 +167,47 @@ public class RelayManager : MonoBehaviour
     }
 
     public string GetJoinCode() => cachedJoinCode;
+    private void OnEnable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+    }
+    private void OnClientConnected(ulong clientId)
+    {
+        Debug.Log($"✅ [RelayManager] OnClientConnected: {clientId}");
+
+        if (NetworkManager.Singleton.IsClient && clientId == NetworkManager.Singleton.LocalClientId)
+        {
+            MultiplayerUI.Instance?.OnClientConnectedConfirmed();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (NetworkManager.Singleton != null)
+            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+    }
+
+    private void HandleClientConnected(ulong clientId)
+    {
+        if (NetworkManager.Singleton.IsClient && NetworkManager.Singleton.LocalClientId == clientId)
+        {
+            Debug.Log($"✅ [RelayManager] Client connected successfully. LocalClientId = {clientId}");
+
+            if (PlayerNetworkState.AllPlayers.TryGetValue(clientId, out var player))
+            {
+                PlayerNetworkState.SetLocalPlayer(player);
+                Debug.Log("🧠 LocalPlayer assigned after Relay join.");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ Local player not found in AllPlayers after join.");
+            }
+
+            // Optional: Trigger success UI callback
+            MultiplayerUI.Instance?.OnClientConnectedConfirmed();
+        }
+    }
+
+
 }

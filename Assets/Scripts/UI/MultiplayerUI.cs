@@ -1,9 +1,9 @@
-﻿
-using UnityEngine;
+﻿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Threading.Tasks;
 using Unity.Netcode;
+using Unity.Services.Core;
 
 public class MultiplayerUI : MonoBehaviour
 {
@@ -16,9 +16,6 @@ public class MultiplayerUI : MonoBehaviour
     public Button hostButton;
     public Button joinButton;
 
-    public void OnClickHost() => _ = HostGame();
-    public void OnClickJoin() => _ = JoinGame();
-
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -26,17 +23,36 @@ public class MultiplayerUI : MonoBehaviour
 
     private void Start()
     {
-        hostButton.onClick.AddListener(OnClickHost);
-        joinButton.onClick.AddListener(OnClickJoin);
+        hostButton.onClick.AddListener(() => _ = HostGame());
+        joinButton.onClick.AddListener(() => _ = JoinGameViaCode(joinCodeInput.text));
     }
 
-    private async Task HostGame()
+    private void SetButtonsInteractable(bool state)
+    {
+        hostButton.interactable = state;
+        joinButton.interactable = state;
+    }
+
+    public void UpdateJoinCodeUI(string newCode)
+    {
+        joinCodeText.text = $"🔗 Join Code: {newCode}";
+    }
+
+    public void OnClientConnectedConfirmed()
+    {
+        Debug.Log("✅ MultiplayerUI: Client fully connected and registered.");
+        joinCodeText.text = "Join Success ✔";
+    }
+
+    public async Task HostGame()
     {
         SetButtonsInteractable(false);
         joinCodeText.text = "Creating lobby...";
 
         try
         {
+            await UnityServicesManager.InitUnityServicesIfNeeded();
+
             string joinCode = await LobbyManager.Instance.HostGameFromUI();
 
             if (!string.IsNullOrEmpty(joinCode))
@@ -47,69 +63,68 @@ public class MultiplayerUI : MonoBehaviour
         catch (System.Exception ex)
         {
             joinCodeText.text = "Error creating lobby.";
-            Debug.LogError("Failed to create host: " + ex.Message);
+            Debug.LogError("❌ Host failed: " + ex.Message);
         }
 
         SetButtonsInteractable(true);
     }
 
-    private async Task JoinGame()
+    public async Task JoinGameViaCode(string joinCode)
     {
         SetButtonsInteractable(false);
-        string code = joinCodeInput?.text.Trim().ToUpper();
 
-        if (string.IsNullOrEmpty(code))
+        if (string.IsNullOrWhiteSpace(joinCode))
         {
-            joinCodeText.text = "Please enter a valid code.";
+            joinCodeText.text = "❌ Invalid join code.";
             SetButtonsInteractable(true);
             return;
         }
 
-        joinCodeText.text = "Joining lobby...";
+        joinCodeText.text = "🔗 Joining...";
 
         try
         {
-            bool success = await LobbyManager.Instance.JoinGameFromUI(code);
+            await UnityServicesManager.InitUnityServicesIfNeeded();
 
-            if (success)
+            bool relaySuccess = await LobbyManager.Instance.JoinGameFromUI(joinCode);
+
+            if (!relaySuccess)
             {
-                ulong localId = NetworkManager.Singleton.LocalClientId;
-                float timeout = 20f;
-                float timer = 0f;
+                joinCodeText.text = "❌ Relay join failed.";
+                SetButtonsInteractable(true);
+                return;
+            }
 
-                while (!PlayerNetworkState.AllPlayers.ContainsKey(localId) && timer < timeout)
-                {
-                    await Task.Delay(100);
-                    timer += 0.1f;
-                }
+            joinCodeText.text = "⏳ Waiting for player to spawn...";
 
-                if (PlayerNetworkState.AllPlayers.ContainsKey(localId))
-                    joinCodeText.text = "Join Success";
-                else
-                    joinCodeText.text = "Player spawn timeout.";
+            float timeout = 20f;
+            float timer = 0f;
+            ulong localClientId = NetworkManager.Singleton.LocalClientId;
+
+            while (!PlayerNetworkState.AllPlayers.ContainsKey(localClientId) && timer < timeout)
+            {
+                await Task.Delay(100);
+                timer += 0.1f;
+            }
+
+            if (PlayerNetworkState.AllPlayers.TryGetValue(localClientId, out var player))
+            {
+                PlayerNetworkState.SetLocalPlayer(player);
+                joinCodeText.text = "✅ Join Success!";
+                Debug.Log($"✅ Local player registered: {localClientId}");
             }
             else
             {
-                joinCodeText.text = "Join failed. Try again.";
+                joinCodeText.text = "⛔ Player spawn timeout.";
+                Debug.LogError("❌ Client connected but PlayerNetworkState never registered.");
             }
         }
         catch (System.Exception ex)
         {
-            joinCodeText.text = "Error joining lobby.";
-            Debug.LogError("Failed to join: " + ex.Message);
+            joinCodeText.text = "❌ Error joining lobby.";
+            Debug.LogError($"[MultiplayerUI] JoinGameViaCode failed: {ex.Message}");
         }
 
         SetButtonsInteractable(true);
-    }
-
-    public void UpdateJoinCodeUI(string newCode)
-    {
-        joinCodeText.text = $"Join Code: {newCode}";
-    }
-
-    private void SetButtonsInteractable(bool state)
-    {
-        hostButton.interactable = state;
-        joinButton.interactable = state;
     }
 }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using Unity.Netcode;
+using Unity.Services.Authentication;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
@@ -25,15 +26,14 @@ public class LobbyManager : NetworkBehaviour
     public Button readyButton;
     public Button leaveButton;
 
-    private Dictionary<string, GameObject> playerSlots = new();
-    public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
-    private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
-
     [SerializeField] private GameObject gameGridPrefab;
 
+    private Dictionary<string, GameObject> playerSlots = new();
+    private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
+
+    public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
     private Lobby currentLobby;
     private float heartbeatInterval = 15f;
-
     private new bool IsHost => NetworkManager.Singleton.IsHost;
 
     private void Awake()
@@ -49,13 +49,19 @@ public class LobbyManager : NetworkBehaviour
         string joinCode = await RelayManager.Instance.CreateRelayHostAsync();
         if (!string.IsNullOrEmpty(joinCode))
         {
-            // 🧩 Create Lobby on UGS
+            string playerName = AuthenticationService.Instance?.PlayerName;
+            if (string.IsNullOrEmpty(playerName))
+                playerName = $"Player_{UnityEngine.Random.Range(1000, 9999)}";
+
             var options = new CreateLobbyOptions
             {
                 IsPrivate = false,
                 Data = new Dictionary<string, DataObject>
                 {
-                    { "JoinCode", new DataObject(DataObject.VisibilityOptions.Public, joinCode) }
+                    { "JoinCode", new DataObject(DataObject.VisibilityOptions.Public, joinCode) },
+                    { "GameMode", new DataObject(DataObject.VisibilityOptions.Public, "Standard") },
+                    { "Region", new DataObject(DataObject.VisibilityOptions.Public, "auto") },
+                    { "HostName", new DataObject(DataObject.VisibilityOptions.Public, playerName) }
                 }
             };
 
@@ -66,6 +72,7 @@ public class LobbyManager : NetworkBehaviour
 
             lobbyPanel.SetActive(true);
             heroSelectionPanel.SetActive(false);
+            joinCodeText.text = $"Join Code: {joinCode}";
 
             return joinCode;
         }
@@ -85,7 +92,6 @@ public class LobbyManager : NetworkBehaviour
             }
 
             var joinAllocation = await RelayManager.Instance.JoinRelayAsync(joinCode);
-
             Debug.Log("[LobbyManager] Joined relay. Starting client...");
             return true;
         }
@@ -117,7 +123,6 @@ public class LobbyManager : NetworkBehaviour
     public void ToggleReadyState()
     {
         Debug.Log("Toggling Ready State (simulate)");
-        // Update ready UI here if needed.
     }
 
     public void StartGame()
@@ -125,7 +130,6 @@ public class LobbyManager : NetworkBehaviour
         if (!IsHost) return;
 
         Debug.Log("[LobbyManager] Host starting game...");
-
         lobbyPanel.SetActive(false);
         heroSelectionPanel.SetActive(true);
         HideLobbyPanelClientRpc();

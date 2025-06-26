@@ -4,15 +4,22 @@ using System.Collections.Generic;
 
 public class PlayerNetworkState : NetworkBehaviour
 {
-    // 🧠 Global registry for camera switching
+    // 🧠 Global registry
     public static Dictionary<ulong, Camera> AllPlayerCameras = new();
     public static Dictionary<ulong, PlayerNetworkState> AllPlayers = new();
 
     private Camera playerCamera;
     public GoldManager GoldManager { get; private set; }
     public static PlayerNetworkState LocalPlayer { get; private set; }
+
+    private void Awake()
+    {
+        GoldManager = GetComponent<GoldManager>();
+    }
+
     public override void OnNetworkSpawn()
     {
+        // 📍 Position at spawn anchor
         int index = (int)OwnerClientId;
         Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);
         if (anchor != null)
@@ -24,17 +31,17 @@ public class PlayerNetworkState : NetworkBehaviour
             Debug.LogWarning($"❌ No spawn anchor found for player {index}");
         }
 
+        // 🧠 Track all players
         if (!AllPlayers.ContainsKey(OwnerClientId))
             AllPlayers.Add(OwnerClientId, this);
 
+        // ✅ Safe local player registration
         if (IsOwner)
-            LocalPlayer = this;
-
+            SetLocalPlayer(this);
     }
 
     private void Start()
     {
-        // Search for camera even if inactive
         playerCamera = GetComponentInChildren<Camera>(true);
 
         if (playerCamera != null)
@@ -42,56 +49,37 @@ public class PlayerNetworkState : NetworkBehaviour
             if (!AllPlayerCameras.ContainsKey(OwnerClientId))
                 AllPlayerCameras.Add(OwnerClientId, playerCamera);
 
+            playerCamera.enabled = IsOwner;
+            playerCamera.gameObject.SetActive(IsOwner);
+
             if (IsOwner)
-            {
-                playerCamera.enabled = true;
-                playerCamera.gameObject.SetActive(true);
                 Debug.Log($"📸 Enabled local camera for Player {OwnerClientId}");
-            }
-            else
-            {
-                playerCamera.enabled = false;
-                playerCamera.gameObject.SetActive(false);
-            }
         }
         else
         {
             Debug.LogWarning($"❌ Camera not found on Player prefab (Client {OwnerClientId})");
         }
     }
-    private void Awake()
-    {
-        GoldManager = GetComponent<GoldManager>();
-    }
 
     public override void OnDestroy()
     {
-        if (AllPlayerCameras.ContainsKey(OwnerClientId))
-        {
-            AllPlayerCameras.Remove(OwnerClientId);
-            Debug.Log($"🧹 Camera removed from registry for Player {OwnerClientId}");
-        }
-
-        if (AllPlayers.ContainsKey(OwnerClientId))
-        {
-            AllPlayers.Remove(OwnerClientId);
-        }
+        AllPlayerCameras.Remove(OwnerClientId);
+        AllPlayers.Remove(OwnerClientId);
 
         base.OnDestroy();
     }
 
-    // ✅ Called by BattleGroundManager to move the Player prefab
     public void TeleportTo(Vector3 position, Quaternion rotation)
     {
         transform.SetPositionAndRotation(position, rotation);
         Debug.Log($"🚀 Teleported Player {OwnerClientId} to {position}");
     }
 
-    // ✅ For safe lookups
     public static PlayerNetworkState GetPlayerByClientId(ulong clientId)
     {
         return AllPlayers.TryGetValue(clientId, out var player) ? player : null;
     }
+
     [ClientRpc]
     public void TeleportClientRpc(Vector3 position, Quaternion rotation)
     {
@@ -101,4 +89,13 @@ public class PlayerNetworkState : NetworkBehaviour
         Debug.Log($"🚀 [ClientRpc] Teleported local player {OwnerClientId} to {position}");
     }
 
+    // ✅ Public safe assignment
+    public static void SetLocalPlayer(PlayerNetworkState instance)
+    {
+        if (LocalPlayer == null)
+        {
+            LocalPlayer = instance;
+            Debug.Log($"🧠 LocalPlayer registered: {instance.OwnerClientId}");
+        }
+    }
 }
