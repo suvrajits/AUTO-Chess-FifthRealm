@@ -80,7 +80,7 @@ public class HeroUnit : NetworkBehaviour
             {
                 healthBarUIInstance.Init(heroData.maxHealth);
                 healthBarUIInstance.SetHealth(CurrentHealth);
-                SetHealthBarVisible(false);
+                //SetHealthBarVisible(false);
             }
         }
 
@@ -202,7 +202,7 @@ public class HeroUnit : NetworkBehaviour
 
         transform.position = currentTile.transform.position + Vector3.up * 0.5f;
         transform.rotation = originalRotation;
-        SetHealthBarVisible(false);
+        //SetHealthBarVisible(false);
         AnimatorHandler?.PlayIdle();
         yield return null;
     }
