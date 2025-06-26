@@ -44,6 +44,7 @@ public class HeroUnit : NetworkBehaviour
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
     }
+  
 
     public override void OnNetworkSpawn()
     {
@@ -202,7 +203,7 @@ public class HeroUnit : NetworkBehaviour
 
         transform.position = currentTile.transform.position + Vector3.up * 0.5f;
         transform.rotation = originalRotation;
-        //SetHealthBarVisible(false);
+ 
         AnimatorHandler?.PlayIdle();
         yield return null;
     }

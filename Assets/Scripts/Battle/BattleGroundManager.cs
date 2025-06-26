@@ -168,6 +168,7 @@ public class BattleGroundManager : NetworkBehaviour
             {
                 unit.SnapToTileY(homeTile);
                 unit.SetCombatState(false);
+
             }
         }
 

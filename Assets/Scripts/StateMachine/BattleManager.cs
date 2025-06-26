@@ -38,7 +38,7 @@ public class BattleManager : NetworkBehaviour
         {
             var ai = unit.GetComponent<AICombatController>();
             ai?.SetBattleMode(true);
-            unit.SetHealthBarVisible(true);
+            
         }
 
         Debug.Log("⚔️ Battle started!");
