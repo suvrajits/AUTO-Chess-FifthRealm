@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class ShopManager : MonoBehaviour
 {
     [Header("Shop Settings")]
     [SerializeField] private int shopSize = 5;
     [SerializeField] private int rerollCost = 2;
+
     public int RerollCost => rerollCost;
     public List<HeroData> CurrentShopHeroes { get; private set; } = new();
 
     public static ShopManager Instance { get; private set; }
-
     public event Action<List<HeroData>> OnShopUpdated;
 
     private void Awake()
@@ -27,10 +28,9 @@ public class ShopManager : MonoBehaviour
 
     private void Start()
     {
-        RefreshShop();
+        // Shop is triggered after UI subscribes
     }
 
-    // 🎲 Replaces shop with new heroes
     public void RefreshShop()
     {
         CurrentShopHeroes.Clear();
@@ -42,57 +42,81 @@ public class ShopManager : MonoBehaviour
             CurrentShopHeroes.Add(pool[i]);
 
         OnShopUpdated?.Invoke(CurrentShopHeroes);
-        Debug.Log("🔄 Shop refreshed with heroes: " + string.Join(", ", CurrentShopHeroes.ConvertAll(h => h.heroName)));
+
+        Debug.Log("🔄 Shop refreshed with heroes: " +
+                  string.Join(", ", CurrentShopHeroes.ConvertAll(h => h.heroName)));
     }
 
-    // 💰 Attempt to purchase a card
+    // ✅ Called from UI/client — routes to server
     public bool TryBuy(HeroData heroData)
     {
-        var player = PlayerNetworkState.LocalPlayer;
-        if (player == null || player.GoldManager == null || player.PlayerDeck == null)
-        {
-            Debug.LogWarning("❌ Cannot complete purchase – missing player systems.");
-            return false;
-        }
-
-        if (player.GoldManager.CurrentGold.Value < heroData.cost)
-        {
-            Debug.Log("❌ Not enough gold to buy " + heroData.heroName);
-            return false;
-        }
-
-        if (!player.PlayerDeck.TryAddCard(heroData))
-        {
-            Debug.Log("❌ Deck full! Sell a card before buying more.");
-            return false;
-        }
-
-        player.GoldManager.TrySpendGold(heroData.cost);
-        Debug.Log($"🛒 Purchased: {heroData.heroName} for {heroData.cost} gold");
-
-        RefreshShop(); // Optional: auto-refresh
+        TryBuyServerRpc(heroData.heroId);
         return true;
     }
 
-    // 🔁 Reroll the shop
+    [ServerRpc(RequireOwnership = false)]
+    private void TryBuyServerRpc(int heroId, ServerRpcParams rpcParams = default)
+    {
+        var player = PlayerNetworkState.GetPlayerByClientId(rpcParams.Receive.SenderClientId);
+        if (player == null || player.GoldManager == null || player.PlayerDeck == null)
+        {
+            Debug.LogWarning("❌ [Server] Missing player systems.");
+            return;
+        }
+
+        HeroData hero = UnitDatabase.Instance.GetHeroById(heroId);
+        if (hero == null)
+        {
+            Debug.LogWarning($"❌ [Server] Hero ID {heroId} not found in database.");
+            return;
+        }
+
+        if (player.GoldManager.CurrentGold.Value < hero.cost)
+        {
+            Debug.Log("❌ [Server] Not enough gold.");
+            return;
+        }
+
+        if (!player.PlayerDeck.TryAddCard(hero))
+        {
+            Debug.Log("❌ [Server] Deck full.");
+            return;
+        }
+
+        if (!player.GoldManager.TrySpendGold(hero.cost))
+        {
+            Debug.Log("❌ [Server] Spend failed.");
+            return;
+        }
+
+        Debug.Log($"🛒 [Server] Purchased {hero.heroName} for {hero.cost} gold");
+    }
+
+    // ✅ Called from client — safely routed to server
     public bool TryReroll()
     {
-        var player = PlayerNetworkState.LocalPlayer;
+        TryRerollServerRpc();
+        return true;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void TryRerollServerRpc(ServerRpcParams rpcParams = default)
+    {
+        var player = PlayerNetworkState.GetPlayerByClientId(rpcParams.Receive.SenderClientId);
         if (player == null || player.GoldManager == null)
         {
-            Debug.LogWarning("❌ Cannot reroll – player or GoldManager missing.");
-            return false;
+            Debug.LogWarning("❌ [Server] Missing player or gold manager.");
+            return;
         }
 
-        if (player.GoldManager.TrySpendGold(rerollCost))
+        if (!player.GoldManager.TrySpendGold(rerollCost))
         {
-            RefreshShop();
-            Debug.Log("🔁 Shop rerolled.");
-            return true;
+            Debug.Log("❌ [Server] Not enough gold to reroll.");
+            return;
         }
 
-        Debug.Log("❌ Not enough gold to reroll.");
-        return false;
+        RefreshShop();
+        Debug.Log("🔁 [Server] Shop rerolled.");
     }
 
     private void Shuffle<T>(List<T> list)

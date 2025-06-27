@@ -43,7 +43,7 @@ public class GoldUI : MonoBehaviour
     private void UpdateGoldUI(int gold)
     {
         if (goldText != null)
-            goldText.text = $"🪙 {gold}";
+            goldText.text = $"{gold}";
 
         // Optional: Hide warning
         if (notEnoughGoldWarning != null)
@@ -60,7 +60,7 @@ public class GoldUI : MonoBehaviour
         var player = PlayerNetworkState.LocalPlayer;
         if (player != null && player.GoldManager.TrySpendGold(2))
         {
-            Debug.Log("🔄 Rerolled!");
+            Debug.Log("🔄Rerolled!");
         }
         else
         {

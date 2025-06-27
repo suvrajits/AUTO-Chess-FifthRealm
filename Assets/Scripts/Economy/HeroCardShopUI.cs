@@ -18,18 +18,15 @@ public class HeroCardShopUI : MonoBehaviour
 
         iconImage.sprite = hero.heroIcon;
         heroNameText.text = hero.heroName;
-        costText.text = $"🪙 {hero.cost}";
+        costText.text = $"{hero.cost}";
 
         buyButton.onClick.RemoveAllListeners();
         buyButton.onClick.AddListener(() =>
         {
-            bool success = ShopManager.Instance.TryBuy(hero);
-            if (!success)
-            {
-                // TODO: trigger tooltip or shake animation
-            }
+            ShopManager.Instance.TryBuy(hero); // ✅ Only calls client-side, then defers to server
         });
     }
+
 
     public void SetBuyable(bool canBuy)
     {

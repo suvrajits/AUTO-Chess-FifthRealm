@@ -3,13 +3,12 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
-
 public class ShopUIManager : MonoBehaviour
 {
     [Header("UI References")]
     public GameObject heroCardPrefab;
     public Transform cardContainer;
-    public TMP_Text goldText;
+
     public Button rerollButton;
     public TMP_Text rerollCostText;
 
@@ -17,21 +16,18 @@ public class ShopUIManager : MonoBehaviour
 
     private void Start()
     {
+        // Prevent duplicate listeners
+        rerollButton.onClick.RemoveAllListeners();
+        rerollButton.onClick.AddListener(OnClickReroll);
+
+        // 1. Subscribe to shop update event
         ShopManager.Instance.OnShopUpdated += RenderShop;
-        rerollButton.onClick.AddListener(() =>
-        {
-            ShopManager.Instance.TryReroll();
-        });
 
-        rerollCostText.text = $"🔁 Reroll ({ShopManager.Instance.RerollCost}🪙)";
-    }
+        // 2. Update UI for reroll cost
+        rerollCostText.text = $"{ShopManager.Instance.RerollCost} 🪙";
 
-    private void Update()
-    {
-        // Update gold display live
-        var player = PlayerNetworkState.LocalPlayer;
-        if (player != null && player.GoldManager != null)
-            goldText.text = $"🪙 {player.GoldManager.CurrentGold.Value}";
+        // 3. Refresh the shop after listener is hooked
+        ShopManager.Instance.RefreshShop();
     }
 
     private void RenderShop(List<HeroData> newCards)
@@ -57,6 +53,16 @@ public class ShopUIManager : MonoBehaviour
             ui.SetBuyable(canAfford && hasSpace);
 
             cardUIs.Add(ui);
+        }
+    }
+
+    public void OnClickReroll()
+    {
+        bool success = ShopManager.Instance.TryReroll();
+        
+        if (!success)
+        {
+            Debug.Log("❌ Reroll failed: Not enough gold or player not valid.");
         }
     }
 }

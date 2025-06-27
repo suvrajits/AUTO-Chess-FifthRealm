@@ -19,6 +19,7 @@ MonoBehaviour:
   attackRange: 1
   attackSpeed: 1.6
   moveSpeed: 5.2
+  cost: 49
   heroIcon: {fileID: 21300000, guid: 6eb4fb8134c6c284ab05c072d5631512, type: 3}
   description: 
   heroPrefab: {fileID: 6542240709122820643, guid: 20d43ed3960cb3c479357affa7bfb991, type: 3}
