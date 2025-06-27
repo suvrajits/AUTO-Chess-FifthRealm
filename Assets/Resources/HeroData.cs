@@ -11,6 +11,7 @@ public class HeroData : ScriptableObject
     public float attackRange;
     public float attackSpeed;
     public float moveSpeed;
+    public int cost;
     public Sprite heroIcon;
     public string description;
     public GameObject heroPrefab; // Prefab reference for this hero

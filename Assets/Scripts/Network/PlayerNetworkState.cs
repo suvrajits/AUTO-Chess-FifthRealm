@@ -11,10 +11,12 @@ public class PlayerNetworkState : NetworkBehaviour
     private Camera playerCamera;
     public GoldManager GoldManager { get; private set; }
     public static PlayerNetworkState LocalPlayer { get; private set; }
+    public PlayerCardDeck PlayerDeck { get; private set; }
 
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
+        PlayerDeck = GetComponent<PlayerCardDeck>();
     }
 
     public override void OnNetworkSpawn()
