@@ -1,68 +1,66 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
+using TMPro;
 
 public class ShopUIManager : MonoBehaviour
 {
     [Header("UI References")]
-    public GameObject heroCardPrefab;
-    public Transform cardContainer;
+    [SerializeField] private Transform cardContainer;
+    [SerializeField] private GameObject heroCardPrefab;
+    [SerializeField] private TMP_Text rerollCostText;
+    [SerializeField] private Button rerollButton;
 
-    public Button rerollButton;
-    public TMP_Text rerollCostText;
-
-    private List<HeroCardShopUI> cardUIs = new();
+    private List<HeroCardShopUI> activeCards = new();
 
     private void Start()
     {
-        // Prevent duplicate listeners
         rerollButton.onClick.RemoveAllListeners();
         rerollButton.onClick.AddListener(OnClickReroll);
+        rerollCostText.text = $"🌀 {ShopManager.Instance.RerollCost} gold";
 
-        // 1. Subscribe to shop update event
-        ShopManager.Instance.OnShopUpdated += RenderShop;
-
-        // 2. Update UI for reroll cost
-        rerollCostText.text = $"{ShopManager.Instance.RerollCost} 🪙";
-
-        // 3. Refresh the shop after listener is hooked
-        ShopManager.Instance.RefreshShop();
+        // Tell server we are ready to receive our personal shop list
+        ShopManager.Instance.RequestInitialShop();
     }
 
-    private void RenderShop(List<HeroData> newCards)
+    public void RenderShop(List<int> heroIds)
     {
-        foreach (Transform child in cardContainer)
-            Destroy(child.gameObject);
+        Clear();
 
-        cardUIs.Clear();
-
-        var player = PlayerNetworkState.LocalPlayer;
-        int currentDeckCount = player?.PlayerDeck?.cards.Count ?? 0;
-        int maxDeck = player?.PlayerDeck?.Capacity ?? 9;
-        int gold = player?.GoldManager?.CurrentGold.Value ?? 0;
-
-        foreach (var hero in newCards)
+        foreach (int id in heroIds)
         {
-            var cardObj = Instantiate(heroCardPrefab, cardContainer);
-            var ui = cardObj.GetComponent<HeroCardShopUI>();
-            ui.Setup(hero);
+            HeroData hero = UnitDatabase.Instance.GetHeroById(id);
+            if (hero == null) continue;
 
-            bool canAfford = gold >= hero.cost;
-            bool hasSpace = currentDeckCount < maxDeck;
-            ui.SetBuyable(canAfford && hasSpace);
+            GameObject cardGO = Instantiate(heroCardPrefab, cardContainer);
+            HeroCardShopUI card = cardGO.GetComponent<HeroCardShopUI>();
+            card.Setup(hero, OnCardBuyClicked);
 
-            cardUIs.Add(ui);
+            activeCards.Add(card);
         }
+
+        // ✅ Re-enable the reroll button when shop is done rendering
+        rerollButton.interactable = true;
     }
 
-    public void OnClickReroll()
+    private void OnCardBuyClicked(int heroId)
     {
-        bool success = ShopManager.Instance.TryReroll();
-        
-        if (!success)
+        rerollButton.interactable = false; // Optionally lock input until shop updates
+        ShopManager.Instance.TryBuy(heroId);
+    }
+
+    private void OnClickReroll()
+    {
+        rerollButton.interactable = false;
+        ShopManager.Instance.TryReroll();
+    }
+
+    public void Clear()
+    {
+        foreach (var card in activeCards)
         {
-            Debug.Log("❌ Reroll failed: Not enough gold or player not valid.");
+            if (card != null) Destroy(card.gameObject);
         }
+        activeCards.Clear();
     }
 }

@@ -6,6 +6,7 @@ public class UnitDatabase : MonoBehaviour
     public static UnitDatabase Instance { get; private set; }
 
     public List<HeroData> allHeroes = new();
+    private Dictionary<int, HeroData> heroLookup = new();
 
     private void Awake()
     {
@@ -32,11 +33,21 @@ public class UnitDatabase : MonoBehaviour
         }
 
         allHeroes = new List<HeroData>(heroes);
-        Debug.Log($" Loaded {allHeroes.Count} heroes into UnitDatabase.");
+        heroLookup.Clear();
+        foreach (var hero in allHeroes)
+        {
+            heroLookup[hero.heroId] = hero;
+        }
+
+        Debug.Log($"✅ Loaded {allHeroes.Count} heroes into UnitDatabase.");
     }
 
     public HeroData GetHeroById(int id)
     {
-        return allHeroes.Find(h => h.heroId == id);
+        if (heroLookup.TryGetValue(id, out var hero))
+            return hero;
+
+        Debug.LogError($"❌ Hero ID {id} not found in UnitDatabase.");
+        return null;
     }
 }

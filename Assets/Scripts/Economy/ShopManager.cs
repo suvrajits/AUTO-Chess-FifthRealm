@@ -1,19 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
-public class ShopManager : MonoBehaviour
+public class ShopManager : NetworkBehaviour
 {
     [Header("Shop Settings")]
     [SerializeField] private int shopSize = 5;
     [SerializeField] private int rerollCost = 2;
 
-    public int RerollCost => rerollCost;
-    public List<HeroData> CurrentShopHeroes { get; private set; } = new();
-
     public static ShopManager Instance { get; private set; }
-    public event Action<List<HeroData>> OnShopUpdated;
+    public int RerollCost => rerollCost;
 
     private void Awake()
     {
@@ -26,105 +23,132 @@ public class ShopManager : MonoBehaviour
         Instance = this;
     }
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        // Shop is triggered after UI subscribes
+        if (IsServer)
+            NetworkManager.OnClientConnectedCallback += OnClientConnected;
     }
 
-    public void RefreshShop()
+    public override void OnDestroy() // ✅ override applied
     {
-        CurrentShopHeroes.Clear();
+        if (IsServer && NetworkManager != null)
+            NetworkManager.OnClientConnectedCallback -= OnClientConnected;
 
-        List<HeroData> pool = new(UnitDatabase.Instance.allHeroes);
-        Shuffle(pool);
-
-        for (int i = 0; i < Mathf.Min(shopSize, pool.Count); i++)
-            CurrentShopHeroes.Add(pool[i]);
-
-        OnShopUpdated?.Invoke(CurrentShopHeroes);
-
-        Debug.Log("🔄 Shop refreshed with heroes: " +
-                  string.Join(", ", CurrentShopHeroes.ConvertAll(h => h.heroName)));
+        base.OnDestroy();
     }
 
-    // ✅ Called from UI/client — routes to server
-    public bool TryBuy(HeroData heroData)
+    private void OnClientConnected(ulong clientId)
     {
-        TryBuyServerRpc(heroData.heroId);
-        return true;
+        Debug.Log($"🛒 [Server] Player {clientId} connected. Generating shop...");
+        if (!PlayerNetworkState.AllPlayers.TryGetValue(clientId, out var player))
+        {
+            Debug.LogWarning($"❌ [Server] No PlayerNetworkState found for {clientId}");
+            return;
+        }
+
+        if (PlayerShopState.AllShops.ContainsKey(clientId))
+        {
+            Debug.Log($"ℹ️ [Server] Shop already initialized for {clientId}");
+            return;
+        }
+
+        var shopState = player.GetComponent<PlayerShopState>();
+        shopState.Init(clientId, player);
+    }
+
+    // Called from ShopUIManager.cs after spawn
+    public void RequestInitialShop()
+    {
+        if (!IsClient) return;
+        RequestShopServerRpc();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestShopServerRpc(ServerRpcParams rpcParams = default)
+    {
+        var clientId = rpcParams.Receive.SenderClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
+        {
+            Debug.LogWarning($"❌ [Server] No PlayerShopState found for Client {clientId}");
+            return;
+        }
+
+        SyncShopToClient(clientId, shop.CurrentShop);
+    }
+
+    public void TryBuy(int heroId)
+    {
+        TryBuyServerRpc(heroId);
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void TryBuyServerRpc(int heroId, ServerRpcParams rpcParams = default)
     {
-        var player = PlayerNetworkState.GetPlayerByClientId(rpcParams.Receive.SenderClientId);
-        if (player == null || player.GoldManager == null || player.PlayerDeck == null)
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
         {
-            Debug.LogWarning("❌ [Server] Missing player systems.");
+            Debug.LogWarning($"❌ [Server] No PlayerShopState for {clientId}");
             return;
         }
 
-        HeroData hero = UnitDatabase.Instance.GetHeroById(heroId);
-        if (hero == null)
-        {
-            Debug.LogWarning($"❌ [Server] Hero ID {heroId} not found in database.");
-            return;
-        }
-
-        if (player.GoldManager.CurrentGold.Value < hero.cost)
-        {
-            Debug.Log("❌ [Server] Not enough gold.");
-            return;
-        }
-
-        if (!player.PlayerDeck.TryAddCard(hero))
-        {
-            Debug.Log("❌ [Server] Deck full.");
-            return;
-        }
-
-        if (!player.GoldManager.TrySpendGold(hero.cost))
-        {
-            Debug.Log("❌ [Server] Spend failed.");
-            return;
-        }
-
-        Debug.Log($"🛒 [Server] Purchased {hero.heroName} for {hero.cost} gold");
+        shop.PurchaseHero(heroId);
     }
 
-    // ✅ Called from client — safely routed to server
-    public bool TryReroll()
+    public void TryReroll()
     {
         TryRerollServerRpc();
-        return true;
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void TryRerollServerRpc(ServerRpcParams rpcParams = default)
     {
-        var player = PlayerNetworkState.GetPlayerByClientId(rpcParams.Receive.SenderClientId);
-        if (player == null || player.GoldManager == null)
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
         {
-            Debug.LogWarning("❌ [Server] Missing player or gold manager.");
+            Debug.LogWarning($"❌ [Server] No PlayerShopState for {clientId}");
             return;
         }
 
-        if (!player.GoldManager.TrySpendGold(rerollCost))
-        {
-            Debug.Log("❌ [Server] Not enough gold to reroll.");
-            return;
-        }
-
-        RefreshShop();
-        Debug.Log("🔁 [Server] Shop rerolled.");
+        shop.RerollShop();
     }
+
+    public void SyncShopToClient(ulong clientId, List<HeroData> shopList)
+    {
+        List<int> heroIds = shopList.ConvertAll(h => h.heroId);
+
+        SyncShopClientRpc(heroIds.ToArray(), new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        });
+    }
+
+    [ClientRpc]
+    private void SyncShopClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
+    {
+        if (!IsClient) return;
+
+        Debug.Log($"📦 [Client] Received shop list: {string.Join(", ", heroIds)}");
+
+        var ui = UnityEngine.Object.FindFirstObjectByType<ShopUIManager>();
+        if (ui != null)
+        {
+            ui.RenderShop(new List<int>(heroIds)); // ✅ Refresh with new list
+        }
+    }
+
 
     private void Shuffle<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
         {
-            int k = UnityEngine.Random.Range(0, i + 1);
-            (list[i], list[k]) = (list[k], list[i]);
+            int j = UnityEngine.Random.Range(0, i + 1);
+            (list[i], list[j]) = (list[j], list[i]);
         }
     }
 }

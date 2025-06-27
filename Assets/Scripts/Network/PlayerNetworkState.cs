@@ -1,18 +1,22 @@
 ﻿using Unity.Netcode;
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class PlayerNetworkState : NetworkBehaviour
 {
-    // 🧠 Global registry
     public static Dictionary<ulong, Camera> AllPlayerCameras = new();
     public static Dictionary<ulong, PlayerNetworkState> AllPlayers = new();
-
-    private Camera playerCamera;
-    public GoldManager GoldManager { get; private set; }
     public static PlayerNetworkState LocalPlayer { get; private set; }
+
+    public static event Action<PlayerNetworkState> OnAnyPlayerFullySpawned;
+
+    public GoldManager GoldManager { get; private set; }
     public PlayerCardDeck PlayerDeck { get; private set; }
 
+    private Camera playerCamera;
+    public PlayerShopState ShopState { get; private set; }
+    [SerializeField] private GameObject playerShopStatePrefab;
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
@@ -21,25 +25,38 @@ public class PlayerNetworkState : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // 📍 Position at spawn anchor
+        // 📍 Anchor the player to correct grid
         int index = (int)OwnerClientId;
         Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);
         if (anchor != null)
         {
             transform.SetPositionAndRotation(anchor.position + new Vector3(0, 1f, 0), Quaternion.Euler(0f, 180f, 0f));
         }
-        else
+
+        // 🧠 Register player
+        AllPlayers[OwnerClientId] = this;
+
+        // ✅ Local player reference
+        if (IsOwner)
         {
-            Debug.LogWarning($"❌ No spawn anchor found for player {index}");
+            SetLocalPlayer(this);
         }
 
-        // 🧠 Track all players
-        if (!AllPlayers.ContainsKey(OwnerClientId))
-            AllPlayers.Add(OwnerClientId, this);
+        // 🛒 Server-only: spawn shop state
+        if (IsServer && playerShopStatePrefab != null)
+        {
+            GameObject shopGO = Instantiate(playerShopStatePrefab);
+            NetworkObject netObj = shopGO.GetComponent<NetworkObject>();
+            netObj.SpawnWithOwnership(OwnerClientId);
 
-        // ✅ Safe local player registration
-        if (IsOwner)
-            SetLocalPlayer(this);
+            ShopState = shopGO.GetComponent<PlayerShopState>();
+            ShopState.Init(OwnerClientId, this);
+
+            Debug.Log($"🛒 [Server] Spawned PlayerShopState for client {OwnerClientId}");
+        }
+
+        // ✅ Let systems know this player is fully ready
+        OnAnyPlayerFullySpawned?.Invoke(this);
     }
 
     private void Start()
@@ -48,18 +65,9 @@ public class PlayerNetworkState : NetworkBehaviour
 
         if (playerCamera != null)
         {
-            if (!AllPlayerCameras.ContainsKey(OwnerClientId))
-                AllPlayerCameras.Add(OwnerClientId, playerCamera);
-
+            AllPlayerCameras[OwnerClientId] = playerCamera;
             playerCamera.enabled = IsOwner;
             playerCamera.gameObject.SetActive(IsOwner);
-
-            if (IsOwner)
-                Debug.Log($"📸 Enabled local camera for Player {OwnerClientId}");
-        }
-        else
-        {
-            Debug.LogWarning($"❌ Camera not found on Player prefab (Client {OwnerClientId})");
         }
     }
 
@@ -67,14 +75,12 @@ public class PlayerNetworkState : NetworkBehaviour
     {
         AllPlayerCameras.Remove(OwnerClientId);
         AllPlayers.Remove(OwnerClientId);
-
         base.OnDestroy();
     }
 
     public void TeleportTo(Vector3 position, Quaternion rotation)
     {
         transform.SetPositionAndRotation(position, rotation);
-        Debug.Log($"🚀 Teleported Player {OwnerClientId} to {position}");
     }
 
     public static PlayerNetworkState GetPlayerByClientId(ulong clientId)
@@ -86,18 +92,14 @@ public class PlayerNetworkState : NetworkBehaviour
     public void TeleportClientRpc(Vector3 position, Quaternion rotation)
     {
         if (!IsOwner) return;
-
         transform.SetPositionAndRotation(position, rotation);
-        Debug.Log($"🚀 [ClientRpc] Teleported local player {OwnerClientId} to {position}");
     }
 
-    // ✅ Public safe assignment
     public static void SetLocalPlayer(PlayerNetworkState instance)
     {
         if (LocalPlayer == null)
         {
             LocalPlayer = instance;
-            Debug.Log($"🧠 LocalPlayer registered: {instance.OwnerClientId}");
         }
     }
 }

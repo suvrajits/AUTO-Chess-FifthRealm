@@ -25,18 +25,21 @@ public class GoldManager : NetworkBehaviour
     {
         if (!IsServer)
         {
-            Debug.LogWarning("❌ TrySpendGold called on non-server");
+            Debug.LogWarning($"❌ [GoldManager] TrySpendGold called on non-server by client {OwnerClientId}");
             return false;
         }
+
+        Debug.Log($"[GoldManager] TrySpendGold requested: {amount} | Current: {CurrentGold.Value} (ClientId: {OwnerClientId})");
 
         if (CurrentGold.Value >= amount)
         {
             CurrentGold.Value -= amount;
-            Debug.Log($"💸 Spent {amount} gold. Remaining: {CurrentGold.Value}");
+            Debug.Log($"💸 [GoldManager] Spent {amount} gold. Remaining: {CurrentGold.Value} (ClientId: {OwnerClientId})");
             return true;
         }
 
-        Debug.Log("❌ Not enough gold to spend.");
+        Debug.Log($"❌ [GoldManager] Not enough gold to spend {amount}. Current: {CurrentGold.Value} (ClientId: {OwnerClientId})");
         return false;
     }
+
 }
