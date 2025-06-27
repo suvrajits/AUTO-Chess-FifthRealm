@@ -17,7 +17,7 @@ public class ShopUIManager : MonoBehaviour
     {
         rerollButton.onClick.RemoveAllListeners();
         rerollButton.onClick.AddListener(OnClickReroll);
-        rerollCostText.text = $"🌀 {ShopManager.Instance.RerollCost} gold";
+        rerollCostText.text = $"{ShopManager.Instance.RerollCost}";
 
         // Tell server we are ready to receive our personal shop list
         ShopManager.Instance.RequestInitialShop();

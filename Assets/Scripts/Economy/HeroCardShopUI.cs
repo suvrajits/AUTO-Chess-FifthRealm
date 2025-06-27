@@ -24,7 +24,7 @@ public class HeroCardShopUI : MonoBehaviour
 
         iconImage.sprite = hero.heroIcon;
         heroNameText.text = hero.heroName;
-        costText.text = $"🪙 {hero.cost}";
+        costText.text = $"{hero.cost}";
 
         buyButton.onClick.RemoveAllListeners();
         buyButton.onClick.AddListener(OnClickBuy);

@@ -15,9 +15,8 @@ public class PlayerShopState : NetworkBehaviour
     public void Init(ulong clientId, PlayerNetworkState playerState)
     {
         player = playerState;
-        Debug.Log($"🛠 Init PlayerShopState for ClientId: {OwnerClientId}");
+        Debug.Log($"🛠 Init PlayerShopState for ClientId: {clientId}");
 
-        // Initial shop generation (server-side only)
         if (IsServer)
             GenerateNewShop();
     }
@@ -26,15 +25,20 @@ public class PlayerShopState : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
-        if (IsServer)
+        if (IsServer && !AllShops.ContainsKey(OwnerClientId))
         {
-            if (!AllShops.ContainsKey(OwnerClientId))
-            {
-                AllShops.Add(OwnerClientId, this);
-                Debug.Log($"📦 [Server] Registered PlayerShopState for Client {OwnerClientId}");
-            }
+            AllShops.Add(OwnerClientId, this);
+            Debug.Log($"📦 [Server] Registered PlayerShopState for Client {OwnerClientId}");
+        }
+
+        // ✅ For host only: wait 1 frame and sync shop to self
+        if (IsOwner && IsServer)
+        {
+            Debug.Log("⏳ [Host] Scheduling delayed shop sync to self...");
+            StartCoroutine(DelayedShopSyncToSelf());
         }
     }
+
 
     public override void OnDestroy()
     {
@@ -109,4 +113,12 @@ public class PlayerShopState : NetworkBehaviour
             (list[i], list[k]) = (list[k], list[i]);
         }
     }
+    private System.Collections.IEnumerator DelayedShopSyncToSelf()
+    {
+        yield return null; // wait 1 frame
+
+        Debug.Log($"✅ [Host] Sending initial shop to self after delay.");
+        ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
+    }
+
 }
