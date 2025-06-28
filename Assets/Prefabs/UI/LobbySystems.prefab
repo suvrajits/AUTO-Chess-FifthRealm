@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2608171945126165482}
-  - component: {fileID: 5680105669149048685}
   - component: {fileID: 2134378111763657503}
+  - component: {fileID: 5680105669149048685}
   m_Layer: 0
   m_Name: LobbySystems
   m_TagString: Untagged
@@ -33,26 +33,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5680105669149048685
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1134906845653978851}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2a89932bdd9c0374bb0b2c70052f2b09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lobbyPanel: {fileID: 0}
-  joinCodeText: {fileID: 0}
-  playerListContent: {fileID: 0}
-  playerSlotPrefab: {fileID: 0}
-  startGameButton: {fileID: 0}
-  readyButton: {fileID: 0}
-  leaveButton: {fileID: 0}
-  ConnectedPlayers: []
 --- !u!114 &2134378111763657503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -65,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3495659900
+  GlobalObjectIdHash: 1816562666
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -78,3 +58,26 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!114 &5680105669149048685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1134906845653978851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a89932bdd9c0374bb0b2c70052f2b09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  lobbyPanel: {fileID: 0}
+  heroSelectionPanel: {fileID: 0}
+  joinCodeText: {fileID: 0}
+  playerListContent: {fileID: 0}
+  playerSlotPrefab: {fileID: 0}
+  startGameButton: {fileID: 0}
+  readyButton: {fileID: 0}
+  leaveButton: {fileID: 0}
+  gameGridPrefab: {fileID: 0}
+  ConnectedPlayers: []

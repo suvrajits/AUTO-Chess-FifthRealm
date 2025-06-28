@@ -80,7 +80,8 @@ public class PlayerShopState : NetworkBehaviour
             return;
         }
 
-        if (!player.PlayerDeck.TryAddCard(hero))
+        bool didFuse;
+        if (!player.PlayerDeck.TryAddCard(hero, out didFuse))
         {
             Debug.LogWarning($"❌ [Server] Deck full. Cannot buy {hero.heroName}");
             return;

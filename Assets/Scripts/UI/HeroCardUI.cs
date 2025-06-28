@@ -7,11 +7,12 @@ public class HeroCardUI : MonoBehaviour
     [Header("UI References")]
     public Image iconImage;
     public TMP_Text heroName;
+    public Transform starContainer; // ⭐ Holds instantiated star icons
+    public GameObject starPrefab;   // ⭐ A single star image prefab (e.g., gold star)
 
     private HeroData assignedHero;
     private UnitSelectionUI selectionUI;
     private int index;
-    public TMP_Text starLevelText;
 
     public void Setup(HeroData hero, UnitSelectionUI selectionUIRef, int cardIndex, int starLevel = 1)
     {
@@ -25,9 +26,9 @@ public class HeroCardUI : MonoBehaviour
         if (heroName != null)
             heroName.text = hero.heroName;
 
-        if (starLevelText != null)
-            starLevelText.text = new string('★', starLevel); // e.g., "★★"
+        GenerateStars(starLevel);
 
+        GetComponent<Button>().onClick.RemoveAllListeners();
         GetComponent<Button>().onClick.AddListener(OnClick);
     }
 
@@ -36,7 +37,30 @@ public class HeroCardUI : MonoBehaviour
     {
         if (assignedHero != null)
         {
-            selectionUI.SelectHero(assignedHero, index);
+            selectionUI.SelectHero(assignedHero, index); // ✅ Enough!
         }
     }
+
+    private void GenerateStars(int starLevel)
+    {
+        // Clear old stars
+        foreach (Transform child in starContainer)
+        {
+            Destroy(child.gameObject);
+        }
+
+        // Clamp level
+        int clampedStars = Mathf.Clamp(starLevel, 1, 5);
+
+        // Instantiate and enable each star
+        for (int i = 0; i < clampedStars; i++)
+        {
+            GameObject star = Instantiate(starPrefab, starContainer);
+            star.SetActive(true);
+        }
+
+        // ✅ Force layout rebuild to apply spacing
+        LayoutRebuilder.ForceRebuildLayoutImmediate(starContainer.GetComponent<RectTransform>());
+    }
+
 }

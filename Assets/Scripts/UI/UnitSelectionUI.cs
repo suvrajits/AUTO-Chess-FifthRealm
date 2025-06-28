@@ -51,44 +51,37 @@ public class UnitSelectionUI : MonoBehaviour
 
     private void RefreshDeckUI()
     {
-        // Clear previous UI
+        // Clear existing buttons
         foreach (var btn in instantiatedButtons)
-        {
-            if (btn != null)
-                Destroy(btn.gameObject);
-        }
+            Destroy(btn.gameObject);
+
         instantiatedButtons.Clear();
 
-        var deck = playerDeck.cards;
-        if (deck == null || deck.Count == 0)
+        // Rebuild UI from updated deck
+        foreach (var cardInstance in playerDeck.cards)
         {
-            Debug.Log("📭 No cards in deck. Unit selection is empty.");
-            return;
-        }
-
-        for (int i = 0; i < deck.Count; i++)
-        {
-            HeroCardInstance cardInstance = deck[i];
-            HeroData hero = cardInstance.baseHero;
-
             GameObject cardObj = Instantiate(cardTemplate, buttonContainer);
             cardObj.SetActive(true);
 
             HeroCardUI cardUI = cardObj.GetComponent<HeroCardUI>();
-            cardUI.Setup(hero, this, i, cardInstance.starLevel); // Pass star level if needed
+            cardUI.Setup(
+                cardInstance.baseHero,
+                this,
+                instantiatedButtons.Count,
+                cardInstance.starLevel
+            );
 
             Button btn = cardObj.GetComponent<Button>();
-            int index = i; // Capture loop variable
-            btn.onClick.AddListener(() => OnHeroClicked(hero, index));
             instantiatedButtons.Add(btn);
         }
 
-        // Auto-select first hero if none selected
-        if (currentlySelectedCard == null && deck.Count > 0)
+        // Optionally select the first card again
+        if (instantiatedButtons.Count > 0)
         {
-            OnHeroClicked(deck[0].baseHero, 0);
+            SelectHero(playerDeck.cards[0].baseHero, 0);
         }
     }
+
 
     private void OnHeroClicked(HeroData hero, int index)
     {

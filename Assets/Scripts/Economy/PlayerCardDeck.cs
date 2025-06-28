@@ -10,17 +10,19 @@ public class PlayerCardDeck : NetworkBehaviour
     public delegate void OnCardChanged();
     public event OnCardChanged DeckChanged;
     public int Capacity => maxCapacity;
-    public bool TryAddCard(HeroData heroData)
+    public bool TryAddCard(HeroData heroData, out bool didFuse)
     {
+        didFuse = false;
+
         if (cards.Count >= maxCapacity)
             return false;
 
-        var newCard = new HeroCardInstance { baseHero = heroData, starLevel = 1 };
-        cards.Add(newCard);
-        TryFusion(heroData);
+        cards.Add(new HeroCardInstance { baseHero = heroData, starLevel = 1 });
+        didFuse = TryFusion(heroData);
         DeckChanged?.Invoke();
         return true;
     }
+
 
     public void SellCard(HeroCardInstance card)
     {
@@ -32,7 +34,7 @@ public class PlayerCardDeck : NetworkBehaviour
         }
     }
 
-    private void TryFusion(HeroData heroData)
+    private bool TryFusion(HeroData heroData)
     {
         var matches = cards.FindAll(c => c.baseHero == heroData && c.starLevel == 1);
         if (matches.Count >= 3)
@@ -41,9 +43,16 @@ public class PlayerCardDeck : NetworkBehaviour
                 cards.Remove(matches[i]);
 
             cards.Add(new HeroCardInstance { baseHero = heroData, starLevel = 2 });
+
             Debug.Log($"✨ Fusion complete: {heroData.heroName} upgraded to 2★");
+            DeckChanged?.Invoke();
+            return true;
         }
+
+        return false;
     }
+
+
 
     public void SetCapacity(int newCap)
     {
@@ -53,29 +62,40 @@ public class PlayerCardDeck : NetworkBehaviour
 
     public void SyncDeckToClient(ulong targetClientId)
     {
-        var heroIds = cards.ConvertAll(c => c.baseHero.heroId);
+        List<int> ids = new();
+        List<int> stars = new();
 
-        SyncDeckClientRpc(heroIds.ToArray(), new ClientRpcParams
+        foreach (var card in cards)
         {
-            Send = new ClientRpcSendParams
-            {
-                TargetClientIds = new[] { targetClientId }
-            }
+            ids.Add(card.baseHero.heroId);
+            stars.Add(card.starLevel);
+        }
+
+        SyncDeckClientRpc(ids.ToArray(), stars.ToArray(), new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { targetClientId } }
         });
     }
     [ClientRpc]
-    private void SyncDeckClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
+    private void SyncDeckClientRpc(int[] heroIds, int[] starLevels, ClientRpcParams rpcParams = default)
     {
         if (!IsClient) return;
 
-        Debug.Log($"📨 SyncDeckClientRpc received: {heroIds.Length} cards");
-
         cards.Clear();
-        foreach (int id in heroIds)
+
+        for (int i = 0; i < heroIds.Length; i++)
         {
-            var data = UnitDatabase.Instance.GetHeroById(id);
+            HeroData data = UnitDatabase.Instance.GetHeroById(heroIds[i]);
+            int level = (i < starLevels.Length) ? starLevels[i] : 1;
+
             if (data != null)
-                cards.Add(new HeroCardInstance { baseHero = data, starLevel = 1 });
+            {
+                cards.Add(new HeroCardInstance
+                {
+                    baseHero = data,
+                    starLevel = level
+                });
+            }
         }
 
         DeckChanged?.Invoke();
