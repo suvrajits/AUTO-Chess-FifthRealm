@@ -5,50 +5,81 @@ using UnityEngine.UI;
 public class UnitSelectionUI : MonoBehaviour
 {
     [Header("UI References")]
-    public GameObject cardTemplate;
-    public Transform buttonContainer;
+    [SerializeField] private GameObject cardTemplate;
+    [SerializeField] private Transform buttonContainer;
 
     [Header("Optional")]
-    public Color normalColor = Color.white;
-    public Color selectedColor = Color.yellow;
+    [SerializeField] private Color normalColor = Color.white;
+    [SerializeField] private Color selectedColor = Color.yellow;
 
     private List<Button> instantiatedButtons = new();
+    private PlayerCardDeck playerDeck;
+    private HeroCardInstance currentlySelectedCard;
 
     private void Start()
     {
         cardTemplate.SetActive(false);
 
-        if (UnitDatabase.Instance == null || UnitDatabase.Instance.allHeroes == null)
+        // Find the player's deck
+        playerDeck = FindFirstObjectByType<PlayerCardDeck>();
+        if (playerDeck == null)
         {
-            Debug.LogError("❌ UnitDatabase.Instance is not initialized.");
+            Debug.LogError("❌ PlayerCardDeck not found in scene.");
             return;
         }
 
-        var allHeroes = UnitDatabase.Instance.allHeroes;
+        // Subscribe to deck updates
+        playerDeck.DeckChanged += RefreshDeckUI;
 
-        for (int i = 0; i < allHeroes.Count; i++)
+        // Initial render
+        RefreshDeckUI();
+    }
+
+    private void RefreshDeckUI()
+    {
+        // Clear previous UI
+        foreach (var btn in instantiatedButtons)
         {
-            HeroData hero = allHeroes[i];
+            if (btn != null)
+                Destroy(btn.gameObject);
+        }
+        instantiatedButtons.Clear();
+
+        var deck = playerDeck.cards;
+        if (deck == null || deck.Count == 0)
+        {
+            Debug.Log("📭 No cards in deck. Unit selection is empty.");
+            return;
+        }
+
+        for (int i = 0; i < deck.Count; i++)
+        {
+            HeroCardInstance cardInstance = deck[i];
+            HeroData hero = cardInstance.baseHero;
 
             GameObject cardObj = Instantiate(cardTemplate, buttonContainer);
             cardObj.SetActive(true);
 
             HeroCardUI cardUI = cardObj.GetComponent<HeroCardUI>();
-            cardUI.Setup(hero, this, i);
+            cardUI.Setup(hero, this, i, cardInstance.starLevel); // Pass star level if needed
 
             Button btn = cardObj.GetComponent<Button>();
+            int index = i; // Capture loop variable
+            btn.onClick.AddListener(() => OnHeroClicked(hero, index));
             instantiatedButtons.Add(btn);
         }
 
-        if (allHeroes.Count > 0)
+        // Auto-select first hero if none selected
+        if (currentlySelectedCard == null && deck.Count > 0)
         {
-            OnHeroClicked(allHeroes[0], 0);
+            OnHeroClicked(deck[0].baseHero, 0);
         }
     }
 
     private void OnHeroClicked(HeroData hero, int index)
     {
         SelectHero(hero, index);
+        currentlySelectedCard = playerDeck.cards[index]; // Track currently selected
     }
 
     public void SelectHero(HeroData hero, int selectedIndex)
@@ -61,5 +92,11 @@ public class UnitSelectionUI : MonoBehaviour
             colors.normalColor = (i == selectedIndex) ? selectedColor : normalColor;
             instantiatedButtons[i].colors = colors;
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (playerDeck != null)
+            playerDeck.DeckChanged -= RefreshDeckUI;
     }
 }

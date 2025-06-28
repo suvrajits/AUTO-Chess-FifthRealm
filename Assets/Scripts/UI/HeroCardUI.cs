@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
@@ -11,8 +11,9 @@ public class HeroCardUI : MonoBehaviour
     private HeroData assignedHero;
     private UnitSelectionUI selectionUI;
     private int index;
+    public TMP_Text starLevelText;
 
-    public void Setup(HeroData hero, UnitSelectionUI selectionUIRef, int cardIndex)
+    public void Setup(HeroData hero, UnitSelectionUI selectionUIRef, int cardIndex, int starLevel = 1)
     {
         assignedHero = hero;
         selectionUI = selectionUIRef;
@@ -24,9 +25,12 @@ public class HeroCardUI : MonoBehaviour
         if (heroName != null)
             heroName.text = hero.heroName;
 
-        // Attach click handler
+        if (starLevelText != null)
+            starLevelText.text = new string('★', starLevel); // e.g., "★★"
+
         GetComponent<Button>().onClick.AddListener(OnClick);
     }
+
 
     private void OnClick()
     {
