@@ -85,7 +85,7 @@ public class PlayerShopState : NetworkBehaviour
             Debug.LogWarning($"❌ [Server] Deck full. Cannot buy {hero.heroName}");
             return;
         }
-
+        player.PlayerDeck.SyncDeckToClient(OwnerClientId);
         CurrentShop.Remove(hero);
         Debug.Log($"✅ [Server] Client {OwnerClientId} bought {hero.heroName}");
 

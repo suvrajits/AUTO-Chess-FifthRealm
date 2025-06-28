@@ -13,6 +13,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
     public GoldManager GoldManager { get; private set; }
     public PlayerCardDeck PlayerDeck { get; private set; }
+    
 
     private Camera playerCamera;
     public PlayerShopState ShopState { get; private set; }
@@ -20,11 +21,19 @@ public class PlayerNetworkState : NetworkBehaviour
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
-        PlayerDeck = GetComponent<PlayerCardDeck>();
+
     }
+    public static PlayerNetworkState GetLocalPlayer()
+    {
+        ulong localId = NetworkManager.Singleton.LocalClientId;
+        return AllPlayers.TryGetValue(localId, out var player) ? player : null;
+    }
+
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+        PlayerDeck = GetComponentInChildren<PlayerCardDeck>();
         // 📍 Anchor the player to correct grid
         int index = (int)OwnerClientId;
         Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);

@@ -21,7 +21,21 @@ public class UnitSelectionUI : MonoBehaviour
         cardTemplate.SetActive(false);
 
         // Find the player's deck
-        playerDeck = FindFirstObjectByType<PlayerCardDeck>();
+        var localPlayer = PlayerNetworkState.GetLocalPlayer();
+        if (localPlayer == null)
+        {
+            Debug.LogError("❌ Local PlayerNetworkState not found.");
+            return;
+        }
+
+        playerDeck = localPlayer.PlayerDeck;
+
+        if (playerDeck == null)
+        {
+            Debug.LogError("❌ PlayerCardDeck not assigned to local player.");
+            return;
+        }
+
         if (playerDeck == null)
         {
             Debug.LogError("❌ PlayerCardDeck not found in scene.");
