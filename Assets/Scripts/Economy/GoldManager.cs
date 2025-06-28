@@ -6,7 +6,7 @@ public class GoldManager : NetworkBehaviour
     [SerializeField] private int maxGold = 50;
 
     public NetworkVariable<int> CurrentGold = new NetworkVariable<int>(
-        10,
+        30,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );

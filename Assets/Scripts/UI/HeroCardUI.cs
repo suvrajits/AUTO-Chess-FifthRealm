@@ -13,31 +13,33 @@ public class HeroCardUI : MonoBehaviour
     private HeroData assignedHero;
     private UnitSelectionUI selectionUI;
     private int index;
-
-    public void Setup(HeroData hero, UnitSelectionUI selectionUIRef, int cardIndex, int starLevel = 1)
+    private HeroCardInstance cardInstance;
+    public void Setup(HeroCardInstance instance, UnitSelectionUI selectionUIRef, int cardIndex)
     {
-        assignedHero = hero;
+        cardInstance = instance;
+        assignedHero = instance.baseHero;
         selectionUI = selectionUIRef;
         index = cardIndex;
 
         if (iconImage != null)
-            iconImage.sprite = hero.heroIcon;
+            iconImage.sprite = assignedHero.heroIcon;
 
         if (heroName != null)
-            heroName.text = hero.heroName;
+            heroName.text = assignedHero.heroName;
 
-        GenerateStars(starLevel);
+        GenerateStars(instance.starLevel);
 
         GetComponent<Button>().onClick.RemoveAllListeners();
         GetComponent<Button>().onClick.AddListener(OnClick);
     }
 
 
+
     private void OnClick()
     {
         if (assignedHero != null)
         {
-            selectionUI.SelectHero(assignedHero, index); // ✅ Enough!
+            selectionUI.SelectHero(cardInstance, index);
         }
     }
 

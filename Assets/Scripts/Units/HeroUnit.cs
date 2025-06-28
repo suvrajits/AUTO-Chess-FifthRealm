@@ -6,6 +6,11 @@ using System.Collections;
 public class HeroUnit : NetworkBehaviour
 {
     public HeroData heroData;
+    public int starLevel = 1;
+
+    private float attack;
+    public float Attack => attack;
+
     public Vector2Int GridPosition { get; private set; }
 
     private NetworkVariable<Faction> faction = new NetworkVariable<Faction>(
@@ -35,16 +40,16 @@ public class HeroUnit : NetworkBehaviour
     private bool isInCombat = false;
     private bool hasSpawned = false;
 
-    public GameObject healthBarPrefab;             // Assign in Inspector
-    public Transform healthBarAnchor;              // Assign in Inspector
-    private HeroHealthBarUI healthBarUIInstance;   // Internal reference
+    public GameObject healthBarPrefab;
+    public Transform healthBarAnchor;
+    private HeroHealthBarUI healthBarUIInstance;
     private Quaternion originalRotation;
+
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
     }
-  
 
     public override void OnNetworkSpawn()
     {
@@ -55,13 +60,14 @@ public class HeroUnit : NetworkBehaviour
             if (heroData == null)
                 Debug.LogError("❌ HeroData missing on server instance!");
 
-            currentHealth.Value = heroData.maxHealth;
+            ApplyFusionStats(); // ✅ Apply once here only
+
             moveSpeed = heroData.moveSpeed;
 
             if (currentTile != null)
                 SnapToTileY(currentTile);
 
-            Debug.Log($"🟢 [{Faction}] {heroData.heroName} spawned at {GridPosition} (Owner: {OwnerClientId}) with {CurrentHealth} HP");
+            Debug.Log($"🟢 [{Faction}] {heroData.heroName} {starLevel}★ spawned at {GridPosition} (Owner: {OwnerClientId}) with {CurrentHealth} HP, {attack} ATK");
 
             if (IsAlive)
             {
@@ -71,7 +77,6 @@ public class HeroUnit : NetworkBehaviour
 
         hasSpawned = true;
 
-        // ✅ Instantiate and initialize health bar
         if (healthBarPrefab != null && healthBarAnchor != null)
         {
             GameObject hb = Instantiate(healthBarPrefab, healthBarAnchor.position, Quaternion.identity, healthBarAnchor);
@@ -79,22 +84,17 @@ public class HeroUnit : NetworkBehaviour
 
             if (healthBarUIInstance != null)
             {
-                healthBarUIInstance.Init(heroData.maxHealth);
+                healthBarUIInstance.Init(CurrentHealth);
                 healthBarUIInstance.SetHealth(CurrentHealth);
-                //SetHealthBarVisible(false);
             }
         }
 
-        // ✅ Subscribe to health updates for local UI
         currentHealth.OnValueChanged += OnHealthChanged;
     }
 
     private void OnDestroy()
     {
-        if (currentHealth != null)
-        {
-            currentHealth.OnValueChanged -= OnHealthChanged;
-        }
+        currentHealth.OnValueChanged -= OnHealthChanged;
     }
 
     private void OnHealthChanged(float oldValue, float newValue)
@@ -203,7 +203,7 @@ public class HeroUnit : NetworkBehaviour
 
         transform.position = currentTile.transform.position + Vector3.up * 0.5f;
         transform.rotation = originalRotation;
- 
+
         AnimatorHandler?.PlayIdle();
         yield return null;
     }
@@ -219,18 +219,45 @@ public class HeroUnit : NetworkBehaviour
             rb.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationZ;
         }
     }
+
     public void RestoreHealthToMax()
     {
         if (!IsServer) return;
 
-        currentHealth.Value = heroData.maxHealth;
+        currentHealth.Value = heroData.maxHealth * GetFusionMultiplier();
         Debug.Log($"❤️‍🩹 {heroData.heroName}'s health restored to {currentHealth.Value}.");
     }
+
     public void SetHealthBarVisible(bool visible)
     {
         if (healthBarUIInstance != null)
         {
             healthBarUIInstance.gameObject.SetActive(visible);
         }
+    }
+
+    public void InitFromDeck(HeroCardInstance cardInstance)
+    {
+        heroData = cardInstance.baseHero;
+        starLevel = cardInstance.starLevel;
+        // Fusion stats are applied in OnNetworkSpawn
+    }
+
+    private void ApplyFusionStats()
+    {
+        float multiplier = GetFusionMultiplier();
+        currentHealth.Value = heroData.maxHealth * multiplier;
+        attack = heroData.attackDamage * multiplier;
+    }
+
+    private float GetFusionMultiplier()
+    {
+        return starLevel switch
+        {
+            1 => 1.0f,
+            2 => 2.0f,
+            3 => 4.0f,
+            _ => 1.0f
+        };
     }
 }

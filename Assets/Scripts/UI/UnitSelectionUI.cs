@@ -58,40 +58,45 @@ public class UnitSelectionUI : MonoBehaviour
         instantiatedButtons.Clear();
 
         // Rebuild UI from updated deck
-        foreach (var cardInstance in playerDeck.cards)
+        for (int i = 0; i < playerDeck.cards.Count; i++)
         {
+            HeroCardInstance cardInstance = playerDeck.cards[i];
+
             GameObject cardObj = Instantiate(cardTemplate, buttonContainer);
             cardObj.SetActive(true);
 
             HeroCardUI cardUI = cardObj.GetComponent<HeroCardUI>();
-            cardUI.Setup(
-                cardInstance.baseHero,
-                this,
-                instantiatedButtons.Count,
-                cardInstance.starLevel
-            );
+            cardUI.Setup(cardInstance, this, i);
 
             Button btn = cardObj.GetComponent<Button>();
+
+            // ✅ Closure-safe local copy for correct onClick binding
+            int capturedIndex = i;
+            HeroCardInstance capturedCard = cardInstance;
+            btn.onClick.AddListener(() => OnHeroClicked(capturedCard, capturedIndex));
+
             instantiatedButtons.Add(btn);
         }
 
-        // Optionally select the first card again
-        if (instantiatedButtons.Count > 0)
+        // ✅ Optionally select the first card again
+        if (playerDeck.cards.Count > 0)
         {
-            SelectHero(playerDeck.cards[0].baseHero, 0);
+            SelectHero(playerDeck.cards[0], 0); // ✅ Pass full card instance
         }
     }
 
 
-    private void OnHeroClicked(HeroData hero, int index)
+
+    private void OnHeroClicked(HeroCardInstance cardInstance, int index)
     {
-        SelectHero(hero, index);
-        currentlySelectedCard = playerDeck.cards[index]; // Track currently selected
+        SelectHero(cardInstance, index); // ✅ FIXED
+        currentlySelectedCard = cardInstance;
     }
 
-    public void SelectHero(HeroData hero, int selectedIndex)
+    public void SelectHero(HeroCardInstance cardInstance, int selectedIndex)
     {
-        UnitSelectionManager.Instance.SelectHero(hero);
+        UnitSelectionManager.Instance.SelectHero(cardInstance.baseHero);
+        UnitSelectionManager.Instance.SetSelectedCard(cardInstance);
 
         for (int i = 0; i < instantiatedButtons.Count; i++)
         {
@@ -100,6 +105,7 @@ public class UnitSelectionUI : MonoBehaviour
             instantiatedButtons[i].colors = colors;
         }
     }
+
 
     private void OnDestroy()
     {

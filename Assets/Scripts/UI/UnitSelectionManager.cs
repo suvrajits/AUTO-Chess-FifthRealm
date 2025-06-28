@@ -8,7 +8,11 @@ public class UnitSelectionManager : MonoBehaviour
 
     public delegate void OnHeroSelected(HeroData hero);
     public event OnHeroSelected HeroSelected;
-
+    private HeroCardInstance selectedCard;
+    public HeroCardInstance GetSelectedCard()
+    {
+        return selectedCard;
+    }
     private void Awake()
     {
         if (Instance != null)
@@ -20,7 +24,10 @@ public class UnitSelectionManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
-
+    public void SetSelectedCard(HeroCardInstance card)
+    {
+        selectedCard = card;
+    }
     public void SelectHero(HeroData hero)
     {
         currentSelectedHero = hero;

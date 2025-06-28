@@ -5,7 +5,7 @@ public class UnitPlacer : NetworkBehaviour
 {
     public LayerMask tileLayer;
     private Camera mainCamera;
-
+    
     private void Start()
     {
         mainCamera = Camera.main;
@@ -23,9 +23,9 @@ public class UnitPlacer : NetworkBehaviour
 
     private void TryPlaceOrReplaceUnit()
     {
-        HeroData selectedHero = UnitSelectionManager.Instance.GetSelectedHero();
-    
-        if (selectedHero == null)
+        HeroCardInstance selectedHero = UnitSelectionManager.Instance.GetSelectedCard();
+
+        if (selectedHero == null || selectedHero.baseHero == null)
         {
             Debug.LogWarning("❌ No hero selected for placement.");
             return;
@@ -53,12 +53,12 @@ public class UnitPlacer : NetworkBehaviour
                 return;
             }
 
-            SpawnUnitServerRpc(tile.GridPosition, selectedHero.heroId);
+            SpawnUnitServerRpc(tile.GridPosition, selectedHero.baseHero.heroId, selectedHero.starLevel);
         }
     }
 
     [ServerRpc]
-    private void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, ServerRpcParams rpcParams = default)
+    private void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, int starLevel, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
         Debug.Log($"⚔️ [Server] Spawning unit with heroId: {heroId}");
@@ -97,8 +97,14 @@ public class UnitPlacer : NetworkBehaviour
 
         HeroUnit heroUnit = unitObj.GetComponent<HeroUnit>();
         heroUnit.SnapToTileY(tile);
-        heroUnit.heroData = heroData;
         heroUnit.SetFaction(FactionForClient(senderId));
+
+        // ✅ Pass data & star level to HeroUnit for fusion-powered stats
+        heroUnit.InitFromDeck(new HeroCardInstance
+        {
+            baseHero = heroData,
+            starLevel = starLevel
+        });
 
         unitObj.GetComponent<NetworkObject>().SpawnWithOwnership(senderId);
 

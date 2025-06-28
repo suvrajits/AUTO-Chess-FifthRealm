@@ -1,8 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Unity.Netcode;
 
 [RequireComponent(typeof(HeroUnit))]
-public class AICombatController : MonoBehaviour
+public class AICombatController : NetworkBehaviour
 {
     private HeroUnit unit;
     private HeroData data;
@@ -18,6 +19,12 @@ public class AICombatController : MonoBehaviour
         if (data == null)
             Debug.LogError($"❌ AICombatController: Missing HeroData on {name}");
     }
+    void Update()
+    {
+        /*if (!NetworkManager.Singleton.IsServer) return;
+        TickAI();*/
+    }
+
 
     public void SetBattleMode(bool enabled)
     {
@@ -116,12 +123,12 @@ public class AICombatController : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (target != null)
+        if (target != null && unit != null && unit.IsAlive)
         {
-            target.TakeDamage((int)data.attackDamage);
+            target.TakeDamage((int)unit.Attack);
         }
 
-        // Reset to idle after attack
         unit.AnimatorHandler?.SetRunning(false);
     }
+
 }

@@ -2,15 +2,13 @@
 
 public class BillboardToCamera : MonoBehaviour
 {
-    private Transform camTransform;
+    private Camera mainCamera;
 
     void Start()
     {
-        if (Camera.main != null)
-        {
-            camTransform = Camera.main.transform;
-        }
-        else
+        mainCamera = Camera.main;
+
+        if (mainCamera == null)
         {
             Debug.LogWarning("🎥 BillboardToCamera: No main camera found.");
         }
@@ -18,14 +16,9 @@ public class BillboardToCamera : MonoBehaviour
 
     void LateUpdate()
     {
-        if (camTransform == null) return;
+        if (mainCamera == null) return;
 
-        // Face the camera only on the Y-axis (horizontal rotation only)
-        Vector3 lookDirection = camTransform.position - transform.position;
-        lookDirection.y = 0f; // Lock vertical axis
-        if (lookDirection != Vector3.zero)
-        {
-            transform.rotation = Quaternion.LookRotation(-lookDirection);
-        }
+        // Match camera rotation exactly (perfectly parallel to screen)
+        transform.rotation = mainCamera.transform.rotation;
     }
 }
