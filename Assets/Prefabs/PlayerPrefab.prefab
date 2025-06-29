@@ -350,5 +350,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxCapacity: 3
+  maxCapacity: 5
   cards: []

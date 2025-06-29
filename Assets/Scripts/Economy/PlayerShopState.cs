@@ -74,6 +74,12 @@ public class PlayerShopState : NetworkBehaviour
             return;
         }
 
+        if (player.PlayerDeck.cards.Count >= player.PlayerDeck.Capacity)
+        {
+            Debug.LogWarning($"❌ [Server] Deck full. Cannot buy {hero.heroName} for client {OwnerClientId}");
+            return;
+        }
+
         if (!player.GoldManager.TrySpendGold(hero.cost))
         {
             Debug.LogWarning($"❌ [Server] Not enough gold to buy {hero.heroName}");

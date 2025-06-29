@@ -4,7 +4,7 @@ using Unity.Netcode;
 
 public class PlayerCardDeck : NetworkBehaviour
 {
-    [SerializeField] private int maxCapacity = 3;
+    [SerializeField] private int maxCapacity = 6;
     public List<HeroCardInstance> cards = new();
 
     public delegate void OnCardChanged();
