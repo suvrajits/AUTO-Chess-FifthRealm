@@ -8,7 +8,7 @@ public class ToggleButtonUI : MonoBehaviour
     public GameObject targetObject;         // The object to show/hide
 
     public bool isEnabled = false;
-
+    public UIPopupType popupType = UIPopupType.Shop;
     void Start()
     {
         UpdateUI();
@@ -26,6 +26,15 @@ public class ToggleButtonUI : MonoBehaviour
         isEnabled = !isEnabled;
         targetObject.SetActive(isEnabled);
         UpdateUI();
+
+        if (isEnabled)
+        {
+            UIOverlayManager.Instance.OpenPopup(popupType);
+        }
+        else
+        {
+            UIOverlayManager.Instance.ClosePopup(popupType);
+        }
     }
 
     private void UpdateUI()

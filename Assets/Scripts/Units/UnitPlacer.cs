@@ -15,6 +15,12 @@ public class UnitPlacer : NetworkBehaviour
     {
         if (!IsOwner || mainCamera == null) return;
 
+        if (UIOverlayManager.Instance != null && UIOverlayManager.Instance.IsPopupOpen())
+        {
+            Debug.Log($"🚫 Input blocked due to active popup: {UIOverlayManager.Instance.ActivePopup}");
+            return;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             TryPlaceOrReplaceUnit();
