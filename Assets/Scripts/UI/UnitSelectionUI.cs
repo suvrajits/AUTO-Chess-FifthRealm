@@ -56,6 +56,12 @@ public class UnitSelectionUI : MonoBehaviour
             Destroy(btn.gameObject);
 
         instantiatedButtons.Clear();
+        if (playerDeck.cards.Count == 0)
+        {
+            currentlySelectedCard = null;
+            UnitSelectionManager.Instance.ClearSelectedCard(); // ✅ Clear globally cached selection
+            return;
+        }
 
         // Rebuild UI from updated deck
         for (int i = 0; i < playerDeck.cards.Count; i++)
@@ -83,6 +89,7 @@ public class UnitSelectionUI : MonoBehaviour
         {
             SelectHero(playerDeck.cards[0], 0); // ✅ Pass full card instance
         }
+      
     }
 
 

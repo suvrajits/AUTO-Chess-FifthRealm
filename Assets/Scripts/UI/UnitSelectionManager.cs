@@ -39,4 +39,10 @@ public class UnitSelectionManager : MonoBehaviour
     {
         return currentSelectedHero;
     }
+    public void ClearSelectedCard()
+    {
+        currentSelectedHero = null;
+        selectedCard = null;
+    }
+
 }
