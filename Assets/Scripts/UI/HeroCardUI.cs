@@ -8,12 +8,14 @@ public class HeroCardUI : MonoBehaviour
     public Image iconImage;
     public TMP_Text heroName;
     public Transform starContainer; // ⭐ Holds instantiated star icons
-    public GameObject starPrefab;   // ⭐ A single star image prefab (e.g., gold star)
+    public GameObject starPrefab;   // ⭐ A single star image prefab
+    public Button sellButton;       // 🔄 NEW: Sell button
 
     private HeroData assignedHero;
     private UnitSelectionUI selectionUI;
     private int index;
     private HeroCardInstance cardInstance;
+
     public void Setup(HeroCardInstance instance, UnitSelectionUI selectionUIRef, int cardIndex)
     {
         cardInstance = instance;
@@ -29,11 +31,17 @@ public class HeroCardUI : MonoBehaviour
 
         GenerateStars(instance.starLevel);
 
+        // Selection
         GetComponent<Button>().onClick.RemoveAllListeners();
         GetComponent<Button>().onClick.AddListener(OnClick);
+
+        // ✅ SELL BUTTON hook
+        if (sellButton != null)
+        {
+            sellButton.onClick.RemoveAllListeners();
+            sellButton.onClick.AddListener(OnSellClicked);
+        }
     }
-
-
 
     private void OnClick()
     {
@@ -43,26 +51,41 @@ public class HeroCardUI : MonoBehaviour
         }
     }
 
+    private void OnSellClicked()
+    {
+        if (cardInstance == null || cardInstance.baseHero == null)
+        {
+            Debug.LogWarning("❌ Cannot sell: No card assigned.");
+            return;
+        }
+
+        var localPlayer = PlayerNetworkState.GetLocalPlayer();
+        if (localPlayer != null)
+        {
+            Debug.Log($"💸 Selling heroId {cardInstance.baseHero.heroId} (★{cardInstance.starLevel})");
+            localPlayer.SellHeroCardServerRpc(cardInstance.baseHero.heroId, cardInstance.starLevel);
+        }
+        else
+        {
+            Debug.LogWarning("❌ Local player not found. Cannot sell.");
+        }
+    }
+
     private void GenerateStars(int starLevel)
     {
-        // Clear old stars
         foreach (Transform child in starContainer)
         {
             Destroy(child.gameObject);
         }
 
-        // Clamp level
         int clampedStars = Mathf.Clamp(starLevel, 1, 5);
 
-        // Instantiate and enable each star
         for (int i = 0; i < clampedStars; i++)
         {
             GameObject star = Instantiate(starPrefab, starContainer);
             star.SetActive(true);
         }
 
-        // ✅ Force layout rebuild to apply spacing
         LayoutRebuilder.ForceRebuildLayoutImmediate(starContainer.GetComponent<RectTransform>());
     }
-
 }

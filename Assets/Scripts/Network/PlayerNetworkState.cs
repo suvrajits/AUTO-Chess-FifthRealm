@@ -111,4 +111,50 @@ public class PlayerNetworkState : NetworkBehaviour
             LocalPlayer = instance;
         }
     }
+
+    [ServerRpc]
+    public void SellHeroCardServerRpc(int heroId, int starLevel, ServerRpcParams rpcParams = default)
+    {
+        if (PlayerDeck == null || GoldManager == null)
+        {
+            Debug.LogWarning($"❌ Missing PlayerDeck or GoldManager on Player {OwnerClientId}");
+            return;
+        }
+
+        // Attempt to find and remove the card
+        HeroCardInstance cardToRemove = null;
+
+        foreach (var card in PlayerDeck.cards)
+        {
+            if (card.baseHero.heroId == heroId && card.starLevel == starLevel)
+            {
+                cardToRemove = card;
+                break;
+            }
+        }
+
+        if (cardToRemove != null)
+        {
+            // ✅ Calculate refund BEFORE removing
+            int baseCost = cardToRemove.baseHero != null ? cardToRemove.baseHero.cost : 1;
+            int refund = starLevel switch
+            {
+                1 => baseCost,
+                2 => baseCost * 3,
+                3 => baseCost * 4,
+                _ => baseCost
+            };
+
+            PlayerDeck.SellCard(cardToRemove);
+            PlayerDeck.SyncDeckToClient(OwnerClientId);
+            GoldManager.AddGold(refund);
+
+            Debug.Log($"💰 Player {OwnerClientId} sold {cardToRemove.baseHero.heroName} (★{starLevel}) for {refund}g");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ Player {OwnerClientId} attempted to sell a card not in deck: heroId {heroId} ★{starLevel}");
+        }
+    }
+
 }

@@ -30,7 +30,8 @@ public class PlayerCardDeck : NetworkBehaviour
         {
             cards.Remove(card);
             DeckChanged?.Invoke();
-            // Refund gold logic will be elsewhere
+            // Gold will now be handled only via ServerRpc externally
+            Debug.Log($"🗑️ Card removed: {card.baseHero.heroName} (★{card.starLevel})");
         }
     }
 
