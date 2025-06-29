@@ -101,6 +101,20 @@ public class PlayerCardDeck : NetworkBehaviour
 
         DeckChanged?.Invoke();
     }
+    public void RemoveCardInstance(HeroCardInstance cardToRemove)
+    {
+        for (int i = 0; i < cards.Count; i++)
+        {
+            if (cards[i].baseHero == cardToRemove.baseHero && cards[i].starLevel == cardToRemove.starLevel)
+            {
+                cards.RemoveAt(i);
+                DeckChanged?.Invoke();
+                Debug.Log($"🗑️ Removed {cardToRemove.baseHero.heroName} (★{cardToRemove.starLevel}) from deck.");
+                return;
+            }
+        }
 
+        Debug.LogWarning("⚠️ Tried to remove card but no exact match found.");
+    }
 
 }

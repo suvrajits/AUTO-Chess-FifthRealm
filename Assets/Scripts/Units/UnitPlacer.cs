@@ -5,7 +5,7 @@ public class UnitPlacer : NetworkBehaviour
 {
     public LayerMask tileLayer;
     private Camera mainCamera;
-    
+
     private void Start()
     {
         mainCamera = Camera.main;
@@ -37,6 +37,14 @@ public class UnitPlacer : NetworkBehaviour
             return;
         }
 
+        var playerDeck = PlayerNetworkState.GetLocalPlayer()?.PlayerDeck;
+
+        if (playerDeck == null || !playerDeck.cards.Contains(selectedHero))
+        {
+            Debug.LogWarning("⚠️ Selected card is no longer in the deck. Cancelling placement.");
+            UnitSelectionManager.Instance.ClearSelectedCard();
+            return;
+        }
 
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, tileLayer))
@@ -60,6 +68,9 @@ public class UnitPlacer : NetworkBehaviour
             }
 
             SpawnUnitServerRpc(tile.GridPosition, selectedHero.baseHero.heroId, selectedHero.starLevel);
+
+            // ✅ Locally clear selection only (deck update happens via ServerRpc + ClientRpc)
+            UnitSelectionManager.Instance.ClearSelectedCard();
         }
     }
 
@@ -105,7 +116,6 @@ public class UnitPlacer : NetworkBehaviour
         heroUnit.SnapToTileY(tile);
         heroUnit.SetFaction(FactionForClient(senderId));
 
-        // ✅ Pass data & star level to HeroUnit for fusion-powered stats
         heroUnit.InitFromDeck(new HeroCardInstance
         {
             baseHero = heroData,
@@ -116,6 +126,10 @@ public class UnitPlacer : NetworkBehaviour
 
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
 
+        // ✅ Remove card from deck and sync it to client
+        PlayerNetworkState player = PlayerNetworkState.GetPlayerByClientId(senderId);
+        player?.PlayerDeck?.RemoveCardInstance(new HeroCardInstance { baseHero = heroData, starLevel = starLevel });
+        player?.PlayerDeck?.SyncDeckToClient(senderId);
     }
 
     private Faction FactionForClient(ulong clientId)

@@ -32,21 +32,23 @@ public class UnitSelectionUI : MonoBehaviour
 
         if (playerDeck == null)
         {
-            Debug.LogError("❌ PlayerCardDeck not assigned to local player.");
+            Debug.LogError("❌ PlayerCardDeck not found on local player.");
             return;
         }
 
-        if (playerDeck == null)
-        {
-            Debug.LogError("❌ PlayerCardDeck not found in scene.");
-            return;
-        }
-
-        // Subscribe to deck updates
         playerDeck.DeckChanged += RefreshDeckUI;
 
         // Initial render
         RefreshDeckUI();
+    }
+
+    private void OnEnable()
+    {
+        // Defensive refresh in case deck was synced before this UI was ready
+        if (playerDeck != null)
+        {
+            RefreshDeckUI();
+        }
     }
 
     private void RefreshDeckUI()
@@ -56,14 +58,23 @@ public class UnitSelectionUI : MonoBehaviour
             Destroy(btn.gameObject);
 
         instantiatedButtons.Clear();
+
+        // Validate selection
+        if (currentlySelectedCard != null && !playerDeck.cards.Contains(currentlySelectedCard))
+        {
+            currentlySelectedCard = null;
+            UnitSelectionManager.Instance.ClearSelectedCard();
+        }
+
+        // Empty deck
         if (playerDeck.cards.Count == 0)
         {
             currentlySelectedCard = null;
-            UnitSelectionManager.Instance.ClearSelectedCard(); // ✅ Clear globally cached selection
+            UnitSelectionManager.Instance.ClearSelectedCard();
             return;
         }
 
-        // Rebuild UI from updated deck
+        // Rebuild UI
         for (int i = 0; i < playerDeck.cards.Count; i++)
         {
             HeroCardInstance cardInstance = playerDeck.cards[i];
@@ -76,7 +87,6 @@ public class UnitSelectionUI : MonoBehaviour
 
             Button btn = cardObj.GetComponent<Button>();
 
-            // ✅ Closure-safe local copy for correct onClick binding
             int capturedIndex = i;
             HeroCardInstance capturedCard = cardInstance;
             btn.onClick.AddListener(() => OnHeroClicked(capturedCard, capturedIndex));
@@ -84,19 +94,17 @@ public class UnitSelectionUI : MonoBehaviour
             instantiatedButtons.Add(btn);
         }
 
-        // ✅ Optionally select the first card again
-        if (playerDeck.cards.Count > 0)
+        // Auto-select first card if none selected
+        if (currentlySelectedCard == null && playerDeck.cards.Count > 0)
         {
-            SelectHero(playerDeck.cards[0], 0); // ✅ Pass full card instance
+            SelectHero(playerDeck.cards[0], 0);
+            currentlySelectedCard = playerDeck.cards[0];
         }
-      
     }
-
-
 
     private void OnHeroClicked(HeroCardInstance cardInstance, int index)
     {
-        SelectHero(cardInstance, index); // ✅ FIXED
+        SelectHero(cardInstance, index);
         currentlySelectedCard = cardInstance;
     }
 
@@ -112,7 +120,6 @@ public class UnitSelectionUI : MonoBehaviour
             instantiatedButtons[i].colors = colors;
         }
     }
-
 
     private void OnDestroy()
     {

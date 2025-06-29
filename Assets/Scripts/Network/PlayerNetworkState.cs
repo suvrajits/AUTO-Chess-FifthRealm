@@ -123,7 +123,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
         // Attempt to find and remove the card
         HeroCardInstance cardToRemove = null;
-
+        
         foreach (var card in PlayerDeck.cards)
         {
             if (card.baseHero.heroId == heroId && card.starLevel == starLevel)
