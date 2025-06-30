@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 5420571145694361456}
   - component: {fileID: -3920840050917071578}
   - component: {fileID: 3856782640454790539}
+  - component: {fileID: -5118120816032408663}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -305,6 +306,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   playerShopStatePrefab: {fileID: 764726777193650823, guid: 223bd437890d89c4f921814b474e017f, type: 3}
+  IsEliminated:
+    m_InternalValue: 0
 --- !u!114 &5420571145694361456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -334,7 +337,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxGold: 50
+  maxGold: 100
   CurrentGold:
     m_InternalValue: 30
 --- !u!114 &3856782640454790539
@@ -352,3 +355,19 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxCapacity: 5
   cards: []
+--- !u!114 &-5118120816032408663
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5248960081774751608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1762a4bd640ffe147be1efeb9e768cea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  startingHealth: 20
+  CurrentHealth:
+    m_InternalValue: 20

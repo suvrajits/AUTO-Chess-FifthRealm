@@ -116,5 +116,12 @@ public class PlayerCardDeck : NetworkBehaviour
 
         Debug.LogWarning("⚠️ Tried to remove card but no exact match found.");
     }
+    public void ClearDeck()
+    {
+        cards.Clear();
+        DeckChanged?.Invoke();
+        Debug.Log("🧹 Cleared player deck.");
+    }
+
 
 }

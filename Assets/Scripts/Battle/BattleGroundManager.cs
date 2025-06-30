@@ -23,7 +23,7 @@ public class BattleGroundManager : NetworkBehaviour
     [Header("Battle Units")]
     private List<HeroUnit> teamAUnits = new();
     private List<HeroUnit> teamBUnits = new();
-    private Dictionary<HeroUnit, GridTile> originalTileMemory = new();
+    public Dictionary<HeroUnit, GridTile> originalTileMemory = new();
 
     [Header("State")]
     private bool battleInProgress = false;
@@ -91,17 +91,33 @@ public class BattleGroundManager : NetworkBehaviour
         List<HeroUnit> allUnits = BattleManager.Instance.GetAllAliveUnits();
         var players = allUnits.GroupBy(u => u.OwnerClientId).ToList();
 
+        // Fallback safety
+        if (players.Count < 1)
+        {
+            Debug.LogWarning("⚠️ No players found in PickTeams!");
+            teamAUnits.Clear();
+            teamBUnits.Clear();
+            return;
+        }
+
         if (players.Count >= 4)
         {
             teamAUnits = players[0].Concat(players[1]).ToList();
             teamBUnits = players[2].Concat(players[3]).ToList();
         }
-        else
+        else if (players.Count >= 2)
         {
             teamAUnits = players[0].ToList();
-            teamBUnits = players.Count > 1 ? players[1].ToList() : new List<HeroUnit>();
+            teamBUnits = players[1].ToList();
+        }
+        else
+        {
+            // Single player fallback
+            teamAUnits = players[0].ToList();
+            teamBUnits.Clear();
         }
     }
+
 
     private void TeleportToBattleGrid(List<HeroUnit> units, bool isTeamA)
     {
@@ -171,7 +187,7 @@ public class BattleGroundManager : NetworkBehaviour
 
             }
         }
-
+        BattleResultHandler.Instance.ApplyPostBattleDamage(teamAUnits, teamBUnits.Select(u => u.OwnerClientId).Distinct().ToList());
         TeleportPlayersBackToOriginalPositions();
         CleanupArena();
 
@@ -205,4 +221,5 @@ public class BattleGroundManager : NetworkBehaviour
                 tile.RemoveUnit();
         }
     }
+
 }

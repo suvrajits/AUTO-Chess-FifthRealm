@@ -7,6 +7,7 @@ public class UIOverlayManager : MonoBehaviour
     public UIPopupType ActivePopup { get; private set; } = UIPopupType.None;
 
     private GamePhase previousPhase;
+    [SerializeField] private PlayerHealthUI healthUI;
 
     private void Awake()
     {
@@ -15,7 +16,7 @@ public class UIOverlayManager : MonoBehaviour
         else
             Destroy(gameObject);
     }
-
+    public PlayerHealthUI GetHealthUI() => healthUI;
     public void OpenPopup(UIPopupType popup)
     {
         if (ActivePopup != UIPopupType.None)

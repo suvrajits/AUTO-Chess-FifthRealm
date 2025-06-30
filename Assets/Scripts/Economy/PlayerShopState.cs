@@ -127,5 +127,12 @@ public class PlayerShopState : NetworkBehaviour
         Debug.Log($"✅ [Host] Sending initial shop to self after delay.");
         ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
     }
+    public void DisableShop()
+    {
+        CurrentShop.Clear();
+        ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
+        Debug.Log($"🚫 Shop disabled for player {OwnerClientId}");
+    }
+
 
 }

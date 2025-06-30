@@ -131,4 +131,21 @@ public class BattleManager : NetworkBehaviour
 
         Debug.Log($"🟢 Registered unit: {unit.heroData.heroName} (ClientId: {unit.OwnerClientId})");
     }
+
+    public void RemoveAllUnitsForClient(ulong clientId)
+{
+    var allUnits = teamAUnits.Concat(teamBUnits)
+        .Where(u => u != null && u.OwnerClientId == clientId)
+        .ToList();
+
+    foreach (var unit in allUnits)
+    {
+        UnregisterUnit(unit);
+        unit.GetComponent<NetworkObject>()?.Despawn(true);
+        unit.currentTile?.RemoveUnit();
+    }
+
+    Debug.Log($"🗑️ All units removed for client {clientId}");
+}
+
 }

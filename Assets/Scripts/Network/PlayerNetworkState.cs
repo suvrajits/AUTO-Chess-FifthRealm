@@ -18,9 +18,14 @@ public class PlayerNetworkState : NetworkBehaviour
     private Camera playerCamera;
     public PlayerShopState ShopState { get; private set; }
     [SerializeField] private GameObject playerShopStatePrefab;
+    public PlayerHealthManager HealthManager { get; private set; }
+    public bool IsAlive => HealthManager != null && !HealthManager.IsDead;
+    public NetworkVariable<bool> IsEliminated = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
+        HealthManager = GetComponent<PlayerHealthManager>();
 
     }
     public static PlayerNetworkState GetLocalPlayer()
@@ -34,6 +39,12 @@ public class PlayerNetworkState : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         PlayerDeck = GetComponentInChildren<PlayerCardDeck>();
+        if (IsServer && HealthManager != null)
+        {
+            HealthManager.CurrentHealth.Value = 20;
+            Debug.Log($"❤️ Player {OwnerClientId} HP initialized to 20");
+        }
+
         // 📍 Anchor the player to correct grid
         int index = (int)OwnerClientId;
         Transform anchor = SpawnAnchorRegistry.Instance.GetAnchor(index);
@@ -156,5 +167,16 @@ public class PlayerNetworkState : NetworkBehaviour
             Debug.LogWarning($"⚠️ Player {OwnerClientId} attempted to sell a card not in deck: heroId {heroId} ★{starLevel}");
         }
     }
+    public void SetSpectatorMode(bool enabled)
+    {
+        if (playerCamera != null)
+        {
+            playerCamera.enabled = enabled;
+            playerCamera.gameObject.SetActive(enabled);
+        }
+        // Add more spectator behavior here if needed
+        Debug.Log($"👁️ Player {OwnerClientId} set to spectator mode: {enabled}");
+    }
+
 
 }
