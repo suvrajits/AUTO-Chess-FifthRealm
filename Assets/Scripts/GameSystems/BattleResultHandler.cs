@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿
+using System.Collections.Generic;
 using UnityEngine;
+using System.Collections;
 
 public class BattleResultHandler : MonoBehaviour
 {
@@ -10,14 +12,10 @@ public class BattleResultHandler : MonoBehaviour
         Instance = this;
     }
 
-    /// <summary>
-    /// Applies post-battle damage based on surviving enemy units.
-    /// </summary>
     public void ApplyPostBattleDamage(List<HeroUnit> winningTeam, List<ulong> losingClientIds)
     {
         int totalDamage = 0;
 
-        // ✅ 1. Calculate total damage based on living units in winning team
         foreach (var unit in winningTeam)
         {
             if (unit == null || !unit.IsAlive) continue;
@@ -30,7 +28,6 @@ public class BattleResultHandler : MonoBehaviour
                 _ => 1
             };
 
-            // ✅ Return to original tile
             if (BattleGroundManager.Instance.originalTileMemory.TryGetValue(unit, out var homeTile) && homeTile != null)
             {
                 unit.SnapToTileY(homeTile);
@@ -38,14 +35,20 @@ public class BattleResultHandler : MonoBehaviour
             }
         }
 
-        // ✅ 2. Apply damage to losing players
         foreach (var clientId in losingClientIds)
         {
             var player = PlayerNetworkState.GetPlayerByClientId(clientId);
-            player?.HealthManager?.ApplyDamageServerRpc(totalDamage);
+            player?.HealthManager?.ApplyServerDamage(totalDamage);
         }
 
         Debug.Log($"📤 Losing players: {string.Join(", ", losingClientIds)}");
+
+        StartCoroutine(DelayedVictoryCheckCoroutine());
     }
 
+    private IEnumerator DelayedVictoryCheckCoroutine()
+    {
+        yield return new WaitForSeconds(0.2f);
+        VictoryManager.Instance?.CheckForVictory();
+    }
 }

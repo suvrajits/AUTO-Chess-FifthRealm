@@ -85,7 +85,7 @@ public class PlayerHealthManager : NetworkBehaviour
             healthUI.UpdateHealth(newVal, startingHealth);
     }
 
-    [ServerRpc(RequireOwnership = false)]
+    /*[ServerRpc(RequireOwnership = false)]
     public void ApplyDamageServerRpc(int damage)
     {
         if (!IsServer) return;
@@ -97,10 +97,26 @@ public class PlayerHealthManager : NetworkBehaviour
 
         if (newHP <= 0)
         {
-            Debug.Log($"💀 [Server] Player {OwnerClientId} eliminated due to 0 HP.");
+            Debug.Log($"💀 [Server] Player {OwnerClientId} reached 0 HP. Attempting elimination...");
+            EliminationManager.Instance?.EliminatePlayer(OwnerClientId);
+        }
+    }*/
+    public void ApplyServerDamage(int amount)
+    {
+        if (!IsServer) return;
+
+        int newHP = Mathf.Max(CurrentHealth.Value - amount, 0);
+        Debug.Log($"💥 [Server] Player {OwnerClientId} took {amount} damage. HP: {CurrentHealth.Value} → {newHP}");
+
+        CurrentHealth.Value = newHP;
+
+        if (newHP <= 0 && !player.IsEliminated.Value)
+        {
+            Debug.Log($"💀 [Server] Player {OwnerClientId} reached 0 HP. Triggering elimination...");
             EliminationManager.Instance?.EliminatePlayer(OwnerClientId);
         }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void HealServerRpc(int healAmount)

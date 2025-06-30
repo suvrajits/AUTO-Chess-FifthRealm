@@ -178,6 +178,15 @@ public class PlayerNetworkState : NetworkBehaviour
         // Add more spectator behavior here if needed
         Debug.Log($"👁️ Player {OwnerClientId} set to spectator mode: {enabled}");
     }
+    [ClientRpc]
+    public void NotifyEliminatedClientRpc(ClientRpcParams rpcParams = default)
+    {
+        if (!IsOwner) return;
+
+        Debug.Log("👁️ Eliminated — entering spectator mode.");
+        SetSpectatorMode(true);
+        
+    }
 
 
 }

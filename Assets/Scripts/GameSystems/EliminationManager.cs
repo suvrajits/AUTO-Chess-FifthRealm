@@ -1,33 +1,61 @@
-﻿using UnityEngine;
+﻿using Unity.Netcode;
+using UnityEngine;
+using System.Collections;
 
-public class EliminationManager : MonoBehaviour
+public class EliminationManager : NetworkBehaviour
 {
     public static EliminationManager Instance;
 
-    private void Awake() => Instance = this;
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     public void EliminatePlayer(ulong clientId)
     {
-        Debug.Log($"💀 Eliminating player {clientId}");
+        if (!IsServer)
+        {
+            Debug.LogWarning($"⚠️ [EliminationManager] Not server — aborting EliminatePlayer({clientId})");
+            return;
+        }
 
         if (!PlayerNetworkState.AllPlayers.TryGetValue(clientId, out var player))
+        {
+            Debug.LogWarning($"❌ [EliminationManager] Player {clientId} not found.");
             return;
+        }
 
-        // Despawn all units
-        BattleManager.Instance.RemoveAllUnitsForClient(clientId);
+        if (player.IsEliminated.Value)
+        {
+            Debug.Log($"ℹ️ [EliminationManager] Player {clientId} already eliminated.");
+            return;
+        }
 
-        // Clear deck
+        Debug.Log($"💀 [EliminationManager] Eliminating Player {clientId}");
+
+        // Cleanup
+        BattleManager.Instance?.RemoveAllUnitsForClient(clientId);
         player.PlayerDeck?.ClearDeck();
-
-        // Disable shop
         player.ShopState?.DisableShop();
 
-        // Mark eliminated
+        // State
         player.IsEliminated.Value = true;
-
-        // Spectator mode toggle
         player.SetSpectatorMode(true);
 
-        VictoryManager.Instance.CheckForVictory();
+        // 🔁 Notify only that client
+        var rpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+        };
+        player.NotifyEliminatedClientRpc(rpcParams);
+
+        // 🏁 Check victory after short delay
+        StartCoroutine(DelayedVictoryCheck());
+    }
+
+    private IEnumerator DelayedVictoryCheck()
+    {
+        yield return new WaitForSeconds(0.3f);
+        VictoryManager.Instance?.CheckForVictory();
     }
 }
