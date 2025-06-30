@@ -176,6 +176,7 @@ public class BattleGroundManager : NetworkBehaviour
 
         battleInProgress = false;
 
+        // 🧠 Return surviving units to their original tiles and reset state
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
             if (unit == null || !unit.IsAlive) continue;
@@ -184,17 +185,38 @@ public class BattleGroundManager : NetworkBehaviour
             {
                 unit.SnapToTileY(homeTile);
                 unit.SetCombatState(false);
-
             }
         }
-        BattleResultHandler.Instance.ApplyPostBattleDamage(teamAUnits, teamBUnits.Select(u => u.OwnerClientId).Distinct().ToList());
+
+        // 🩸 Determine actual winning and losing teams based on survivors
+        List<HeroUnit> teamAAlive = teamAUnits.Where(u => u != null && u.IsAlive).ToList();
+        List<HeroUnit> teamBAlive = teamBUnits.Where(u => u != null && u.IsAlive).ToList();
+
+        bool teamAWin = teamAAlive.Count > 0 && teamBAlive.Count == 0;
+        bool teamBWin = teamBAlive.Count > 0 && teamAAlive.Count == 0;
+
+        List<HeroUnit> winningTeam = teamAWin ? teamAAlive : teamBWin ? teamBAlive : new List<HeroUnit>();
+        List<ulong> losingClientIds = teamAWin
+            ? teamBUnits.Select(u => u.OwnerClientId).Distinct().ToList()
+            : teamBWin
+                ? teamAUnits.Select(u => u.OwnerClientId).Distinct().ToList()
+                : new List<ulong>(); // Handle draw
+
+        // 💥 Apply damage only to losing players
+        BattleResultHandler.Instance.ApplyPostBattleDamage(winningTeam, losingClientIds);
+
+        // 🧍 Return players to original position
         TeleportPlayersBackToOriginalPositions();
+
+        // 🧼 Clean up battlefield tiles
         CleanupArena();
 
+        // 🧽 Clear internal state
         originalTileMemory.Clear();
         teamAUnits.Clear();
         teamBUnits.Clear();
     }
+
 
     private void TeleportPlayersBackToOriginalPositions()
     {

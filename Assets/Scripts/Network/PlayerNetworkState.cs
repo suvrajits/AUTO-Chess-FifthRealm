@@ -74,6 +74,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
             Debug.Log($"🛒 [Server] Spawned PlayerShopState for client {OwnerClientId}");
         }
+        Debug.Log($"🧠 Registering player {OwnerClientId} (IsServer: {IsServer}, IsOwner: {IsOwner})");
 
         // ✅ Let systems know this player is fully ready
         OnAnyPlayerFullySpawned?.Invoke(this);

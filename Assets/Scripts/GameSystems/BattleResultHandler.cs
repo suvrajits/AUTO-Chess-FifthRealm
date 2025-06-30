@@ -45,7 +45,7 @@ public class BattleResultHandler : MonoBehaviour
             player?.HealthManager?.ApplyDamageServerRpc(totalDamage);
         }
 
-        Debug.Log($"💥 Applied {totalDamage} damage to {losingClientIds.Count} players and restored survivors.");
+        Debug.Log($"📤 Losing players: {string.Join(", ", losingClientIds)}");
     }
 
 }
