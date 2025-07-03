@@ -45,4 +45,8 @@ public class GridTile : MonoBehaviour
     {
         OccupyingUnit = null;
     }
+    public bool IsOwnedBy(ulong clientId)
+    {
+        return OwnerClientId == clientId;
+    }
 }

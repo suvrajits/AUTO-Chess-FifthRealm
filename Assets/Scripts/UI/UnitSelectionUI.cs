@@ -110,7 +110,7 @@ public class UnitSelectionUI : MonoBehaviour
 
     public void SelectHero(HeroCardInstance cardInstance, int selectedIndex)
     {
-        UnitSelectionManager.Instance.SelectHero(cardInstance.baseHero);
+        //UnitSelectionManager.Instance.SelectHero(cardInstance.baseHero);
         UnitSelectionManager.Instance.SetSelectedCard(cardInstance);
 
         for (int i = 0; i < instantiatedButtons.Count; i++)

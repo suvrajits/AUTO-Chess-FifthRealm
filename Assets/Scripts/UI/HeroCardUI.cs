@@ -1,20 +1,24 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 
-public class HeroCardUI : MonoBehaviour
+public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Header("UI References")]
     public Image iconImage;
     public TMP_Text heroName;
-    public Transform starContainer; // ⭐ Holds instantiated star icons
-    public GameObject starPrefab;   // ⭐ A single star image prefab
-    public Button sellButton;       // 🔄 NEW: Sell button
+    public Transform starContainer;
+    public GameObject starPrefab;
+    public Button sellButton;
 
     private HeroData assignedHero;
     private UnitSelectionUI selectionUI;
     private int index;
     private HeroCardInstance cardInstance;
+
+    // 👇 Drag preview
+    private GameObject dragPreview;
 
     public void Setup(HeroCardInstance instance, UnitSelectionUI selectionUIRef, int cardIndex)
     {
@@ -31,11 +35,9 @@ public class HeroCardUI : MonoBehaviour
 
         GenerateStars(instance.starLevel);
 
-        // Selection
         GetComponent<Button>().onClick.RemoveAllListeners();
         GetComponent<Button>().onClick.AddListener(OnClick);
 
-        // ✅ SELL BUTTON hook
         if (sellButton != null)
         {
             sellButton.onClick.RemoveAllListeners();
@@ -74,12 +76,9 @@ public class HeroCardUI : MonoBehaviour
     private void GenerateStars(int starLevel)
     {
         foreach (Transform child in starContainer)
-        {
             Destroy(child.gameObject);
-        }
 
         int clampedStars = Mathf.Clamp(starLevel, 1, 5);
-
         for (int i = 0; i < clampedStars; i++)
         {
             GameObject star = Instantiate(starPrefab, starContainer);
@@ -87,5 +86,57 @@ public class HeroCardUI : MonoBehaviour
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(starContainer.GetComponent<RectTransform>());
+    }
+
+    // 🔽 DRAG & DROP INTERFACES
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (cardInstance == null || cardInstance.baseHero == null) return;
+
+        dragPreview = new GameObject("DragPreview");
+        dragPreview.transform.SetParent(transform.root, false);
+        Image previewImage = dragPreview.AddComponent<Image>();
+        previewImage.raycastTarget = false;
+        previewImage.sprite = cardInstance.baseHero.heroIcon;
+        previewImage.color = new Color(1f, 1f, 1f, 0.6f); // 60% opacity
+
+        RectTransform rect = dragPreview.GetComponent<RectTransform>();
+        rect.sizeDelta = new Vector2(100, 100);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (dragPreview != null)
+        {
+            dragPreview.transform.position = eventData.position;
+        }
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        if (dragPreview != null)
+        {
+            Destroy(dragPreview);
+        }
+
+        // Try to raycast onto the board
+        Ray ray = Camera.main.ScreenPointToRay(eventData.position);
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f, LayerMask.GetMask("Tile")))
+        {
+            GridTile tile = hit.collider.GetComponent<GridTile>();
+            if (tile != null)
+            {
+                UnitPlacer placer = FindFirstObjectByType<UnitPlacer>();
+                if (placer != null)
+                {
+                    placer.TryPlaceUnitFromDeck(cardInstance, tile);
+                }
+                else
+                {
+                    Debug.LogWarning("❌ UnitPlacer not found in scene.");
+                }
+            }
+        }
     }
 }

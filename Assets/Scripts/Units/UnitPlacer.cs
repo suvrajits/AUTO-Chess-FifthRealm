@@ -11,67 +11,37 @@ public class UnitPlacer : NetworkBehaviour
         mainCamera = Camera.main;
     }
 
-    void Update()
+    // ✅ New method for drag-and-drop placement
+    public void TryPlaceUnitFromDeck(HeroCardInstance cardInstance, GridTile tile)
     {
-        if (!IsOwner || mainCamera == null) return;
-
-        if (UIOverlayManager.Instance != null && UIOverlayManager.Instance.IsPopupOpen())
+        if (cardInstance == null || tile == null)
         {
-            Debug.Log($"🚫 Input blocked due to active popup: {UIOverlayManager.Instance.ActivePopup}");
+            Debug.LogWarning("❌ Invalid card or tile.");
             return;
         }
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            TryPlaceOrReplaceUnit();
-        }
-    }
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
 
-    private void TryPlaceOrReplaceUnit()
-    {
-        HeroCardInstance selectedHero = UnitSelectionManager.Instance.GetSelectedCard();
-
-        if (selectedHero == null || selectedHero.baseHero == null)
+        if (CameraSwitcherUI.CurrentTargetId != clientId)
         {
-            Debug.LogWarning("❌ No hero selected for placement.");
+            Debug.LogWarning("🚫 Can't place while spectating.");
             return;
         }
 
-        var playerDeck = PlayerNetworkState.GetLocalPlayer()?.PlayerDeck;
-
-        if (playerDeck == null || !playerDeck.cards.Contains(selectedHero))
+        if (!tile.IsOwnedBy(clientId))
         {
-            Debug.LogWarning("⚠️ Selected card is no longer in the deck. Cancelling placement.");
-            UnitSelectionManager.Instance.ClearSelectedCard();
+            Debug.LogWarning("🚫 Tile not owned by this player.");
             return;
         }
 
-        Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, tileLayer))
+        if (tile.IsOccupied)
         {
-            GridTile tile = hit.collider.GetComponent<GridTile>();
-            if (tile == null) return;
-
-            ulong viewedClientId = CameraSwitcherUI.CurrentTargetId;
-            ulong localClientId = NetworkManager.Singleton.LocalClientId;
-
-            if (viewedClientId != localClientId)
-            {
-                Debug.LogWarning("🚫 Can't place units while spectating.");
-                return;
-            }
-
-            if (tile.OwnerClientId != localClientId)
-            {
-                Debug.LogWarning("🚫 This tile belongs to another player.");
-                return;
-            }
-
-            SpawnUnitServerRpc(tile.GridPosition, selectedHero.baseHero.heroId, selectedHero.starLevel);
-
-            // ✅ Locally clear selection only (deck update happens via ServerRpc + ClientRpc)
-            UnitSelectionManager.Instance.ClearSelectedCard();
+            Debug.LogWarning("🚫 Tile already occupied.");
+            return;
         }
+
+        SpawnUnitServerRpc(tile.GridPosition, cardInstance.baseHero.heroId, cardInstance.starLevel);
+        UnitSelectionManager.Instance.ClearSelectedCard();
     }
 
     [ServerRpc]

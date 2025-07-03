@@ -1,18 +1,14 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class UnitSelectionManager : MonoBehaviour
 {
     public static UnitSelectionManager Instance { get; private set; }
 
-    private HeroData currentSelectedHero;
-
-    public delegate void OnHeroSelected(HeroData hero);
-    public event OnHeroSelected HeroSelected;
     private HeroCardInstance selectedCard;
-    public HeroCardInstance GetSelectedCard()
-    {
-        return selectedCard;
-    }
+
+    public delegate void OnHeroCardSelected(HeroCardInstance card);
+    public event OnHeroCardSelected HeroSelected;
+
     private void Awake()
     {
         if (Instance != null)
@@ -24,25 +20,28 @@ public class UnitSelectionManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
+
     public void SetSelectedCard(HeroCardInstance card)
     {
         selectedCard = card;
-    }
-    public void SelectHero(HeroData hero)
-    {
-        currentSelectedHero = hero;
-        HeroSelected?.Invoke(hero);
-        Debug.Log(" Hero selected: " + hero.heroName);
+        HeroSelected?.Invoke(card);
+        Debug.Log($"📦 HeroCard selected: {card?.baseHero?.heroName} (★{card?.starLevel})");
     }
 
-    public HeroData GetSelectedHero()
+    public HeroCardInstance GetSelectedCard()
     {
-        return currentSelectedHero;
+        return selectedCard;
     }
+
     public void ClearSelectedCard()
     {
-        currentSelectedHero = null;
+        Debug.Log("🧹 Cleared selected card.");
         selectedCard = null;
+        HeroSelected?.Invoke(null);
     }
 
+    public bool HasCardSelected()
+    {
+        return selectedCard != null;
+    }
 }
