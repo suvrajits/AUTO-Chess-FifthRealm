@@ -601,7 +601,7 @@ MonoBehaviour:
   victoryPanel: {fileID: 1138198461}
   defeatPanel: {fileID: 1970485638}
   eliminatedPanel: {fileID: 1639182062}
-  restartButton: {fileID: 1779724992}
+  restartButton: {fileID: 1779724990}
 --- !u!1 &172255847
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.Netcode;
-using UnityEngine.UI; // For Button, if needed
+using System.Collections;
 
 public class VictoryUIHandler : MonoBehaviour
 {
@@ -11,20 +11,14 @@ public class VictoryUIHandler : MonoBehaviour
     [SerializeField] private GameObject victoryPanel;
     [SerializeField] private GameObject defeatPanel;
     [SerializeField] private GameObject eliminatedPanel;
-
-    [SerializeField] private Button restartButton; // optional if assigned via inspector
+    //[SerializeField] private GameObject restartButton;
 
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
 
         HideAll();
-
-        if (restartButton != null)
-            restartButton.onClick.AddListener(OnRestartClicked);
     }
 
     public void ShowResult(bool isWinner)
@@ -34,24 +28,21 @@ public class VictoryUIHandler : MonoBehaviour
         if (isWinner)
         {
             victoryPanel.SetActive(true);
+            //restartButton.SetActive(NetworkManager.Singleton.IsServer); // Host-only restart
         }
         else
         {
             defeatPanel.SetActive(true);
+            // Auto-restart for loser
         }
-
-        // Only host can restart game
-        if (restartButton != null)
-            restartButton.gameObject.SetActive(NetworkManager.Singleton.IsHost);
+        StartCoroutine(RestartAfterDelay());
     }
 
     public void ShowEliminated()
     {
         HideAll();
         eliminatedPanel.SetActive(true);
-
-        if (restartButton != null)
-            restartButton.gameObject.SetActive(false);
+        StartCoroutine(RestartAfterDelay()); // Auto-restart for eliminated
     }
 
     private void HideAll()
@@ -59,25 +50,23 @@ public class VictoryUIHandler : MonoBehaviour
         victoryPanel.SetActive(false);
         defeatPanel.SetActive(false);
         eliminatedPanel.SetActive(false);
-
-        if (restartButton != null)
-            restartButton.gameObject.SetActive(false);
+        //restartButton?.SetActive(false);
     }
 
-    private void OnRestartClicked()
+    public void OnRestartButtonPressed()
     {
-        if (!NetworkManager.Singleton.IsHost) return;
+        if (!NetworkManager.Singleton.IsServer) return;
 
-        Debug.Log("🔁 Restarting game...");
+        // Reload for everyone
+        NetworkManager.Singleton.SceneManager.LoadScene("YourSceneName", LoadSceneMode.Single);
+    }
 
-        // Clean shutdown, then reload
+    private IEnumerator RestartAfterDelay()
+    {
+        yield return new WaitForSeconds(3f);
+
+        // Leave network and return to main scene for next round
         NetworkManager.Singleton.Shutdown();
-
-        // Optional: clear static references
-        PlayerNetworkState.AllPlayers.Clear();
-        PlayerNetworkState.AllPlayerCameras.Clear();
-
-        // Reload scene (assuming it's index 0 or name-based)
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        SceneManager.LoadScene("NecodeSetup");
     }
 }
