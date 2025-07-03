@@ -123,5 +123,26 @@ public class PlayerCardDeck : NetworkBehaviour
         Debug.Log("🧹 Cleared player deck.");
     }
 
+    public bool CanAddCard()
+    {
+        return cards.Count < Capacity;
+    }
+    public void AddCardFromUnit(HeroUnit unit)
+    {
+        if (unit == null || unit.heroData == null)
+        {
+            Debug.LogWarning("❌ Invalid unit or missing heroData.");
+            return;
+        }
 
+        var newCard = new HeroCardInstance
+        {
+            baseHero = unit.heroData,
+            starLevel = unit.starLevel
+        };
+
+        cards.Add(newCard);
+        SyncDeckToClient(unit.OwnerClientId); // ✅ Use the hero's owner to refresh deck UI
+        DeckChanged?.Invoke();
+    }
 }

@@ -5,7 +5,12 @@ public class UnitPlacer : NetworkBehaviour
 {
     public LayerMask tileLayer;
     private Camera mainCamera;
-
+    public static UnitPlacer Instance { get; private set; }
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+    }
     private void Start()
     {
         mainCamera = Camera.main;

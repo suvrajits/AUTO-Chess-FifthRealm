@@ -3,7 +3,7 @@ using Unity.Netcode;
 using System.Collections;
 
 [RequireComponent(typeof(HeroStateMachine), typeof(HeroAnimatorHandler))]
-public class HeroUnit : NetworkBehaviour
+public class HeroUnit : NetworkBehaviour, IUnitInteractable
 {
     public HeroData heroData;
     public int starLevel = 1;
@@ -44,6 +44,13 @@ public class HeroUnit : NetworkBehaviour
     public Transform healthBarAnchor;
     private HeroHealthBarUI healthBarUIInstance;
     private Quaternion originalRotation;
+    [SerializeField] private GameObject contextMenuPrefab;
+    private GameObject activeMenu;
+    public bool IsInBattle = false;
+
+    [SerializeField] private Transform contextAnchor; // Where the menu spawns
+    private PlayerNetworkState ownerPlayerState;
+  
 
     private void Awake()
     {
@@ -73,6 +80,7 @@ public class HeroUnit : NetworkBehaviour
             {
                 GetComponent<AICombatController>()?.TickAI();
             }
+            ownerPlayerState = PlayerNetworkState.GetPlayerByClientId(OwnerClientId);
         }
 
         hasSpawned = true;
@@ -260,4 +268,72 @@ public class HeroUnit : NetworkBehaviour
             _ => 1.0f
         };
     }
+    public int GetSellValue()
+    {
+        return starLevel switch
+        {
+            1 => 1,
+            2 => 3,
+            3 => 5,
+            _ => 1
+        };
+    }
+
+    public void SetInBattle(bool value)
+    {
+        IsInBattle = value;
+    }
+    public void OnRightClick()
+    {
+        if (!IsOwner || IsInBattle || activeMenu != null) return;
+        Debug.Log("🟢 Right-click registered on hero");
+        ShowContextMenu();
+    }
+
+    public void OnLongPress()
+    {
+        if (!IsOwner || IsInBattle || activeMenu != null) return;
+        ShowContextMenu();
+    }
+
+    private void ShowContextMenu()
+    {
+        if (contextMenuPrefab == null || contextAnchor == null)
+        {
+            Debug.LogWarning($"❌ Missing context menu references on {gameObject.name}");
+            return;
+        }
+        Debug.Log("Coming to show context menu");
+        Vector3 spawnPos = contextAnchor.position + new Vector3(0, 0.5f, 0);
+        activeMenu = Instantiate(contextMenuPrefab, contextAnchor.position, Quaternion.identity, contextAnchor);
+        var menu = activeMenu.GetComponent<UnitContextMenuUI>();
+        menu.Init(this);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestReturnToDeckServerRpc()
+    {
+        if (IsInBattle || ownerPlayerState == null)
+            return;
+
+        if (!ownerPlayerState.PlayerDeck.CanAddCard())
+            return;
+
+        ownerPlayerState.PlayerDeck.AddCardFromUnit(this);
+
+        currentTile?.RemoveUnit();
+        NetworkObject.Despawn();
+    }
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestSellFromGridServerRpc()
+    {
+        if (IsInBattle || ownerPlayerState == null)
+            return;
+
+        int refund = GetSellValue(); // This calculates value based on starLevel
+        ownerPlayerState.GoldManager.AddGold(refund);
+
+        currentTile?.RemoveUnit();
+        NetworkObject.Despawn();
+    }
+
 }

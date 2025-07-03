@@ -187,6 +187,57 @@ public class PlayerNetworkState : NetworkBehaviour
         SetSpectatorMode(true);
         
     }
+    [ServerRpc]
+    public void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, int starLevel, ServerRpcParams rpcParams = default)
+    {
+        GridManager gridManager = GetComponentInChildren<GridManager>();
+        if (gridManager == null)
+        {
+            Debug.LogWarning("⚠️ Missing GridManager.");
+            return;
+        }
+
+        GridTile tile = gridManager.GetTileAt(gridPos);
+        if (tile == null || tile.HasUnit)
+        {
+            Debug.LogWarning($"⚠️ Tile invalid or already occupied at {gridPos}");
+            return;
+        }
+
+        if (PlayerDeck == null)
+        {
+            Debug.LogWarning("❌ PlayerDeck not available.");
+            return;
+        }
+
+        HeroData heroData = UnitDatabase.Instance.GetHeroById(heroId);
+        if (heroData == null)
+        {
+            Debug.LogWarning($"❌ Invalid HeroId {heroId}");
+            return;
+        }
+
+        GameObject heroPrefab = UnitDatabase.Instance.GetPrefabForHero(heroId);
+        if (heroPrefab == null)
+        {
+            Debug.LogWarning($"❌ No prefab found for HeroId {heroId}");
+            return;
+        }
+
+        GameObject heroGO = Instantiate(heroPrefab, tile.transform.position + Vector3.up * 0.5f, Quaternion.identity);
+        NetworkObject netObj = heroGO.GetComponent<NetworkObject>();
+        netObj.SpawnWithOwnership(OwnerClientId);
+
+        HeroUnit unit = heroGO.GetComponent<HeroUnit>();
+        unit.InitFromDeck(new HeroCardInstance { baseHero = heroData, starLevel = starLevel });
+        //unit.SetFaction(Faction.Friendly);
+        unit.SnapToTileY(tile);
+
+        PlayerDeck.RemoveCardInstance(heroId, starLevel);
+        PlayerDeck.SyncDeckToClient(OwnerClientId);
+
+        Debug.Log($"✅ Spawned {heroData.heroName} ★{starLevel} at {gridPos} for player {OwnerClientId}");
+    }
 
 
 }

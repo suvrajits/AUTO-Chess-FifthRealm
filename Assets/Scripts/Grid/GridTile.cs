@@ -11,6 +11,7 @@ public class GridTile : MonoBehaviour
 
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
+    public bool IsEmpty => OccupyingUnit == null;
 
     public void Init(Vector2Int position, ulong ownerClientId, Color ownerColor)
     {
@@ -44,5 +45,9 @@ public class GridTile : MonoBehaviour
     public void RemoveUnit()
     {
         OccupyingUnit = null;
+    }
+    public bool IsOwnedBy(ulong clientId)
+    {
+        return OwnerClientId == clientId;
     }
 }

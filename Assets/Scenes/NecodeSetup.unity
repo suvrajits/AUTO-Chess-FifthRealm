@@ -601,7 +601,6 @@ MonoBehaviour:
   victoryPanel: {fileID: 1138198461}
   defeatPanel: {fileID: 1970485638}
   eliminatedPanel: {fileID: 1639182062}
-  restartButton: {fileID: 1779724990}
 --- !u!1 &172255847
 GameObject:
   m_ObjectHideFlags: 0
@@ -1961,7 +1960,7 @@ Canvas:
   m_GameObject: {fileID: 936101002}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_Camera: {fileID: 0}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
@@ -3561,6 +3560,54 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1485820585}
   m_CullTransparentMesh: 1
+--- !u!1 &1497537898
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1497537899}
+  - component: {fileID: 1497537900}
+  m_Layer: 0
+  m_Name: InputHandler
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1497537899
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1497537898}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 1942225766}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1497537900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1497537898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bb7093855e326b648b6672366d22c3c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  longPressThreshold: 0.6
+  heroUnitLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!1 &1584553732
 GameObject:
   m_ObjectHideFlags: 0
@@ -4845,6 +4892,7 @@ Transform:
   - {fileID: 85040154}
   - {fileID: 1945562487}
   - {fileID: 1401487032}
+  - {fileID: 1497537899}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1945562487 stripped
