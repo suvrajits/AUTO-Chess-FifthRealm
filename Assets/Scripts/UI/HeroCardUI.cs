@@ -115,10 +115,15 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (dragPreview != null)
+        if (dragPreview == null)
         {
-            Destroy(dragPreview);
+            // This drag likely wasn't initialized, so exit early to avoid null errors.
+            Debug.LogWarning("⚠️ OnEndDrag called but dragPreview was null. Possibly not an actual drag.");
+            return;
         }
+
+        Destroy(dragPreview);
+        dragPreview = null;
 
         // Try to raycast onto the board
         Ray ray = Camera.main.ScreenPointToRay(eventData.position);
@@ -139,4 +144,5 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             }
         }
     }
+
 }

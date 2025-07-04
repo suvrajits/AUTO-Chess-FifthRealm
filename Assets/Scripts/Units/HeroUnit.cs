@@ -51,6 +51,7 @@ public class HeroUnit : NetworkBehaviour
     public Transform contextMenuAnchor;
 
     [HideInInspector] public UnitContextMenuUI contextMenuInstance;
+
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -66,7 +67,7 @@ public class HeroUnit : NetworkBehaviour
             if (heroData == null)
                 Debug.LogError("❌ HeroData missing on server instance!");
 
-            ApplyFusionStats(); // ✅ Apply fusion stat bonuses once
+            ApplyFusionStats();
             moveSpeed = heroData.moveSpeed;
 
             if (currentTile != null)
@@ -75,9 +76,7 @@ public class HeroUnit : NetworkBehaviour
             Debug.Log($"🟢 [{Faction}] {heroData.heroName} {starLevel}★ spawned at {GridPosition} (Owner: {OwnerClientId}) with {CurrentHealth} HP, {attack} ATK");
 
             if (IsAlive)
-            {
                 GetComponent<AICombatController>()?.TickAI();
-            }
         }
 
         hasSpawned = true;
@@ -92,59 +91,33 @@ public class HeroUnit : NetworkBehaviour
             {
                 healthBarUIInstance.Init(CurrentHealth);
                 healthBarUIInstance.SetHealth(CurrentHealth);
-                Debug.Log($"❤️‍🩹 Health bar created for {heroData.heroName}");
             }
             else
             {
-                Debug.LogWarning("⚠️ HeroHealthBarUI component missing on prefab.");
+                Debug.LogWarning("⚠️ HeroHealthBarUI component missing.");
             }
         }
-        else
-        {
-            Debug.LogWarning($"⚠️ Missing healthBarPrefab or healthBarAnchor on {name}");
-        }
 
-        // 🟡 Setup Context Menu UI
+        // 🔵 Setup Context Menu
         if (contextMenuPrefab != null && contextMenuAnchor != null)
         {
-            Debug.Log("📦 Instantiating context menu prefab...");
             GameObject ui = Instantiate(contextMenuPrefab, contextMenuAnchor.position, Quaternion.identity, contextMenuAnchor);
             contextMenuInstance = ui.GetComponent<UnitContextMenuUI>();
 
             if (contextMenuInstance != null)
             {
                 contextMenuInstance.AttachToUnit(this);
-                contextMenuInstance.Init(this); // ✅ REQUIRED to wire buttons
+                contextMenuInstance.Init(this); // Assigns camera and buttons
                 contextMenuInstance.HideMenu();
-                Debug.Log($"📜 Context menu instantiated for {heroData.heroName}");
-
-                // 📷 Assign camera to ConstantScreenSize if present
-                var playerCam = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
-                var scaler = contextMenuInstance.GetComponent<ConstantScreenSize>();
-                if (scaler != null && playerCam != null)
-                {
-                    scaler.SetCamera(playerCam);
-                    Debug.Log("📐 Assigned ConstantScreenSize camera.");
-                }
-                else
-                {
-                    Debug.LogWarning("⚠️ ConstantScreenSize or player camera missing.");
-                }
             }
             else
             {
-                Debug.LogWarning($"⚠️ UnitContextMenuUI missing on context menu prefab assigned to {name}");
+                Debug.LogWarning("⚠️ UnitContextMenuUI component missing from prefab.");
             }
         }
-        else
-        {
-            Debug.LogWarning($"❌ Context menu not instantiated. Prefab or anchor is missing for {name}");
-        }
 
-        // 🔁 Hook health change
         currentHealth.OnValueChanged += OnHealthChanged;
     }
-
 
 
     private void OnDestroy()

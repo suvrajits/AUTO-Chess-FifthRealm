@@ -10,33 +10,49 @@ public class UnitContextMenuUI : MonoBehaviour
     private HeroUnit attachedUnit;
     private Camera cam;
 
+    public void AttachToUnit(HeroUnit unit)
+    {
+        attachedUnit = unit;
+        transform.position = unit.contextMenuAnchor.position;
+    }
+
     public void Init(HeroUnit unit)
     {
         Debug.Log("✅ Init() called for UnitContextMenuUI");
+
         attachedUnit = unit;
 
+        // Grab main cam from local player prefab (should exist even for host)
         cam = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
+
         if (canvas != null && canvas.renderMode == RenderMode.WorldSpace)
         {
-            canvas.worldCamera = cam;
+            //canvas.worldCamera = cam;
+            canvas.worldCamera = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
+
         }
 
-        //sendToDugoutButton?.onClick.RemoveAllListeners();
+        var scaler = GetComponent<ConstantScreenSize>();
+        if (scaler != null)
+        {
+            scaler.SetCamera(cam);
+        }
+
         sendToDugoutButton?.onClick.AddListener(() =>
         {
-            Debug.Log("dugout button clicked");
+            Debug.Log("📦 Dugout button clicked");
             attachedUnit?.RequestReturnToDeckServerRpc();
             HideMenu();
         });
 
-        //sellButton?.onClick.RemoveAllListeners();
         sellButton?.onClick.AddListener(() =>
         {
-            Debug.Log("sell button clicked");
+            Debug.Log("💰 Sell button clicked");
             attachedUnit?.RequestSellFromGridServerRpc();
             HideMenu();
         });
     }
+
 
     public void ShowMenu()
     {
@@ -47,10 +63,5 @@ public class UnitContextMenuUI : MonoBehaviour
     public void HideMenu()
     {
         gameObject.SetActive(false);
-    }
-    public void AttachToUnit(HeroUnit unit)
-    {
-        attachedUnit = unit;
-        transform.position = unit.contextMenuAnchor.position;
     }
 }

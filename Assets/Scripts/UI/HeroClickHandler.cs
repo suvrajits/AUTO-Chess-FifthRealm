@@ -1,9 +1,12 @@
 ﻿using UnityEngine;
+using Unity.Netcode;
 
 public class HeroClickHandler : MonoBehaviour
 {
     [SerializeField] private LayerMask heroUnitLayer;
     [SerializeField] private Camera mainCamera;
+
+    private bool clickedValidUnit = false;
 
     private void Start()
     {
@@ -16,47 +19,43 @@ public class HeroClickHandler : MonoBehaviour
 
     private void Update()
     {
-        bool isOverUI = UIOverlayManager.Instance != null && UIOverlayManager.Instance.IsPointerOverUI();
-
-        if (Input.GetMouseButtonDown(0) && !isOverUI)
+        if (Input.GetMouseButtonDown(0))
         {
+            // ✅ If no hero hit or not your unit, hide all menus
+            
+            bool isOverUI = UIOverlayManager.Instance != null && UIOverlayManager.Instance.IsPointerOverUI();
+
+            if (isOverUI)
+                return;
+            
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit, 100f, heroUnitLayer))
             {
-                Debug.Log($"🧠 Clicked on object: {hit.collider.gameObject.name}");
-
                 HeroUnit unit = hit.collider.GetComponentInParent<HeroUnit>();
-                if (unit != null)
+                if (unit != null && unit.IsOwner && unit.contextMenuInstance != null)
                 {
-                    Debug.Log($"✅ Clicked on HeroUnit: {unit.name}");
-
-                    if (unit.IsOwner && unit.contextMenuInstance != null)
-                    {
-                        unit.contextMenuInstance.ShowMenu();
-                        Debug.Log("📜 Context menu shown.");
-                    }
-                    else if (!unit.IsOwner)
-                    {
-                        Debug.Log("🚫 Not the owner of the clicked unit.");
-                    }
-                    else
-                    {
-                        Debug.Log("❌ Context menu instance is null.");
-                    }
+                    unit.contextMenuInstance.ShowMenu();
+                    Debug.Log("📜 Context menu shown.");
                     return;
                 }
             }
 
-            // Hide all owned menus on empty space click
-            foreach (var unit in FindObjectsOfType<HeroUnit>())
-            {
-                if (unit.IsOwner && unit.contextMenuInstance != null)
-                {
-                    unit.contextMenuInstance.HideMenu();
-                }
-            }
-
-            Debug.Log("❎ Clicked elsewhere — all menus hidden.");
+           
         }
+    }
+
+
+
+    private void HideAllMenus()
+    {
+        foreach (var unit in FindObjectsOfType<HeroUnit>())
+        {
+            if (unit.IsOwner && unit.contextMenuInstance != null)
+            {
+                unit.contextMenuInstance.HideMenu();
+            }
+        }
+
+        Debug.Log("❎ Clicked elsewhere — all menus hidden.");
     }
 }
