@@ -187,6 +187,7 @@ public class PlayerNetworkState : NetworkBehaviour
         SetSpectatorMode(true);
         
     }
+  
 
 
 }

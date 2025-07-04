@@ -601,7 +601,6 @@ MonoBehaviour:
   victoryPanel: {fileID: 1138198461}
   defeatPanel: {fileID: 1970485638}
   eliminatedPanel: {fileID: 1639182062}
-  restartButton: {fileID: 1779724990}
 --- !u!1 &172255847
 GameObject:
   m_ObjectHideFlags: 0
@@ -3996,6 +3995,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 2018299127}
     m_Modifications:
+    - target: {fileID: 3058599959457682139, guid: 90e8926b6174c6f448825c337f807ffb, type: 3}
+      propertyPath: m_PresetInfoIsWorld
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4304183774239167572, guid: 90e8926b6174c6f448825c337f807ffb, type: 3}
       propertyPath: m_Name
       value: PlayerHealthUI

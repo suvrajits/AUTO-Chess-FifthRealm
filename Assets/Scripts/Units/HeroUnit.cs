@@ -45,6 +45,12 @@ public class HeroUnit : NetworkBehaviour
     private HeroHealthBarUI healthBarUIInstance;
     private Quaternion originalRotation;
 
+    public Transform uiAnchor;
+    public Transform GetUIAnchor() => uiAnchor;
+    public GameObject contextMenuPrefab;
+    public Transform contextMenuAnchor;
+
+    [HideInInspector] public UnitContextMenuUI contextMenuInstance;
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -60,8 +66,7 @@ public class HeroUnit : NetworkBehaviour
             if (heroData == null)
                 Debug.LogError("❌ HeroData missing on server instance!");
 
-            ApplyFusionStats(); // ✅ Apply once here only
-
+            ApplyFusionStats(); // ✅ Apply fusion stat bonuses once
             moveSpeed = heroData.moveSpeed;
 
             if (currentTile != null)
@@ -77,6 +82,7 @@ public class HeroUnit : NetworkBehaviour
 
         hasSpawned = true;
 
+        // 🔵 Setup Health Bar
         if (healthBarPrefab != null && healthBarAnchor != null)
         {
             GameObject hb = Instantiate(healthBarPrefab, healthBarAnchor.position, Quaternion.identity, healthBarAnchor);
@@ -86,11 +92,60 @@ public class HeroUnit : NetworkBehaviour
             {
                 healthBarUIInstance.Init(CurrentHealth);
                 healthBarUIInstance.SetHealth(CurrentHealth);
+                Debug.Log($"❤️‍🩹 Health bar created for {heroData.heroName}");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ HeroHealthBarUI component missing on prefab.");
             }
         }
+        else
+        {
+            Debug.LogWarning($"⚠️ Missing healthBarPrefab or healthBarAnchor on {name}");
+        }
 
+        // 🟡 Setup Context Menu UI
+        if (contextMenuPrefab != null && contextMenuAnchor != null)
+        {
+            Debug.Log("📦 Instantiating context menu prefab...");
+            GameObject ui = Instantiate(contextMenuPrefab, contextMenuAnchor.position, Quaternion.identity, contextMenuAnchor);
+            contextMenuInstance = ui.GetComponent<UnitContextMenuUI>();
+
+            if (contextMenuInstance != null)
+            {
+                contextMenuInstance.AttachToUnit(this);
+                contextMenuInstance.Init(this); // ✅ REQUIRED to wire buttons
+                contextMenuInstance.HideMenu();
+                Debug.Log($"📜 Context menu instantiated for {heroData.heroName}");
+
+                // 📷 Assign camera to ConstantScreenSize if present
+                var playerCam = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
+                var scaler = contextMenuInstance.GetComponent<ConstantScreenSize>();
+                if (scaler != null && playerCam != null)
+                {
+                    scaler.SetCamera(playerCam);
+                    Debug.Log("📐 Assigned ConstantScreenSize camera.");
+                }
+                else
+                {
+                    Debug.LogWarning("⚠️ ConstantScreenSize or player camera missing.");
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"⚠️ UnitContextMenuUI missing on context menu prefab assigned to {name}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"❌ Context menu not instantiated. Prefab or anchor is missing for {name}");
+        }
+
+        // 🔁 Hook health change
         currentHealth.OnValueChanged += OnHealthChanged;
     }
+
+
 
     private void OnDestroy()
     {
@@ -260,4 +315,81 @@ public class HeroUnit : NetworkBehaviour
             _ => 1.0f
         };
     }
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestReturnToDeckServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong senderId = rpcParams.Receive.SenderClientId;
+
+        if (OwnerClientId != senderId)
+        {
+            Debug.LogWarning("🚫 Cannot return a unit you don't own.");
+            return;
+        }
+
+        var player = PlayerNetworkState.GetPlayerByClientId(senderId);
+        if (player == null)
+        {
+            Debug.LogWarning("⚠️ Player not found.");
+            return;
+        }
+
+        // Check if deck has room BEFORE proceeding
+        if (!player.PlayerDeck.HasRoom())
+        {
+            Debug.LogWarning($"⚠️ Cannot return {heroData.heroName} — deck is full.");
+            return;
+        }
+
+        var cardInstance = new HeroCardInstance
+        {
+            baseHero = heroData,
+            starLevel = starLevel
+        };
+
+        // Add to deck and sync
+        player.PlayerDeck.AddCard(cardInstance);
+        player.PlayerDeck.SyncDeckToClient(senderId);
+
+        // Remove from board
+        BattleManager.Instance.UnregisterUnit(this);
+        GetComponent<NetworkObject>().Despawn(true);
+
+        Debug.Log($"📦 Returned {heroData.heroName} to deck.");
+    }
+
+
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestSellFromGridServerRpc(ServerRpcParams rpcParams = default)
+    {
+        Debug.Log("trying to sell");
+        ulong senderId = rpcParams.Receive.SenderClientId;
+
+        if (OwnerClientId != senderId)
+        {
+            Debug.LogWarning("🚫 Cannot sell another player's unit.");
+            return;
+        }
+
+        var player = PlayerNetworkState.GetPlayerByClientId(senderId);
+        if (player == null)
+        {
+            Debug.LogWarning("⚠️ Player not found.");
+            return;
+        }
+
+        int refund = starLevel switch
+        {
+            1 => heroData.cost,
+            2 => heroData.cost * 3,
+            3 => heroData.cost * 5,
+            _ => heroData.cost
+        };
+
+        player.GoldManager.AddGold(refund);
+        BattleManager.Instance.UnregisterUnit(this);
+        GetComponent<NetworkObject>().Despawn(true);
+
+        Debug.Log($"💰 Player {senderId} sold {heroData.heroName} for {refund}g");
+    }
+
 }

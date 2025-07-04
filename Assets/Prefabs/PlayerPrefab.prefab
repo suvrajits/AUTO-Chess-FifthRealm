@@ -170,6 +170,7 @@ GameObject:
   - component: {fileID: -3920840050917071578}
   - component: {fileID: 3856782640454790539}
   - component: {fileID: -5118120816032408663}
+  - component: {fileID: 2010537000496757721}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -371,3 +372,19 @@ MonoBehaviour:
   startingHealth: 20
   CurrentHealth:
     m_InternalValue: 20
+--- !u!114 &2010537000496757721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5248960081774751608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca6665f999ccb5a45b925974a212fdde, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  heroUnitLayer:
+    serializedVersion: 2
+    m_Bits: 256
+  mainCamera: {fileID: 2857463836730549054}

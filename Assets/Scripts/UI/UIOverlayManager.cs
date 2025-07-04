@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class UIOverlayManager : MonoBehaviour
 {
@@ -46,4 +47,8 @@ public class UIOverlayManager : MonoBehaviour
     }
 
     public bool IsPopupOpen() => ActivePopup != UIPopupType.None;
+    public bool IsPointerOverUI()
+    {
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
+    }
 }

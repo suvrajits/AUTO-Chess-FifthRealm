@@ -4,7 +4,7 @@ using Unity.Netcode;
 
 public class PlayerCardDeck : NetworkBehaviour
 {
-    [SerializeField] private int maxCapacity = 6;
+    [SerializeField] private int maxCapacity = 5;
     public List<HeroCardInstance> cards = new();
 
     public delegate void OnCardChanged();
@@ -121,6 +121,23 @@ public class PlayerCardDeck : NetworkBehaviour
         cards.Clear();
         DeckChanged?.Invoke();
         Debug.Log("🧹 Cleared player deck.");
+    }
+    public bool AddCard(HeroCardInstance card)
+    {
+        if (cards.Count >= maxCapacity)
+        {
+            Debug.LogWarning("⚠️ Cannot add card: deck is full.");
+            return false;
+        }
+
+        cards.Add(card);
+        DeckChanged?.Invoke();
+        Debug.Log($"➕ Added {card.baseHero.heroName} (★{card.starLevel}) to deck.");
+        return true;
+    }
+    public bool HasRoom()
+    {
+        return cards.Count < maxCapacity;
     }
 
 
