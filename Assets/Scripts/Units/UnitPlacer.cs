@@ -44,7 +44,7 @@ public class UnitPlacer : NetworkBehaviour
         UnitSelectionManager.Instance.ClearSelectedCard();
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     private void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, int starLevel, ServerRpcParams rpcParams = default)
     {
         ulong senderId = rpcParams.Receive.SenderClientId;
