@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
+using System.Collections;
 
 public class UnitContextMenuUI : MonoBehaviour
 {
@@ -9,6 +11,12 @@ public class UnitContextMenuUI : MonoBehaviour
 
     private HeroUnit attachedUnit;
     private Camera cam;
+    private RectTransform rectTransform;
+
+    private void Awake()
+    {
+        rectTransform = GetComponent<RectTransform>();
+    }
 
     public void AttachToUnit(HeroUnit unit)
     {
@@ -21,15 +29,11 @@ public class UnitContextMenuUI : MonoBehaviour
         Debug.Log("✅ Init() called for UnitContextMenuUI");
 
         attachedUnit = unit;
-
-        // Grab main cam from local player prefab (should exist even for host)
         cam = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
 
         if (canvas != null && canvas.renderMode == RenderMode.WorldSpace)
         {
-            //canvas.worldCamera = cam;
-            canvas.worldCamera = PlayerNetworkState.LocalPlayer?.GetComponentInChildren<Camera>(true);
-
+            canvas.worldCamera = cam;
         }
 
         var scaler = GetComponent<ConstantScreenSize>();
@@ -53,15 +57,63 @@ public class UnitContextMenuUI : MonoBehaviour
         });
     }
 
-
     public void ShowMenu()
     {
         if (attachedUnit == null || !attachedUnit.IsOwner) return;
+
         gameObject.SetActive(true);
+        StartCoroutine(DetectClickOutside());
     }
 
     public void HideMenu()
     {
         gameObject.SetActive(false);
+    }
+
+    private IEnumerator DetectClickOutside()
+    {
+        yield return null; // wait 1 frame to avoid self-click
+
+        while (gameObject.activeSelf)
+        {
+            if (Input.GetMouseButtonDown(0))
+            {
+                // Check if pointer is over any UI
+                if (EventSystem.current.IsPointerOverGameObject())
+                {
+                    PointerEventData pointerData = new PointerEventData(EventSystem.current)
+                    {
+                        position = Input.mousePosition
+                    };
+
+                    var results = new System.Collections.Generic.List<RaycastResult>();
+                    EventSystem.current.RaycastAll(pointerData, results);
+
+                    bool clickedSelf = false;
+                    foreach (var r in results)
+                    {
+                        if (r.gameObject.transform.IsChildOf(this.transform))
+                        {
+                            clickedSelf = true;
+                            break;
+                        }
+                    }
+
+                    if (!clickedSelf)
+                    {
+                        HideMenu();
+                        yield break;
+                    }
+                }
+                else
+                {
+                    // Clicked in world, not UI
+                    HideMenu();
+                    yield break;
+                }
+            }
+
+            yield return null;
+        }
     }
 }
