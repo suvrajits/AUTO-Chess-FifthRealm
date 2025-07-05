@@ -49,6 +49,8 @@ public class HeroUnit : NetworkBehaviour
     public Transform GetUIAnchor() => uiAnchor;
     public GameObject contextMenuPrefab;
     public Transform contextMenuAnchor;
+    private Coroutine visualCheckCoroutine;
+
 
     [HideInInspector] public UnitContextMenuUI contextMenuInstance;
 
@@ -57,7 +59,7 @@ public class HeroUnit : NetworkBehaviour
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
     }
-
+    
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -80,6 +82,10 @@ public class HeroUnit : NetworkBehaviour
         }
 
         hasSpawned = true;
+        if (!IsDead && AnimatorHandler != null)
+        {
+            AnimatorHandler.PlayIdle();
+        }
 
         // 🔵 Setup Health Bar
         if (healthBarPrefab != null && healthBarAnchor != null)
@@ -385,8 +391,6 @@ public class HeroUnit : NetworkBehaviour
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
 
-        
-
         AnimatorHandler?.ResetAllTriggers();
         AnimatorHandler?.SetTrigger("hasRecovered");
 
@@ -396,6 +400,8 @@ public class HeroUnit : NetworkBehaviour
         if (col) col.enabled = true;
 
         SetCombatState(false);
+
+        
 
         // ✅ Health bar restore (if null)
         if (healthBarUIInstance == null && healthBarPrefab != null && healthBarAnchor != null)
@@ -417,7 +423,14 @@ public class HeroUnit : NetworkBehaviour
 
         // ✅ Now safe to clear death flag AFTER damage has been applied
         hasDied = false;
+        
         RestoreHealthToMax();
+        if (IsServer)
+        {
+            ShowRevivedClientRpc();
+            ResetAnimatorClientRpc();
+        }
+            
     }
     public void StopAllCombatCoroutines()
     {
@@ -429,5 +442,47 @@ public class HeroUnit : NetworkBehaviour
     }
 
 
+    [ClientRpc]
+    public void HideCorpseClientRpc()
+    {
+        // ✅ Safeguard: only hide if we’re actively in a battle phase
+        if (!BattleManager.Instance || BattleManager.Instance.CurrentPhase != GamePhase.Battle)
+        {
+            Debug.Log($"🛑 Skipping corpse hide — not in battle phase: {BattleManager.Instance?.CurrentPhase}");
+            return;
+        }
+
+        foreach (var renderer in GetComponentsInChildren<Renderer>())
+        {
+            if (renderer != null)
+                renderer.enabled = false;
+        }
+
+        if (healthBarUIInstance != null)
+            healthBarUIInstance.gameObject.SetActive(false);
+
+        Debug.Log($"👻 Corpse hidden for {heroData.heroName}");
+    }
+
+
+    [ClientRpc]
+    private void ShowRevivedClientRpc()
+    {
+        foreach (var r in GetComponentsInChildren<Renderer>())
+            r.enabled = true;
+
+        if (healthBarUIInstance != null)
+            healthBarUIInstance.gameObject.SetActive(true);
+    }
+    [ClientRpc]
+    private void ResetAnimatorClientRpc()
+    {
+        if (!AnimatorHandler) return;
+
+        Debug.Log($"🎬 Resetting animator on client for {heroData.heroName}");
+
+        AnimatorHandler.ResetAllTriggers();
+        AnimatorHandler.SetTrigger("hasRecovered");
+    }
 
 }

@@ -59,6 +59,8 @@ public class UnitContextMenuUI : MonoBehaviour
 
     public void ShowMenu()
     {
+        if (BattleManager.Instance.CurrentPhase == GamePhase.Battle) return;
+
         if (attachedUnit == null || !attachedUnit.IsOwner) return;
 
         gameObject.SetActive(true);

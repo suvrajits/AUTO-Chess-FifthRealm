@@ -25,8 +25,14 @@ public class HeroStateMachine : NetworkBehaviour
         animHandler.TriggerDeath();
 
         StopAllCoroutines();
+        StartCoroutine(HideCorpseAfterDelay(1.5f));
     }
+    private IEnumerator HideCorpseAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
 
+        hero.HideCorpseClientRpc(); // Will run on all clients
+    }
 
 
     private void OnDisable()

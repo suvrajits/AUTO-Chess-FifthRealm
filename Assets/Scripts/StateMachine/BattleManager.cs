@@ -19,11 +19,50 @@ public class BattleManager : NetworkBehaviour
     private List<HeroUnit> teamBUnits = new();
     private bool isBattleOngoing = false;
 
-    public GamePhase CurrentPhase { get; private set; } = GamePhase.Waiting;
+    // ✅ Network-synced game phase
+    private NetworkVariable<GamePhase> _currentPhase = new NetworkVariable<GamePhase>(
+        GamePhase.Waiting,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    // ✅ Expose as read-only for external use
+    public GamePhase CurrentPhase => _currentPhase.Value;
 
     private void Awake()
     {
         Instance = this;
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsClient)
+        {
+            _currentPhase.OnValueChanged += OnPhaseChanged;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (IsClient)
+        {
+            _currentPhase.OnValueChanged -= OnPhaseChanged;
+        }
+    }
+
+    private void OnPhaseChanged(GamePhase oldPhase, GamePhase newPhase)
+    {
+        Debug.Log($"[Client] Phase changed: {oldPhase} → {newPhase}");
+        // TODO: Notify other systems (UIManager, HeroUnit visibility, etc)
+    }
+
+    public void SetPhase(GamePhase newPhase)
+    {
+        if (!IsServer) return;
+        if (_currentPhase.Value == newPhase) return;
+
+        _currentPhase.Value = newPhase;
+        Debug.Log($"[Server] Phase set to: {newPhase}");
     }
 
     public void BeginCombat(List<HeroUnit> teamA, List<HeroUnit> teamB)
@@ -32,13 +71,12 @@ public class BattleManager : NetworkBehaviour
         teamBUnits = teamB.Where(u => u != null && u.IsAlive).ToList();
 
         isBattleOngoing = true;
-        CurrentPhase = GamePhase.Battle;
+        SetPhase(GamePhase.Battle);
 
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
             var ai = unit.GetComponent<AICombatController>();
             ai?.SetBattleMode(true);
-            
         }
 
         Debug.Log("⚔️ Battle started!");
@@ -72,7 +110,7 @@ public class BattleManager : NetworkBehaviour
         if (teamAAlive && teamBAlive) return;
 
         isBattleOngoing = false;
-        CurrentPhase = GamePhase.Results;
+        SetPhase(GamePhase.Results);
 
         string winner = teamAAlive ? "Team A" : teamBAlive ? "Team B" : "Draw";
         Debug.Log($"🏆 Battle ended! Winner: {winner}");
@@ -82,14 +120,13 @@ public class BattleManager : NetworkBehaviour
 
     private void EndBattle()
     {
-        // ✅ Disable AI and animations for all tracked units (alive only — dead handled separately)
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
             if (unit == null) continue;
 
             var ai = unit.GetComponent<AICombatController>();
             ai?.SetBattleMode(false);
-            unit.StopAllCombatCoroutines(); 
+            unit.StopAllCombatCoroutines();
 
             if (unit.IsAlive)
             {
@@ -98,10 +135,8 @@ public class BattleManager : NetworkBehaviour
             }
         }
 
-        // ✅ Delegate full post-battle recovery to BattleGroundManager
         BattleGroundManager.Instance.OnBattleEnded();
     }
-
 
     public bool IsBattleOver() => !isBattleOngoing;
 
@@ -113,9 +148,6 @@ public class BattleManager : NetworkBehaviour
     public HeroUnit FindNearestEnemy(HeroUnit requester)
     {
         var enemies = GetAllAliveUnits().Where(u => u.OwnerClientId != requester.OwnerClientId).ToList();
-
-        if (enemies.Count == 0) return null;
-
         return enemies.OrderBy(e => Vector3.Distance(requester.transform.position, e.transform.position)).FirstOrDefault();
     }
 
@@ -137,19 +169,18 @@ public class BattleManager : NetworkBehaviour
     }
 
     public void RemoveAllUnitsForClient(ulong clientId)
-{
-    var allUnits = teamAUnits.Concat(teamBUnits)
-        .Where(u => u != null && u.OwnerClientId == clientId)
-        .ToList();
-
-    foreach (var unit in allUnits)
     {
-        UnregisterUnit(unit);
-        unit.GetComponent<NetworkObject>()?.Despawn(true);
-        unit.currentTile?.RemoveUnit();
+        var allUnits = teamAUnits.Concat(teamBUnits)
+            .Where(u => u != null && u.OwnerClientId == clientId)
+            .ToList();
+
+        foreach (var unit in allUnits)
+        {
+            UnregisterUnit(unit);
+            unit.GetComponent<NetworkObject>()?.Despawn(true);
+            unit.currentTile?.RemoveUnit();
+        }
+
+        Debug.Log($"🗑️ All units removed for client {clientId}");
     }
-
-    Debug.Log($"🗑️ All units removed for client {clientId}");
-}
-
 }
