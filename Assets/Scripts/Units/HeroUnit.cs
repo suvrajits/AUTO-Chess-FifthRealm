@@ -385,7 +385,7 @@ public class HeroUnit : NetworkBehaviour
         if (!gameObject.activeSelf)
             gameObject.SetActive(true);
 
-        RestoreHealthToMax();
+        
 
         AnimatorHandler?.ResetAllTriggers();
         AnimatorHandler?.SetTrigger("hasRecovered");
@@ -417,8 +417,16 @@ public class HeroUnit : NetworkBehaviour
 
         // ✅ Now safe to clear death flag AFTER damage has been applied
         hasDied = false;
+        RestoreHealthToMax();
     }
-
+    public void StopAllCombatCoroutines()
+    {
+        var ai = GetComponent<AICombatController>();
+        if (ai != null)
+        {
+            ai.StopAllCoroutines(); // ✅ Ensure delayed attacks or repeated attacks stop
+        }
+    }
 
 
 

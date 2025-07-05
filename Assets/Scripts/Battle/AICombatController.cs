@@ -40,8 +40,9 @@ public class AICombatController : NetworkBehaviour
 
     public void TickAI()
     {
-        if (!isInBattle || !unit.IsAlive || data == null) return;
-        
+        if (!isInBattle || !unit.IsAlive || BattleManager.Instance.IsBattleOver())
+            return;
+
         unit.SnapToGroundedTile(); //  Keep centered + upright every frame
 
         HeroUnit target = FindClosestEnemy();
@@ -99,6 +100,9 @@ public class AICombatController : NetworkBehaviour
 
     private void TryAttack(HeroUnit target)
     {
+        if (!unit.IsAlive || BattleManager.Instance.IsBattleOver())
+            return;
+
         if (cooldownTimer > 0)
         {
             cooldownTimer -= Time.deltaTime;

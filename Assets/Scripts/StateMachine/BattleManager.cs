@@ -89,6 +89,7 @@ public class BattleManager : NetworkBehaviour
 
             var ai = unit.GetComponent<AICombatController>();
             ai?.SetBattleMode(false);
+            unit.StopAllCombatCoroutines(); 
 
             if (unit.IsAlive)
             {
