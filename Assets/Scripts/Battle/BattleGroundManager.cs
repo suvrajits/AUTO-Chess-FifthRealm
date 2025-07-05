@@ -27,6 +27,8 @@ public class BattleGroundManager : NetworkBehaviour
 
     [Header("State")]
     private bool battleInProgress = false;
+    private List<HeroUnit> allBattleParticipants = new();
+
 
     private void Awake()
     {
@@ -71,15 +73,30 @@ public class BattleGroundManager : NetworkBehaviour
         if (battleInProgress) return;
 
         battleInProgress = true;
-        PickTeams();
+
+        PickTeams(); // Split units into teamAUnits and teamBUnits
+
+        // ✅ Track ALL participants for post-battle revival
+        allBattleParticipants.Clear();
+        allBattleParticipants.AddRange(teamAUnits);
+        allBattleParticipants.AddRange(teamBUnits);
+
+        // ✅ Save their original tiles for later teleport
+        foreach (var unit in allBattleParticipants)
+        {
+            if (unit != null && unit.currentTile != null)
+            {
+                originalTileMemory[unit] = unit.currentTile;
+            }
+        }
 
         TeleportToBattleGrid(teamAUnits, true);
         TeleportToBattleGrid(teamBUnits, false);
         TeleportPlayersToSpectatorSpot();
 
-        Invoke(nameof(InvokeBattleStart), 2f); // Rename if needed
-
+        Invoke(nameof(InvokeBattleStart), 2f);
     }
+
     private void InvokeBattleStart()
     {
         BattleManager.Instance.BeginCombat(teamAUnits, teamBUnits);
@@ -176,19 +193,9 @@ public class BattleGroundManager : NetworkBehaviour
 
         battleInProgress = false;
 
-        // 🧠 Return surviving units to their original tiles and reset state
-        foreach (var unit in teamAUnits.Concat(teamBUnits))
-        {
-            if (unit == null || !unit.IsAlive) continue;
+        Debug.Log("🛠️ OnBattleEnded: Restoring all battle participants...");
 
-            if (originalTileMemory.TryGetValue(unit, out var homeTile) && homeTile != null)
-            {
-                unit.SnapToTileY(homeTile);
-                unit.SetCombatState(false);
-            }
-        }
-
-        // 🩸 Determine actual winning and losing teams based on survivors
+        // 🩸 Determine winning and losing teams before any revival
         List<HeroUnit> teamAAlive = teamAUnits.Where(u => u != null && u.IsAlive).ToList();
         List<HeroUnit> teamBAlive = teamBUnits.Where(u => u != null && u.IsAlive).ToList();
 
@@ -202,8 +209,35 @@ public class BattleGroundManager : NetworkBehaviour
                 ? teamAUnits.Select(u => u.OwnerClientId).Distinct().ToList()
                 : new List<ulong>(); // Handle draw
 
-        // 💥 Apply damage only to losing players
+        // 💥 Apply damage BEFORE any revive/reset logic
         BattleResultHandler.Instance.ApplyPostBattleDamage(winningTeam, losingClientIds);
+
+        // 🛠️ Then restore all units (alive or dead) to original home grid
+        foreach (var unit in allBattleParticipants)
+        {
+            if (unit == null) continue;
+
+            if (originalTileMemory.TryGetValue(unit, out var homeTile) && homeTile != null)
+            {
+                if (unit.IsAlive)
+                {
+                    // ✅ Alive: reposition + heal
+                    unit.SnapToTileY(homeTile);
+                    unit.RestoreHealthToMax();
+                    unit.SetCombatState(false);
+                    unit.transform.rotation = Quaternion.Euler(0, 0, 0);
+                }
+                else
+                {
+                    // ✅ Dead: revive properly
+                    unit.ReviveAndReturnToTile(homeTile);
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"⚠️ Missing home tile for unit: {unit.name}");
+            }
+        }
 
         // 🧍 Return players to original position
         TeleportPlayersBackToOriginalPositions();
@@ -215,7 +249,11 @@ public class BattleGroundManager : NetworkBehaviour
         originalTileMemory.Clear();
         teamAUnits.Clear();
         teamBUnits.Clear();
+        allBattleParticipants.Clear();
     }
+
+
+
 
 
     private void TeleportPlayersBackToOriginalPositions()

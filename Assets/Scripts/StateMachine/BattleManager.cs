@@ -82,22 +82,25 @@ public class BattleManager : NetworkBehaviour
 
     private void EndBattle()
     {
+        // ✅ Disable AI and animations for all tracked units (alive only — dead handled separately)
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
-            if (unit != null && unit.IsAlive)
-            {
-                var ai = unit.GetComponent<AICombatController>();
-                ai?.SetBattleMode(false);
+            if (unit == null) continue;
 
+            var ai = unit.GetComponent<AICombatController>();
+            ai?.SetBattleMode(false);
+
+            if (unit.IsAlive)
+            {
                 unit.AnimatorHandler?.SetRunning(false);
                 unit.AnimatorHandler?.PlayIdle();
-
-                StartCoroutine(unit.TeleportBackToHomeTile());
             }
         }
 
+        // ✅ Delegate full post-battle recovery to BattleGroundManager
         BattleGroundManager.Instance.OnBattleEnded();
     }
+
 
     public bool IsBattleOver() => !isBattleOngoing;
 

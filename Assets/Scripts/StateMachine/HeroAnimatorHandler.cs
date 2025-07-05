@@ -36,5 +36,14 @@ public class HeroAnimatorHandler : MonoBehaviour
         animator.ResetTrigger("isAttacking");
         animator.ResetTrigger("isDead");
     }
-
+    public void ResetAllTriggers()
+    {
+        animator.ResetTrigger("isAttacking");
+        animator.ResetTrigger("isDead");
+        animator.SetBool("isRunning", false);
+    }
+    public void SetTrigger(string triggerName)
+    {
+        animator.SetTrigger(triggerName);
+    }
 }

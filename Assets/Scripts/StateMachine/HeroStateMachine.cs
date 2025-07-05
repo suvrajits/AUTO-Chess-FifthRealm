@@ -25,50 +25,9 @@ public class HeroStateMachine : NetworkBehaviour
         animHandler.TriggerDeath();
 
         StopAllCoroutines();
-
-        /*Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb)
-        {
-            rb.constraints = RigidbodyConstraints.None;
-            rb.useGravity = true;
-            rb.isKinematic = false;
-        }*/
-
-        StartCoroutine(FreezeCorpseAfterFall());
     }
 
 
-    private IEnumerator FreezeCorpseAfterFall()
-    {
-        yield return new WaitForSeconds(1f);
-        transform.position -= new Vector3(0, corpseSinkY, 0);
-
-        /*Rigidbody rb = GetComponent<Rigidbody>();
-        if (rb)
-        {
-            rb.constraints = RigidbodyConstraints.FreezeAll;
-            rb.isKinematic = true;
-        }*/
-
-        Collider col = GetComponent<Collider>();
-        if (col) col.enabled = false;
-
-        yield return new WaitForSeconds(vanishDelay);
-
-        if (IsServer)
-        {
-            if (GridManager.Instance.TryGetTile(NetworkObject.OwnerClientId, hero.GridPosition, out var tile))
-            {
-                tile.RemoveUnit();
-            }
-
-            BattleManager.Instance.UnregisterUnit(hero);
-
-            var netObj = GetComponent<NetworkObject>();
-            if (netObj && netObj.IsSpawned)
-                netObj.Despawn();
-        }
-    }
 
     private void OnDisable()
     {

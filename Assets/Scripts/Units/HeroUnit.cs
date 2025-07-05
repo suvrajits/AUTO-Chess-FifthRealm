@@ -149,9 +149,7 @@ public class HeroUnit : NetworkBehaviour
         if (tile == null) return;
 
         if (currentTile != null)
-        {
             currentTile.RemoveUnit();
-        }
 
         currentTile = tile;
         GridPosition = tile.GridPosition;
@@ -159,10 +157,14 @@ public class HeroUnit : NetworkBehaviour
         Vector3 pos = tile.transform.position;
         pos.y += 0.1f;
         transform.position = pos;
-        originalRotation = transform.rotation;
+
+        // ✅ Only capture this once, not overwrite it every round
+        if (originalRotation == Quaternion.identity)
+            originalRotation = transform.rotation;
 
         tile.AssignUnit(this);
     }
+
 
     public void RemoveFromTile()
     {
@@ -197,19 +199,21 @@ public class HeroUnit : NetworkBehaviour
         Debug.Log($"☠️ {heroData.heroName} has died from hero unit.");
         hasDied = true;
         currentHealth.Value = 0;
-
+        SetCombatState(false);
         stateMachine?.Die();
-        RemoveFromTile();
 
-        if (IsServer)
-        {
-            BattleManager.Instance?.UnregisterUnit(this);
-        }
     }
+
 
     public void SetCombatState(bool enabled)
     {
         isInCombat = enabled;
+
+        var ai = GetComponent<AICombatController>();
+        if (ai != null)
+        {
+            ai.SetBattleMode(enabled);
+        }
     }
 
     public IEnumerator TeleportBackToHomeTile()
@@ -254,6 +258,7 @@ public class HeroUnit : NetworkBehaviour
 
         currentHealth.Value = heroData.maxHealth * GetFusionMultiplier();
         Debug.Log($"❤️‍🩹 {heroData.heroName}'s health restored to {currentHealth.Value}.");
+
     }
 
     public void SetHealthBarVisible(bool visible)
@@ -364,5 +369,57 @@ public class HeroUnit : NetworkBehaviour
 
         Debug.Log($"💰 Player {senderId} sold {heroData.heroName} for {refund}g");
     }
+    public void MarkAsDeadForBattle()
+    {
+        hasDied = true;
+
+        Collider col = GetComponent<Collider>();
+        if (col) col.enabled = false;
+
+        SetHealthBarVisible(false);
+        SetCombatState(false);
+    }
+
+    public void ReviveAndReturnToTile(GridTile tile)
+    {
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
+        RestoreHealthToMax();
+
+        AnimatorHandler?.ResetAllTriggers();
+        AnimatorHandler?.SetTrigger("hasRecovered");
+
+        SetHealthBarVisible(true);
+
+        Collider col = GetComponent<Collider>();
+        if (col) col.enabled = true;
+
+        SetCombatState(false);
+
+        // ✅ Health bar restore (if null)
+        if (healthBarUIInstance == null && healthBarPrefab != null && healthBarAnchor != null)
+        {
+            GameObject hb = Instantiate(healthBarPrefab, healthBarAnchor.position, Quaternion.identity, healthBarAnchor);
+            healthBarUIInstance = hb.GetComponent<HeroHealthBarUI>();
+            healthBarUIInstance?.Init(CurrentHealth);
+        }
+
+        if (healthBarUIInstance != null)
+        {
+            healthBarUIInstance.SetHealth(CurrentHealth);
+            healthBarUIInstance.gameObject.SetActive(true);
+        }
+
+        // ✅ Snap and reset rotation
+        SnapToTileY(tile);
+        transform.rotation = Quaternion.Euler(0, 0, 0); // Or originalRotation if stored
+
+        // ✅ Now safe to clear death flag AFTER damage has been applied
+        hasDied = false;
+    }
+
+
+
 
 }
