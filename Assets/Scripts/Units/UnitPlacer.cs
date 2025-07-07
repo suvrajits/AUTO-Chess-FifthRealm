@@ -84,19 +84,10 @@ public class UnitPlacer : NetworkBehaviour
 
         if (tile.IsOccupied)
         {
-            var existingUnit = tile.OccupyingUnit;
-            if (existingUnit != null && existingUnit.OwnerClientId == senderId)
-            {
-                BattleManager.Instance.UnregisterUnit(existingUnit);
-                existingUnit.GetComponent<NetworkObject>()?.Despawn(true);
-                tile.RemoveUnit();
-            }
-            else
-            {
-                Debug.LogWarning("🚫 Cannot replace another player's unit.");
-                return;
-            }
+            Debug.LogWarning($"🚫 Cannot place unit on occupied tile at {gridPos} — owned by Client {tile.OccupyingUnit?.OwnerClientId}");
+            return;
         }
+
 
         // 🔒 Optional: server-side safety check on unit cap
         PlayerNetworkState player = PlayerNetworkState.GetPlayerByClientId(senderId);
