@@ -13,7 +13,11 @@ public class GoldManager : NetworkBehaviour
 
     public void AddGold(int amount)
     {
-        if (!IsServer) return;
+        if (!IsServer)
+        {
+            Debug.LogWarning($"❌ [GoldManager] AddGold called on non-server by client {OwnerClientId}");
+            return;
+        }
 
         int newGold = Mathf.Min(CurrentGold.Value + amount, maxGold);
         CurrentGold.Value = newGold;

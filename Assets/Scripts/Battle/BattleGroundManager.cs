@@ -195,7 +195,7 @@ public class BattleGroundManager : NetworkBehaviour
 
         Debug.Log("🛠️ OnBattleEnded: Restoring all battle participants...");
 
-        // 🩸 Determine winning and losing teams before any revival
+        // Determine winning and losing teams
         List<HeroUnit> teamAAlive = teamAUnits.Where(u => u != null && u.IsAlive).ToList();
         List<HeroUnit> teamBAlive = teamBUnits.Where(u => u != null && u.IsAlive).ToList();
 
@@ -207,12 +207,12 @@ public class BattleGroundManager : NetworkBehaviour
             ? teamBUnits.Select(u => u.OwnerClientId).Distinct().ToList()
             : teamBWin
                 ? teamAUnits.Select(u => u.OwnerClientId).Distinct().ToList()
-                : new List<ulong>(); // Handle draw
+                : new List<ulong>(); // draw
 
-        // 💥 Apply damage BEFORE any revive/reset logic
+        // 💥 Damage first
         BattleResultHandler.Instance.ApplyPostBattleDamage(winningTeam, losingClientIds);
 
-        // 🛠️ Then restore all units (alive or dead) to original home grid
+        // ✅ Restore all units (alive or dead)
         foreach (var unit in allBattleParticipants)
         {
             if (unit == null) continue;
@@ -221,7 +221,6 @@ public class BattleGroundManager : NetworkBehaviour
             {
                 if (unit.IsAlive)
                 {
-                    // ✅ Alive: reposition + heal
                     unit.SnapToTileY(homeTile);
                     unit.RestoreHealthToMax();
                     unit.SetCombatState(false);
@@ -229,7 +228,6 @@ public class BattleGroundManager : NetworkBehaviour
                 }
                 else
                 {
-                    // ✅ Dead: revive properly
                     unit.ReviveAndReturnToTile(homeTile);
                 }
             }
@@ -239,22 +237,33 @@ public class BattleGroundManager : NetworkBehaviour
             }
         }
 
-        // 🧍 Return players to original position
+        // 🧍 Return players
         TeleportPlayersBackToOriginalPositions();
 
-        // 🧼 Clean up battlefield tiles
-        CleanupArena();
+        // ✅ Give gold to winners
+        foreach (var clientId in winningTeam.Select(u => u.OwnerClientId).Distinct())
+        {
+            Debug.Log($"🌀 Granting round win reward to Client {clientId}");
+            RewardManager.Instance?.GrantRoundWinReward(clientId);
+        }
 
-        // 🧽 Clear internal state
+        // ✅ Give participation reward to losers
+        foreach (var clientId in losingClientIds)
+        {
+            Debug.Log($"🎗️ Granting round loss reward to Client {clientId}");
+            RewardManager.Instance?.GrantRoundLossReward(clientId);
+        }
+
+        // 🧾 Show round result UI
+        ShowRoundResultClientRpc(winningTeam.Select(u => u.OwnerClientId).Distinct().ToArray());
+
+        // 🧼 Cleanup
+        CleanupArena();
         originalTileMemory.Clear();
         teamAUnits.Clear();
         teamBUnits.Clear();
         allBattleParticipants.Clear();
     }
-
-
-
-
 
     private void TeleportPlayersBackToOriginalPositions()
     {
@@ -280,6 +289,12 @@ public class BattleGroundManager : NetworkBehaviour
             if (tile != null)
                 tile.RemoveUnit();
         }
+    }
+    [ClientRpc]
+    private void ShowRoundResultClientRpc(ulong[] winningClientIds)
+    {
+        bool isWinner = winningClientIds.Contains(NetworkManager.Singleton.LocalClientId);
+        RewardUI.Instance?.ShowRoundResult(isWinner);
     }
 
 }

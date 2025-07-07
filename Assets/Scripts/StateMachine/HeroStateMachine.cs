@@ -25,7 +25,7 @@ public class HeroStateMachine : NetworkBehaviour
         animHandler.TriggerDeath();
 
         StopAllCoroutines();
-        StartCoroutine(HideCorpseAfterDelay(1.5f));
+        StartCoroutine(HideCorpseAfterDelay(2f));
     }
     private IEnumerator HideCorpseAfterDelay(float delay)
     {

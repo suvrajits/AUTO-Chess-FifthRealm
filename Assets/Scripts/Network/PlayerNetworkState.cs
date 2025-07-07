@@ -187,7 +187,14 @@ public class PlayerNetworkState : NetworkBehaviour
         SetSpectatorMode(true);
         
     }
-  
+    [ServerRpc]
+    public void ClaimRewardServerRpc(int amount)
+    {
+        GoldManager.AddGold(amount);
+        Debug.Log($"🪙 [Server] Reward claimed: {amount}g for Player {OwnerClientId}");
+    }
+
+
 
 
 }

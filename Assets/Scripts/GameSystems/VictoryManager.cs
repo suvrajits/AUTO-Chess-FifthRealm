@@ -31,9 +31,21 @@ public class VictoryManager : NetworkBehaviour
 
     private void DeclareWinner(ulong winnerClientId)
     {
-        Debug.Log($"🏆 [VictoryManager] Declaring Player {winnerClientId} as winner");
+        Debug.Log($"🏆 [VictoryManager] Declaring Player {winnerClientId} as match winner");
+
+        var winner = PlayerNetworkState.GetPlayerByClientId(winnerClientId);
+        if (winner != null && RewardManager.Instance != null)
+        {
+            RewardManager.Instance.GrantMatchVictoryReward(winnerClientId);
+        }
+        else
+        {
+            Debug.LogWarning("❌ [VictoryManager] RewardManager.Instance or Winner is null.");
+        }
+
         BroadcastVictoryClientRpc(winnerClientId);
     }
+
 
     [ClientRpc]
     private void BroadcastVictoryClientRpc(ulong winnerClientId)
@@ -47,5 +59,14 @@ public class VictoryManager : NetworkBehaviour
             VictoryUIHandler.Instance.ShowResult(isWinner);
         else
             Debug.LogWarning("❌ VictoryUIHandler.Instance is null on client.");
+    }
+
+    // ✅ Hook from BattleResultHandler or BattleGroundManager
+    public void DeclareRoundWin(ulong winnerClientId)
+    {
+        if (!IsServer) return;
+
+        Debug.Log($"🟩 [VictoryManager] Player {winnerClientId} won the round");
+        RewardManager.Instance.GrantRoundWinReward(winnerClientId);
     }
 }

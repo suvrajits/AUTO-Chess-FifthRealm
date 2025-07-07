@@ -12,27 +12,31 @@ public class GoldUI : MonoBehaviour
 
     private void Start()
     {
-        var localPlayer = PlayerNetworkState.LocalPlayer;
-        if (localPlayer == null)
+        if (PlayerNetworkState.LocalPlayer == null)
         {
             Debug.LogWarning("🟡 LocalPlayer not ready. Retrying...");
             StartCoroutine(WaitForLocalPlayer());
             return;
         }
 
-        goldManager = localPlayer.GetComponent<GoldManager>();
+        InitializeGoldUI();
+    }
+
+    private IEnumerator WaitForLocalPlayer()
+    {
+        yield return new WaitUntil(() => PlayerNetworkState.LocalPlayer != null);
+        InitializeGoldUI();
+    }
+
+    private void InitializeGoldUI()
+    {
+        goldManager = PlayerNetworkState.LocalPlayer.GetComponent<GoldManager>();
 
         if (goldManager != null)
         {
             goldManager.CurrentGold.OnValueChanged += OnGoldChanged;
             UpdateGoldUI(goldManager.CurrentGold.Value);
         }
-    }
-
-    private IEnumerator WaitForLocalPlayer()
-    {
-        yield return new WaitUntil(() => PlayerNetworkState.LocalPlayer != null);
-        Start();
     }
 
     private void OnGoldChanged(int oldValue, int newValue)
@@ -67,5 +71,6 @@ public class GoldUI : MonoBehaviour
             Debug.Log("❌ Not enough gold.");
         }
     }
+
 
 }
