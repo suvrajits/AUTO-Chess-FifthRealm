@@ -338,7 +338,14 @@ public class HeroUnit : NetworkBehaviour
         BattleManager.Instance.UnregisterUnit(this);
         GetComponent<NetworkObject>().Despawn(true);
 
+        if (player.PlacedUnitCount.Value > 0)
+        {
+            player.PlacedUnitCount.Value--;
+            Debug.Log($"📉 Returned to deck. New unit count: {player.PlacedUnitCount.Value}");
+        }
+
         Debug.Log($"📦 Returned {heroData.heroName} to deck.");
+
     }
 
 
@@ -372,6 +379,12 @@ public class HeroUnit : NetworkBehaviour
         player.GoldManager.AddGold(refund);
         BattleManager.Instance.UnregisterUnit(this);
         GetComponent<NetworkObject>().Despawn(true);
+
+        if (player.PlacedUnitCount.Value > 0)
+        {
+            player.PlacedUnitCount.Value--;
+            Debug.Log($"📉 Unit sold. New unit count: {player.PlacedUnitCount.Value}");
+        }
 
         Debug.Log($"💰 Player {senderId} sold {heroData.heroName} for {refund}g");
     }

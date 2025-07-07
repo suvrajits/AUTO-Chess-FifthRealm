@@ -40,9 +40,28 @@ public class UnitPlacer : NetworkBehaviour
             return;
         }
 
+        // 🔥 Placement cap enforcement (client-side check)
+        var player = PlayerNetworkState.GetPlayerByClientId(clientId);
+        if (player != null)
+        {
+            int placed = player.PlacedUnitCount.Value;
+            int allowed = player.MaxUnitsAllowed;
+
+            if (placed >= allowed)
+            {
+                Debug.LogWarning($"⚠️ Cannot place unit: limit reached ({placed}/{allowed})");
+
+                if (RoundHUDUI.Instance != null)
+                    RoundHUDUI.Instance.FlashLimitReached();
+
+                return;
+            }
+        }
+
         SpawnUnitServerRpc(tile.GridPosition, cardInstance.baseHero.heroId, cardInstance.starLevel);
         UnitSelectionManager.Instance.ClearSelectedCard();
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     private void SpawnUnitServerRpc(Vector2Int gridPos, int heroId, int starLevel, ServerRpcParams rpcParams = default)
@@ -79,6 +98,14 @@ public class UnitPlacer : NetworkBehaviour
             }
         }
 
+        // 🔒 Optional: server-side safety check on unit cap
+        PlayerNetworkState player = PlayerNetworkState.GetPlayerByClientId(senderId);
+        if (player != null && player.PlacedUnitCount.Value >= player.MaxUnitsAllowed)
+        {
+            Debug.LogWarning($"🚫 Server: Player {senderId} exceeded unit cap. Placement denied.");
+            return;
+        }
+
         Vector3 spawnPos = tile.transform.position + new Vector3(0, 0.55f, 0);
         GameObject unitObj = Instantiate(heroData.heroPrefab, spawnPos, Quaternion.identity);
 
@@ -96,11 +123,17 @@ public class UnitPlacer : NetworkBehaviour
 
         BattleManager.Instance.RegisterUnit(heroUnit, heroUnit.Faction);
 
-        // ✅ Remove card from deck and sync it to client
-        PlayerNetworkState player = PlayerNetworkState.GetPlayerByClientId(senderId);
-        player?.PlayerDeck?.RemoveCardInstance(new HeroCardInstance { baseHero = heroData, starLevel = starLevel });
-        player?.PlayerDeck?.SyncDeckToClient(senderId);
+        if (player != null)
+        {
+            player.PlayerDeck?.RemoveCardInstance(new HeroCardInstance { baseHero = heroData, starLevel = starLevel });
+            player.PlayerDeck?.SyncDeckToClient(senderId);
+
+            // ✅ Increment synced unit count
+            player.PlacedUnitCount.Value++;
+            Debug.Log($"📈 Player {senderId} placed unit. Count: {player.PlacedUnitCount.Value}");
+        }
     }
+
 
     private Faction FactionForClient(ulong clientId)
     {

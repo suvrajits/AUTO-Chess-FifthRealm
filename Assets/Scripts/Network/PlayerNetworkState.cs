@@ -22,6 +22,17 @@ public class PlayerNetworkState : NetworkBehaviour
     public bool IsAlive => HealthManager != null && !HealthManager.IsDead;
     public NetworkVariable<bool> IsEliminated = new(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<int> CurrentRound = new NetworkVariable<int>(
+    1,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server);
+
+    public int MaxUnitsAllowed => Mathf.Min(2 + CurrentRound.Value - 1, 8);
+    public NetworkVariable<int> PlacedUnitCount = new NetworkVariable<int>(
+    0,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();

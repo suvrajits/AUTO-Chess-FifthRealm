@@ -183,4 +183,12 @@ public class BattleManager : NetworkBehaviour
 
         Debug.Log($"🗑️ All units removed for client {clientId}");
     }
+    public List<HeroUnit> GetAliveUnitsForPlayer(ulong clientId)
+    {
+        return teamAUnits
+            .Concat(teamBUnits)
+            .Where(u => u != null && u.OwnerClientId == clientId && u.IsAlive)
+            .ToList();
+    }
+
 }

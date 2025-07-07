@@ -257,6 +257,12 @@ public class BattleGroundManager : NetworkBehaviour
         teamAUnits.Clear();
         teamBUnits.Clear();
         allBattleParticipants.Clear();
+
+        foreach (var player in PlayerNetworkState.AllPlayers.Values)
+        {
+            player.CurrentRound.Value++;
+            Debug.Log($"📈 Player {player.OwnerClientId} now at Round {player.CurrentRound.Value}");
+        }
     }
 
     private void TeleportPlayersBackToOriginalPositions()
