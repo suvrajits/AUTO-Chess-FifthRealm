@@ -1,7 +1,6 @@
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "HeroData", menuName = "Dota2DOW/Hero Data", order = 1)]
-
 public class HeroData : ScriptableObject
 {
     public int heroId;
@@ -14,7 +13,19 @@ public class HeroData : ScriptableObject
     public int cost;
     public Sprite heroIcon;
     public string description;
-    public GameObject heroPrefab; // Prefab reference for this hero
+    public GameObject heroPrefab;
+
     [Tooltip("Delay between animation start and hit frame in seconds")]
     public float attackDelay = 0.25f;
+
+    [Header("AI & Formation")]
+    public HeroRole heroRole = HeroRole.Flexible;  // NEW: Used for role-based formation
 }
+
+public enum HeroRole
+{
+    Frontline,
+    Backline,
+    Flexible
+}
+

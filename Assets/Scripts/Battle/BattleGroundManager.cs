@@ -138,28 +138,22 @@ public class BattleGroundManager : NetworkBehaviour
 
     private void TeleportToBattleGrid(List<HeroUnit> units, bool isTeamA)
     {
-        int row = isTeamA ? 1 : 6;
+        if (units == null || units.Count == 0) return;
 
-        for (int i = 0; i < units.Count; i++)
+        var assignments = FormationPlanner.GenerateFormation(units, battleGrid, isTeamA);
+
+        foreach (var (unit, tile) in assignments)
         {
-            HeroUnit unit = units[i];
-            if (unit == null) continue;
+            if (unit == null || tile == null) continue;
 
             if (unit.currentTile != null)
                 originalTileMemory[unit] = unit.currentTile;
 
-            int col = Mathf.Clamp(i, 0, gridSizeX - 1);
-            GridTile targetTile = battleGrid[col, row];
-            if (targetTile == null)
-            {
-                Debug.LogError($"❌ Missing battle tile at ({col},{row})");
-                continue;
-            }
-
-            unit.SnapToTileY(targetTile);
+            unit.SnapToTileY(tile);
             unit.SetCombatState(true);
         }
     }
+
 
     private void TeleportPlayersToSpectatorSpot()
     {

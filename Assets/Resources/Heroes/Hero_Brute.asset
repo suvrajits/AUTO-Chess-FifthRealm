@@ -24,3 +24,4 @@ MonoBehaviour:
   description: 
   heroPrefab: {fileID: 1090314742711936182, guid: 083ce3f64cf0b874c90759b743e994fd, type: 3}
   attackDelay: 4.2
+  heroRole: 0
