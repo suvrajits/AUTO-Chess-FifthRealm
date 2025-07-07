@@ -309,6 +309,10 @@ MonoBehaviour:
   playerShopStatePrefab: {fileID: 764726777193650823, guid: 223bd437890d89c4f921814b474e017f, type: 3}
   IsEliminated:
     m_InternalValue: 0
+  CurrentRound:
+    m_InternalValue: 1
+  PlacedUnitCount:
+    m_InternalValue: 0
 --- !u!114 &5420571145694361456
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -340,7 +344,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   maxGold: 100
   CurrentGold:
-    m_InternalValue: 30
+    m_InternalValue: 60
 --- !u!114 &3856782640454790539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -386,5 +390,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heroUnitLayer:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 0
   mainCamera: {fileID: 2857463836730549054}

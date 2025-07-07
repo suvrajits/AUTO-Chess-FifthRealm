@@ -12,15 +12,8 @@ public class PlayerCardDeck : NetworkBehaviour
     public int Capacity => maxCapacity;
     public bool TryAddCard(HeroData heroData, out bool didFuse)
     {
-        didFuse = false;
-
-        if (cards.Count >= maxCapacity)
-            return false;
-
-        cards.Add(new HeroCardInstance { baseHero = heroData, starLevel = 1 });
-        didFuse = TryFusion(heroData);
-        DeckChanged?.Invoke();
-        return true;
+        didFuse = AddCard(new HeroCardInstance { baseHero = heroData, starLevel = 1 });
+        return didFuse;
     }
 
 
@@ -37,22 +30,46 @@ public class PlayerCardDeck : NetworkBehaviour
 
     private bool TryFusion(HeroData heroData)
     {
-        var matches = cards.FindAll(c => c.baseHero == heroData && c.starLevel == 1);
-        if (matches.Count >= 3)
+        bool didAnyFusion = false;
+
+        while (true)
         {
-            for (int i = 0; i < 3; i++)
-                cards.Remove(matches[i]);
+            bool fused = false;
 
-            cards.Add(new HeroCardInstance { baseHero = heroData, starLevel = 2 });
+            for (int star = 1; star <= 2; star++) // allow up to ★3
+            {
+                var matches = cards.FindAll(c => c.baseHero == heroData && c.starLevel == star);
 
-            Debug.Log($"✨ Fusion complete: {heroData.heroName} upgraded to 2★");
-            DeckChanged?.Invoke();
-            return true;
+                if (matches.Count >= 3)
+                {
+                    // Remove 3 matching cards
+                    for (int i = 0; i < 3; i++)
+                        cards.Remove(matches[i]);
+
+                    // Create next-star fusion card
+                    var fusedCard = new HeroCardInstance
+                    {
+                        baseHero = heroData,
+                        starLevel = star + 1
+                    };
+
+                    Debug.Log($"🌟 Fusion: {heroData.heroName} upgraded to ★{fusedCard.starLevel}");
+
+                    // 🔁 Re-enter fusion via AddCard — key to solving your bug
+                    AddCard(fusedCard);
+
+                    didAnyFusion = true;
+                    fused = true;
+                    break; // restart from star=1
+                }
+            }
+
+            if (!fused)
+                break;
         }
 
-        return false;
+        return didAnyFusion;
     }
-
 
 
     public void SetCapacity(int newCap)
@@ -131,10 +148,14 @@ public class PlayerCardDeck : NetworkBehaviour
         }
 
         cards.Add(card);
-        DeckChanged?.Invoke();
         Debug.Log($"➕ Added {card.baseHero.heroName} (★{card.starLevel}) to deck.");
+
+        bool didFuse = TryFusion(card.baseHero); // ✅ critical
+        DeckChanged?.Invoke();
+
         return true;
     }
+
     public bool HasRoom()
     {
         return cards.Count < maxCapacity;

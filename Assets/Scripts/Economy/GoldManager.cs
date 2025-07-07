@@ -3,10 +3,10 @@ using Unity.Netcode;
 
 public class GoldManager : NetworkBehaviour
 {
-    [SerializeField] private int maxGold = 50;
+    [SerializeField] private int maxGold = 100;
 
     public NetworkVariable<int> CurrentGold = new NetworkVariable<int>(
-        10,
+        60,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
