@@ -53,13 +53,35 @@ public class HeroUnit : NetworkBehaviour
 
 
     [HideInInspector] public UnitContextMenuUI contextMenuInstance;
+    private float tapCooldown = 0.25f;
+    private float lastTapTime = -1f;
 
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
     }
-    
+    private void Update()
+    {
+        // Skip if not owned by this player
+        if (!IsOwner) return;
+
+#if UNITY_EDITOR || UNITY_STANDALONE
+        // Handle mouse click
+        if (Input.GetMouseButtonDown(0) && Time.time - lastTapTime > tapCooldown)
+        {
+            HandleTapOrClick(Input.mousePosition);
+            lastTapTime = Time.time;
+        }
+#elif UNITY_IOS || UNITY_ANDROID
+    // Handle mobile tap
+    if (Input.touchCount == 1 && Input.GetTouch(0).phase == TouchPhase.Began && Time.time - lastTapTime > tapCooldown)
+    {
+        HandleTapOrClick(Input.GetTouch(0).position);
+        lastTapTime = Time.time;
+    }
+#endif
+    }
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
@@ -496,6 +518,25 @@ public class HeroUnit : NetworkBehaviour
 
         AnimatorHandler.ResetAllTriggers();
         AnimatorHandler.SetTrigger("hasRecovered");
+    }
+    private void HandleTapOrClick(Vector2 screenPosition)
+    {
+        Ray ray = Camera.main.ScreenPointToRay(screenPosition);
+        if (Physics.Raycast(ray, out RaycastHit hit, 100f))
+        {
+            if (hit.collider != null && hit.collider.gameObject == this.gameObject)
+            {
+                if (contextMenuInstance != null)
+                {
+                    Debug.Log($"👆 Tapped {heroData.heroName} — showing context menu");
+                    contextMenuInstance.ShowMenu();
+                }
+                else
+                {
+                    Debug.LogWarning("❌ contextMenuInstance is null");
+                }
+            }
+        }
     }
 
 }

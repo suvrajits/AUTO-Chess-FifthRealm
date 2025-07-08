@@ -12,7 +12,7 @@ public class ShopUIManager : MonoBehaviour
     [SerializeField] private Button rerollButton;
 
     private List<HeroCardShopUI> activeCards = new();
-
+    
     private void Start()
     {
         rerollButton.onClick.RemoveAllListeners();
@@ -27,21 +27,30 @@ public class ShopUIManager : MonoBehaviour
     {
         Clear();
 
+        if (heroIds == null || heroIds.Count == 0)
+        {
+            Debug.LogWarning("⚠️ Empty shop list received.");
+            return;
+        }
+
         foreach (int id in heroIds)
         {
             HeroData hero = UnitDatabase.Instance.GetHeroById(id);
-            if (hero == null) continue;
+            if (hero == null)
+            {
+                Debug.LogWarning($"❌ HeroData not found for id {id}");
+                continue;
+            }
 
             GameObject cardGO = Instantiate(heroCardPrefab, cardContainer);
             HeroCardShopUI card = cardGO.GetComponent<HeroCardShopUI>();
             card.Setup(hero, OnCardBuyClicked);
-
             activeCards.Add(card);
         }
 
-        // ✅ Re-enable the reroll button when shop is done rendering
         rerollButton.interactable = true;
     }
+
 
     private void OnCardBuyClicked(int heroId)
     {

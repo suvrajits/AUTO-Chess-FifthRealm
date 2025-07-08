@@ -1,37 +1,24 @@
 ﻿using UnityEngine;
-using Unity.Services.Core;
-using Unity.Services.Authentication;
-using System;
 using System.Threading.Tasks;
 
 public class AuthInitializer : MonoBehaviour
 {
-    async void Start()
+    private async void Start()
     {
-        await InitializeUnityServices();
+        await InitIfNeeded();
     }
 
-    private async Task InitializeUnityServices()
+    private async Task InitIfNeeded()
     {
         try
         {
-            await UnityServices.InitializeAsync();
+            await UnityServicesManager.InitUnityServicesIfNeeded();
 
-            if (!AuthenticationService.Instance.IsSignedIn)
-            {
-                // Fallback for old SDK: Sign in anonymously
-                await AuthenticationService.Instance.SignInAnonymouslyAsync();
-
-                Debug.Log("Signed in anonymously. Player ID: " + AuthenticationService.Instance.PlayerId);
-            }
-            else
-            {
-                Debug.Log("Already signed in. Player ID: " + AuthenticationService.Instance.PlayerId);
-            }
+            Debug.Log("[AuthInitializer] ✅ Unity Services initialized by UnityServicesManager.");
         }
-        catch (Exception e)
+        catch (System.Exception e)
         {
-            Debug.LogError("Authentication failed: " + e.Message);
+            Debug.LogError("[AuthInitializer] ❌ Failed to initialize Unity Services: " + e.Message);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -14,10 +15,13 @@ public class ShopManager : NetworkBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
+        if (Instance != null && Instance != this)
+        {
             Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
     }
 
     public override void OnNetworkSpawn()
@@ -125,21 +129,6 @@ public class ShopManager : NetworkBehaviour
         });
     }
 
-    [ClientRpc]
-    private void SyncShopClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
-    {
-        if (!IsClient) return;
-
-        Debug.Log($"📦 [Client] Received shop list: {string.Join(", ", heroIds)}");
-
-        var ui = UnityEngine.Object.FindFirstObjectByType<ShopUIManager>();
-        if (ui != null)
-        {
-            ui.RenderShop(new List<int>(heroIds)); // ✅ Refresh with new list
-        }
-    }
-
-
     private void Shuffle<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
@@ -148,4 +137,35 @@ public class ShopManager : NetworkBehaviour
             (list[i], list[j]) = (list[j], list[i]);
         }
     }
+    [ClientRpc]
+    private void SyncShopClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
+    {
+        if (!IsClient) return;
+        StartCoroutine(WaitForShopUIAndRender(new List<int>(heroIds)));
+    }
+
+    private IEnumerator WaitForShopUIAndRender(List<int> heroIds)
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        ShopUIManager ui = null;
+
+        while (ui == null && elapsed < timeout)
+        {
+            ui = FindFirstObjectByType<ShopUIManager>();
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        if (ui != null)
+        {
+            ui.RenderShop(heroIds);
+        }
+        else
+        {
+            Debug.LogError("❌ ShopUIManager not found in scene after timeout.");
+        }
+    }
+
 }

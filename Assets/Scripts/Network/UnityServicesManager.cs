@@ -1,57 +1,58 @@
 ﻿using Unity.Services.Core;
 using Unity.Services.Authentication;
-using System.Threading.Tasks;
 using UnityEngine;
+using System.Threading.Tasks;
 
-public class UnityServicesManager : MonoBehaviour
+public static class UnityServicesManager
 {
-    public static bool IsInitialized { get; private set; } = false;
-    public static UnityServicesManager Instance;
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-        DontDestroyOnLoad(gameObject);
-
-        _ = InitUnityServicesIfNeeded();
-    }
+    private static bool isInitialized = false;
+    private static Task initTask;
 
     public static async Task InitUnityServicesIfNeeded()
     {
-        if (IsInitialized) return;
+        if (isInitialized)
+        {
+            Debug.Log("[UnityServices] Already initialized.");
+            return;
+        }
 
+        if (initTask != null)
+        {
+            // Await the ongoing initialization
+            Debug.Log("[UnityServices] Waiting for concurrent initialization...");
+            await initTask;
+            return;
+        }
+
+        initTask = InitializeServicesInternal();
+        await initTask;
+    }
+
+    private static async Task InitializeServicesInternal()
+    {
         try
         {
-            Debug.Log("[UnityServices] Initializing...");
-
             await UnityServices.InitializeAsync();
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
-                Debug.Log($"[UnityServices] Signed in as anonymous user: {AuthenticationService.Instance.PlayerId}");
+                Debug.Log($"[UnityServices] Signed in as: {AuthenticationService.Instance.PlayerId}");
             }
 
-            IsInitialized = true;
-            Debug.Log("[UnityServices]  Initialization complete.");
+            isInitialized = true;
         }
-        catch (AuthenticationException authEx)
+        catch (AuthenticationException ex)
         {
-            Debug.LogError($"[UnityServices]  Auth Error: {authEx.Message}");
+            Debug.LogError($"[UnityServices] Auth error: {ex.Message}");
         }
-        catch (ServicesInitializationException initEx)
+        catch (RequestFailedException ex)
         {
-            Debug.LogError($"[UnityServices]  Initialization Error: {initEx.Message}");
+            Debug.LogError($"[UnityServices] Request failed: {ex.Message}");
         }
-        catch (System.Exception ex)
+        finally
         {
-            Debug.LogError($"[UnityServices]  Unknown Error: {ex.Message}");
+            initTask = null; // Clear for future init attempts if needed
         }
     }
 }

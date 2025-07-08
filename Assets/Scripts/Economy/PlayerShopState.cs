@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
 
@@ -9,7 +10,6 @@ public class PlayerShopState : NetworkBehaviour
 
     private PlayerNetworkState player;
 
-    // ✅ Global reference registry (only server-side)
     public static Dictionary<ulong, PlayerShopState> AllShops = new();
 
     public void Init(ulong clientId, PlayerNetworkState playerState)
@@ -18,7 +18,10 @@ public class PlayerShopState : NetworkBehaviour
         Debug.Log($"🛠 Init PlayerShopState for ClientId: {clientId}");
 
         if (IsServer)
-            GenerateNewShop();
+        {
+            AllShops[clientId] = this;
+            StartCoroutine(WaitForShopManagerAndGenerate());
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -31,14 +34,12 @@ public class PlayerShopState : NetworkBehaviour
             Debug.Log($"📦 [Server] Registered PlayerShopState for Client {OwnerClientId}");
         }
 
-        // ✅ For host only: wait 1 frame and sync shop to self
         if (IsOwner && IsServer)
         {
             Debug.Log("⏳ [Host] Scheduling delayed shop sync to self...");
             StartCoroutine(DelayedShopSyncToSelf());
         }
     }
-
 
     public override void OnDestroy()
     {
@@ -92,6 +93,7 @@ public class PlayerShopState : NetworkBehaviour
             Debug.LogWarning($"❌ [Server] Deck full. Cannot buy {hero.heroName}");
             return;
         }
+
         player.PlayerDeck.SyncDeckToClient(OwnerClientId);
         CurrentShop.Remove(hero);
         Debug.Log($"✅ [Server] Client {OwnerClientId} bought {hero.heroName}");
@@ -112,6 +114,28 @@ public class PlayerShopState : NetworkBehaviour
         ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
     }
 
+    private IEnumerator WaitForShopManagerAndGenerate()
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (ShopManager.Instance == null && elapsed < timeout)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+
+        if (ShopManager.Instance != null)
+        {
+            Debug.Log($"✅ ShopManager available after {elapsed:F2}s. Generating shop...");
+            GenerateNewShop();
+        }
+        else
+        {
+            Debug.LogError("❌ ShopManager.Instance still null after timeout. Shop not generated.");
+        }
+    }
+
     private void Shuffle<T>(List<T> list)
     {
         for (int i = list.Count - 1; i > 0; i--)
@@ -120,19 +144,34 @@ public class PlayerShopState : NetworkBehaviour
             (list[i], list[k]) = (list[k], list[i]);
         }
     }
-    private System.Collections.IEnumerator DelayedShopSyncToSelf()
-    {
-        yield return null; // wait 1 frame
 
-        Debug.Log($"✅ [Host] Sending initial shop to self after delay.");
-        ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
+    private IEnumerator DelayedShopSyncToSelf()
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (ShopManager.Instance == null && elapsed < timeout)
+        {
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+
+        if (ShopManager.Instance != null)
+        {
+            Debug.Log($"✅ [Host] Sending initial shop to self after delay.");
+            ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
+        }
+        else
+        {
+            Debug.LogError("❌ ShopManager.Instance still null after timeout. Cannot sync shop.");
+        }
     }
+
+
     public void DisableShop()
     {
         CurrentShop.Clear();
         ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
         Debug.Log($"🚫 Shop disabled for player {OwnerClientId}");
     }
-
-
 }
