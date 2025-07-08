@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22ab025f8e06dc1498aea8ae1a9df655, type: 3}
+  m_Name: SacredHarmony
+  m_EditorClassIdentifier: 
+  synergyName: Sacred Harmony
+  icon: {fileID: 0}
+  description: Heal every 5s, gain wisdom
+  requiredTraits:
+  - {fileID: 11400000, guid: 07ae414c627feed45bef83bd4883cb57, type: 2}
+  - {fileID: 11400000, guid: 67ef07ec9d6c2dc448c108f118d2c1aa, type: 2}
+  - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
+  - {fileID: 11400000, guid: a5c7e9e035714cd4c888241a1b2d473b, type: 2}
+  - {fileID: 11400000, guid: 713f3e32df357a649a9f6ff36734dccb, type: 2}
+  - {fileID: 11400000, guid: f5bc0805623a091428702bc497a5a00c, type: 2}
+  - {fileID: 11400000, guid: e7bc616ddf7bdad46acc42264326d171, type: 2}
+  - {fileID: 11400000, guid: c168d63bb89cc6e46b85080e033acad0, type: 2}
+  requiredPlayerLevel: 5

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "HeroData", menuName = "Dota2DOW/Hero Data", order = 1)]
@@ -14,6 +15,7 @@ public class HeroData : ScriptableObject
     public Sprite heroIcon;
     public string description;
     public GameObject heroPrefab;
+    public List<TraitDefinition> traits;
 
     [Tooltip("Delay between animation start and hit frame in seconds")]
     public float attackDelay = 0.25f;

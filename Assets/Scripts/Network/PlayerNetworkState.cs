@@ -33,10 +33,12 @@ public class PlayerNetworkState : NetworkBehaviour
     NetworkVariableReadPermission.Everyone,
     NetworkVariableWritePermission.Server
     );
+    public TraitTracker TraitTracker { get; private set; }
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
         HealthManager = GetComponent<PlayerHealthManager>();
+        TraitTracker = GetComponent<TraitTracker>();
 
     }
     public static PlayerNetworkState GetLocalPlayer()

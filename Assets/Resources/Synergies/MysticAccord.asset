@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22ab025f8e06dc1498aea8ae1a9df655, type: 3}
+  m_Name: MysticAccord
+  m_EditorClassIdentifier: 
+  synergyName: MysticAccord
+  icon: {fileID: 0}
+  description: Spells apply bonus debuff
+  requiredTraits:
+  - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
+  - {fileID: 11400000, guid: c168d63bb89cc6e46b85080e033acad0, type: 2}
+  - {fileID: 11400000, guid: a5c7e9e035714cd4c888241a1b2d473b, type: 2}
+  requiredPlayerLevel: 5

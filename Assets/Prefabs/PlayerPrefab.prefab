@@ -171,6 +171,7 @@ GameObject:
   - component: {fileID: 3856782640454790539}
   - component: {fileID: -5118120816032408663}
   - component: {fileID: 2010537000496757721}
+  - component: {fileID: 1528181741344702347}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -342,9 +343,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  maxGold: 100
+  maxGold: 200
   CurrentGold:
-    m_InternalValue: 60
+    m_InternalValue: 10
 --- !u!114 &3856782640454790539
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -392,3 +393,17 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 0
   mainCamera: {fileID: 2857463836730549054}
+--- !u!114 &1528181741344702347
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5248960081774751608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 037e1978dbde7f046be61d1473677148, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  activeAdvancedSynergies: []
