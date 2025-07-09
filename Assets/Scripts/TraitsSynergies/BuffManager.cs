@@ -146,6 +146,11 @@ public class BuffManager : NetworkBehaviour
 
         // ✅ Always update the displayed stack count from the synced value
         poisonUIInstance?.SetStacks(poisonStackCount.Value);
+        if (poisonUIInstance != null)
+        {
+            poisonUIInstance.SetStacks(totalStacks);
+            poisonUIInstance.gameObject.SetActive(totalStacks > 0); // 👈 only visible if poisoned
+        }
     }
 
 
@@ -223,5 +228,28 @@ public class BuffManager : NetworkBehaviour
         if (poisonUIInstance != null)
             poisonUIInstance.SetStacks(0);
     }
+    public void HidePoisonUI()
+    {
+        if (NetworkManager.Singleton.IsServer)
+            HidePoisonUIClientRpc(); // Ensure all clients are notified
+        else
+            InternalHidePoisonUI(); // fallback
 
+        InternalHidePoisonUI(); // host/local fallback
+    }
+    [ClientRpc]
+    private void HidePoisonUIClientRpc()
+    {
+        InternalHidePoisonUI();
+    }
+    private void InternalHidePoisonUI()
+    {
+        if (poisonUIInstance != null)
+            poisonUIInstance.gameObject.SetActive(false);
+    }
+    public void ShowPoisonUIIfNeeded()
+    {
+        if (poisonUIInstance != null && poisonStackCount.Value > 0)
+            poisonUIInstance.gameObject.SetActive(true);
+    }
 }

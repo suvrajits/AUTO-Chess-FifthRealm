@@ -257,6 +257,7 @@ public class HeroUnit : NetworkBehaviour
 
         Debug.Log($"☠️ {heroData.heroName} has died from hero unit.");
         hasDied = true;
+        BuffManager?.HidePoisonUI();
         currentHealth.Value = 0;
         SetCombatState(false);
         stateMachine?.Die();
@@ -267,10 +268,6 @@ public class HeroUnit : NetworkBehaviour
             player.TraitTracker?.RecalculateTraits(player.GetAllAliveHeroUnits(), player.PlayerLevel.Value);
         }
     }
-
-
-
-
 
     public void SetCombatState(bool enabled)
     {
@@ -504,7 +501,8 @@ public class HeroUnit : NetworkBehaviour
             ShowRevivedClientRpc();
             ResetAnimatorClientRpc();
         }
-            
+        
+
     }
     public void StopAllCombatCoroutines()
     {
