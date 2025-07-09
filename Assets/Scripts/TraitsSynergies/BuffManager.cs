@@ -89,7 +89,6 @@ public class BuffManager : NetworkBehaviour
     {
         if (sourceUnit == null || hero == null) yield break;
 
-        // Add or increment poison stack for source
         if (!poisonStackCounts.ContainsKey(sourceUnit))
             poisonStackCounts[sourceUnit] = 0;
         poisonStackCounts[sourceUnit]++;
@@ -101,14 +100,17 @@ public class BuffManager : NetworkBehaviour
 
         while (elapsed < duration)
         {
-            if (hero == null || !hero.IsAlive) yield break;
+            // 🛡 Safety check
+            if (hero == null || !hero.IsAlive || BattleManager.Instance.CurrentPhase != GamePhase.Battle)
+                yield break;
 
             hero.TakeDamage(Mathf.RoundToInt(damagePerTick), sourceUnit);
+
             yield return new WaitForSeconds(tickRate);
             elapsed += tickRate;
         }
 
-        // Decrement after duration ends
+        // Decrement after done
         if (poisonStackCounts.ContainsKey(sourceUnit))
         {
             poisonStackCounts[sourceUnit]--;
@@ -118,6 +120,7 @@ public class BuffManager : NetworkBehaviour
 
         UpdatePoisonUI();
     }
+
 
     private void UpdatePoisonUI()
     {
@@ -202,4 +205,23 @@ public class BuffManager : NetworkBehaviour
             UpdatePoisonUI();
         }
     }
+    public void ClearAllBuffs()
+    {
+        foreach (var kvp in activeBuffs)
+        {
+            if (kvp.Value != null)
+                StopCoroutine(kvp.Value);
+        }
+
+        activeBuffs.Clear();
+        poisonStackCounts.Clear();
+
+        // Optional: reset shield, lifesteal, and UI
+        currentShield = 0;
+        hero.DisableLifesteal();
+
+        if (poisonUIInstance != null)
+            poisonUIInstance.SetStacks(0);
+    }
+
 }

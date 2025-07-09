@@ -214,6 +214,10 @@ public class BattleGroundManager : NetworkBehaviour
 
         // 💥 Damage first
         BattleResultHandler.Instance.ApplyPostBattleDamage(winningTeam, losingClientIds);
+        foreach (var hero in allBattleParticipants)
+        {
+            hero.BuffManager?.ClearAllBuffs();
+        }
 
         // ✅ Restore all units (alive or dead)
         foreach (var unit in allBattleParticipants)
@@ -265,6 +269,7 @@ public class BattleGroundManager : NetworkBehaviour
         originalTileMemory.Clear();
         teamAUnits.Clear();
         teamBUnits.Clear();
+     
         allBattleParticipants.Clear();
 
         foreach (var player in PlayerNetworkState.AllPlayers.Values)
@@ -272,6 +277,7 @@ public class BattleGroundManager : NetworkBehaviour
             player.CurrentRound.Value++;
             Debug.Log($"📈 Player {player.OwnerClientId} now at Round {player.CurrentRound.Value}");
         }
+        
     }
 
     private void TeleportPlayersBackToOriginalPositions()
