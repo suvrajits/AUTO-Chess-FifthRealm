@@ -11,7 +11,7 @@ public enum BuffType
     LifestealAura
 }
 
-public class BuffManager : MonoBehaviour
+public class BuffManager : NetworkBehaviour
 {
     private HeroUnit hero;
     private readonly Dictionary<BuffType, Coroutine> activeBuffs = new();
@@ -158,16 +158,23 @@ public class BuffManager : MonoBehaviour
 
         return incoming;
     }
-    public void OnNetworkSpawn()
+    public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         poisonStackCount.OnValueChanged += (oldVal, newVal) =>
         {
-            if (poisonUIInstance != null)
+            if (poisonUIInstance == null && poisonStackUIPrefab != null)
             {
-                poisonUIInstance.SetStacks(newVal);
+                GameObject go = Instantiate(poisonStackUIPrefab, transform.position, Quaternion.identity, transform);
+                poisonUIInstance = go.GetComponent<PoisonStackUI>();
+                poisonUIInstance?.Init(transform);
             }
+
+            poisonUIInstance?.SetStacks(newVal);
         };
     }
+
     public void ClearAllPoison()
     {
         poisonStackCounts.Clear();
