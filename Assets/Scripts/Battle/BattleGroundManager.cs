@@ -216,6 +216,7 @@ public class BattleGroundManager : NetworkBehaviour
         BattleResultHandler.Instance.ApplyPostBattleDamage(winningTeam, losingClientIds);
         foreach (var hero in allBattleParticipants)
         {
+            hero.BuffManager?.ClearAllPoison();
             hero.BuffManager?.ClearAllBuffs();
         }
 

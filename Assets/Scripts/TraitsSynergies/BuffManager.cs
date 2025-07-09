@@ -187,7 +187,11 @@ public class BuffManager : NetworkBehaviour
     {
         poisonStackCounts.Clear();
         poisonStackCount.Value = 0;
-        poisonUIInstance?.SetStacks(0);
+
+        if (poisonUIInstance != null)
+            poisonUIInstance.SetStacks(0);
+
+        HidePoisonUI(); // ✅ ensure it's hidden
     }
 
     public void StopAllBuffs()
