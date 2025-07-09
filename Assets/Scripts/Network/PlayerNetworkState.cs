@@ -34,6 +34,11 @@ public class PlayerNetworkState : NetworkBehaviour
     NetworkVariableWritePermission.Server
     );
     public TraitTracker TraitTracker { get; private set; }
+    public NetworkVariable<int> PlayerLevel = new(
+    1,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
     private void Awake()
     {
         GoldManager = GetComponent<GoldManager>();
@@ -207,7 +212,16 @@ public class PlayerNetworkState : NetworkBehaviour
         Debug.Log($"🪙 [Server] Reward claimed: {amount}g for Player {OwnerClientId}");
     }
 
-
+    public List<HeroUnit> GetAllAliveHeroUnits()
+    {
+        var aliveHeroes = new List<HeroUnit>();
+        foreach (var unit in GetComponentsInChildren<HeroUnit>())
+        {
+            if (unit.IsAlive)
+                aliveHeroes.Add(unit);
+        }
+        return aliveHeroes;
+    }
 
 
 }

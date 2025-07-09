@@ -178,8 +178,10 @@ public class BuffManager : NetworkBehaviour
     public void ClearAllPoison()
     {
         poisonStackCounts.Clear();
+        poisonStackCount.Value = 0;
         poisonUIInstance?.SetStacks(0);
     }
+
     public void StopAllBuffs()
     {
         foreach (var pair in activeBuffs)
@@ -191,5 +193,13 @@ public class BuffManager : NetworkBehaviour
         activeBuffs.Clear();
         poisonStackCounts.Clear();
         poisonUIInstance?.SetStacks(0);
+    }
+    public void ClearAllPoisonFrom(HeroUnit source)
+    {
+        if (poisonStackCounts.ContainsKey(source))
+        {
+            poisonStackCounts.Remove(source);
+            UpdatePoisonUI();
+        }
     }
 }

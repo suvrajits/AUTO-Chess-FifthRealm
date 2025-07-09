@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using System.Linq;
@@ -49,8 +49,21 @@ public class TraitTracker : NetworkBehaviour
         }
 
         OnTraitsChanged?.Invoke();
+
+        Debug.Log("🧮 Recalculating Traits");
+        foreach (var kvp in traitCounts)
+            Debug.Log($"Trait: {kvp.Key.traitName}, Count: {kvp.Value}");
+
+        foreach (var kvp in activeBonuses)
+            Debug.Log($"✅ Active Trait Bonus: {kvp.Key.traitName} → {kvp.Value.requiredCount}");
     }
 
     public event Action OnTraitsChanged;
+    public bool IsSynergyActive(string traitName)
+    {
+        return activeBonuses.Keys.Any(t => t.traitName == traitName);
+    }
+
+
 
 }

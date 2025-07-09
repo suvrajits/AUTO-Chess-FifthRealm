@@ -64,6 +64,8 @@ public class HeroUnit : NetworkBehaviour
     private float bonusAttack = 0f;
     private float bonusMaxHealth = 0f;
     public GameObject poisonStackUIPrefab;
+    public PlayerNetworkState OwnerPlayerNetworkState => NetworkManager.Singleton.ConnectedClients[OwnerClientId].PlayerObject.GetComponent<PlayerNetworkState>();
+
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -259,7 +261,15 @@ public class HeroUnit : NetworkBehaviour
         SetCombatState(false);
         stateMachine?.Die();
 
+        var player = PlayerNetworkState.GetPlayerByClientId(OwnerClientId);
+        if (player != null)
+        {
+            player.TraitTracker?.RecalculateTraits(player.GetAllAliveHeroUnits(), player.PlayerLevel.Value);
+        }
     }
+
+
+
 
 
     public void SetCombatState(bool enabled)

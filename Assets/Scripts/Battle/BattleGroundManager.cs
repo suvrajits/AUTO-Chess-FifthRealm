@@ -75,6 +75,15 @@ public class BattleGroundManager : NetworkBehaviour
         battleInProgress = true;
 
         PickTeams(); // Split units into teamAUnits and teamBUnits
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        {
+            var player = PlayerNetworkState.GetPlayerByClientId(clientId);
+            if (player == null) continue;
+
+            var aliveUnits = BattleManager.Instance.GetAliveUnitsForPlayer(clientId);
+            player.TraitTracker?.RecalculateTraits(aliveUnits, player.PlayerLevel.Value);
+        }
+
 
         // ✅ Track ALL participants for post-battle revival
         allBattleParticipants.Clear();

@@ -15,11 +15,13 @@ public class TraitEffectHandler : MonoBehaviour
     private bool isYogiActive = false;
     private int yogiStacks = 0;
     private int maxYogiStacks = 3;
+    private TraitTracker traitTracker;
     public void Initialize(HeroUnit hero, List<TraitDefinition> traitList)
     {
         unit = hero;
         traits = traitList;
         hasUsedFirstStrike = false;
+        traitTracker = unit.OwnerPlayerNetworkState?.GetComponent<TraitTracker>();
     }
     private void Update()
     {
@@ -62,8 +64,20 @@ public class TraitEffectHandler : MonoBehaviour
             // 🐍 Naga – Apply Poison Stack
             if (trait.traitName == "Naga")
             {
-                ApplyPoison(target);
+                var traitTracker = unit.OwnerPlayerNetworkState?.GetComponent<TraitTracker>();
+
+                // Only apply poison if synergy is active
+                if (traitTracker != null && traitTracker.IsSynergyActive("Naga"))
+                {
+                    ApplyPoison(target);
+                }
+                else
+                {
+                    // If synergy is broken, clean up poison from this target
+                    target.BuffManager?.ClearAllPoison();
+                }
             }
+
             if (trait.traitName == "Dhanava")
             {
                 TryExecuteTarget(target);
@@ -146,10 +160,19 @@ public class TraitEffectHandler : MonoBehaviour
         float poisonDamagePerTick = 4f;
         float durationPerStack = 4f;
 
-        target.BuffManager?.ApplyBuff(BuffType.Poison, poisonDamagePerTick, durationPerStack, unit);
-
-        Debug.Log($"🐍 Naga poison applied to {target.heroData.heroName} by {unit.heroData.heroName}");
+        if (traitTracker != null && traitTracker.IsSynergyActive("Naga"))
+        {
+            target.BuffManager?.ApplyBuff(BuffType.Poison, poisonDamagePerTick, durationPerStack, unit);
+            Debug.Log($"🐍 Poison applied to {target.heroData.heroName} by {unit.heroData.heroName}");
+        }
+        else
+        {
+            Debug.Log($"❌ Naga synergy inactive. Poison not applied by {unit.heroData.heroName}");
+        }
     }
+
+
+
     private void ApplyYogiBuff()
     {
         float atkBoost = unit.Attack * 0.10f;
