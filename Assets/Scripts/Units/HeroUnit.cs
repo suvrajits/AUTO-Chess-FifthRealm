@@ -55,11 +55,16 @@ public class HeroUnit : NetworkBehaviour
     [HideInInspector] public UnitContextMenuUI contextMenuInstance;
     private float tapCooldown = 0.25f;
     private float lastTapTime = -1f;
-
+    public BuffManager BuffManager { get; private set; }
+    private bool hasLifestealAura = false;
+    private float lifestealPercentage = 0f;
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
+        BuffManager = GetComponent<BuffManager>();
+        if (BuffManager == null)
+            BuffManager = gameObject.AddComponent<BuffManager>();
     }
     private void Update()
     {
@@ -216,8 +221,16 @@ public class HeroUnit : NetworkBehaviour
 
     public void TakeDamage(int amount)
     {
+        if (!IsAlive || amount <= 0) return;
+
+        if (BuffManager != null)
+        {
+            float absorbed = BuffManager.AbsorbDamage(amount);
+            amount = Mathf.RoundToInt(absorbed); // Remaining after shield
+        }
         Debug.Log($"🎯 {heroData.heroName} received {amount} damage.");
         ApplyDamage(amount);
+
     }
 
     public void Die()
@@ -538,5 +551,44 @@ public class HeroUnit : NetworkBehaviour
             }
         }
     }
+    public void SetShieldVisual(bool enabled)
+    {
+        // OPTIONAL: You can assign a GameObject like a glowing particle ring
+        // Example:
+        Transform shieldFX = transform.Find("ShieldFX");
+        if (shieldFX != null)
+            shieldFX.gameObject.SetActive(enabled);
+    }
+    public void ApplyPoisonTest()
+    {
+        BuffManager?.ApplyBuff(BuffType.Poison, 5, 3f);
+    }
+    public void EnableLifesteal(float percentage)
+    {
+        lifestealPercentage = percentage;
+        hasLifestealAura = true;
+        Debug.Log($"🩸 {heroData.heroName} enabled lifesteal aura ({percentage * 100f}% of damage).");
+    }
+
+    public void DisableLifesteal()
+    {
+        lifestealPercentage = 0f;
+        hasLifestealAura = false;
+        Debug.Log($"🛑 {heroData.heroName} disabled lifesteal aura.");
+    }
+    public void Heal(int amount)
+    {
+        if (!IsAlive || amount <= 0) return;
+
+        float prevHP = currentHealth.Value;
+        currentHealth.Value = Mathf.Min(currentHealth.Value + amount, heroData.maxHealth * GetFusionMultiplier());
+        float healed = currentHealth.Value - prevHP;
+
+
+        Debug.Log($"💚 {heroData.heroName} healed {amount}. Current HP: {currentHealth.Value}");
+    }
+    public bool HasLifesteal() => hasLifestealAura;
+
+    public float GetLifestealPercentage() => lifestealPercentage;
 
 }

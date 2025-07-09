@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Agni
   m_EditorClassIdentifier: 
   traitName: Agni
-  traitIcon: {fileID: 0}
+  traitIcon: {fileID: 21300000, guid: 14f6cec3d50f35b449e5d0386be805a2, type: 3}
   symbol: "\U0001F525"
-  description: fury retaliators
+  description: Flameborne rage brawlers.
   uiColor: {r: 1, g: 0.9435326, b: 0.06132078, a: 0}
+  activationSound: {fileID: 0}
+  tooltip: 
   tierBonuses:
-  - requiredCount: 3
-    bonusDescription: First strike deals AoE shock.
-  - requiredCount: 6
-    bonusDescription: Grants nearby allies bonus move speed.
-  - requiredCount: 8
-    bonusDescription: Grants nearby allies bonus move speed.
+  - requiredCount: 2
+    bonusDescription: Bonus attack speed under 50% HP
+  - requiredCount: 4
+    bonusDescription: Deal area damage when hit

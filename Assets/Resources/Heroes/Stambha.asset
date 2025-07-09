@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Brute
+  m_Name: Stambha
   m_EditorClassIdentifier: 
   heroId: 6
-  heroName: Brute
+  heroName: Stambha
   maxHealth: 420
   attackDamage: 42
   attackRange: 1.5
@@ -23,5 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 7ecbd1ebda089364fa88e926b6605660, type: 3}
   description: 
   heroPrefab: {fileID: 1090314742711936182, guid: 083ce3f64cf0b874c90759b743e994fd, type: 3}
+  traits:
+  - {fileID: 11400000, guid: 713f3e32df357a649a9f6ff36734dccb, type: 2}
+  - {fileID: 11400000, guid: c168d63bb89cc6e46b85080e033acad0, type: 2}
   attackDelay: 4.2
   heroRole: 0

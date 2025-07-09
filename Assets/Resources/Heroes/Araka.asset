@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Knight
+  m_Name: Araka
   m_EditorClassIdentifier: 
   heroId: 1
-  heroName: Knight
+  heroName: Araka
   maxHealth: 380
   attackDamage: 30
   attackRange: 1.5
@@ -23,5 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 1afb35716f04a894c8b6c0a268ae6d44, type: 3}
   description: 
   heroPrefab: {fileID: 1578704834589959522, guid: f69e61b29be0b6c4587b60a521aacbc6, type: 3}
+  traits:
+  - {fileID: 11400000, guid: f5bc0805623a091428702bc497a5a00c, type: 2}
+  - {fileID: 11400000, guid: 713f3e32df357a649a9f6ff36734dccb, type: 2}
   attackDelay: 3.5
   heroRole: 0

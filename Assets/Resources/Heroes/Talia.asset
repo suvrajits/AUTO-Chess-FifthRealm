@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Assassin
+  m_Name: Talia
   m_EditorClassIdentifier: 
   heroId: 5
-  heroName: Assassin
+  heroName: Talia
   maxHealth: 220
   attackDamage: 40
   attackRange: 1.2
@@ -23,5 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 6135695f67b7a6a4f8f723c7caccd2c5, type: 3}
   description: 
   heroPrefab: {fileID: 6609675140676988595, guid: 13c9f7f8777a6924f87f32be5ff15573, type: 3}
+  traits:
+  - {fileID: 11400000, guid: e7bc616ddf7bdad46acc42264326d171, type: 2}
+  - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
   attackDelay: 3
   heroRole: 0

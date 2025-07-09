@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Healer
+  m_Name: NaaginiVasuki
   m_EditorClassIdentifier: 
   heroId: 4
-  heroName: Healer
+  heroName: Naagini Vasuki
   maxHealth: 280
   attackDamage: 5
   attackRange: 3.5
@@ -23,5 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 3c828d4e6a8fc684b808b8dfc413e7bf, type: 3}
   description: 
   heroPrefab: {fileID: 1283152093216832500, guid: e4e6accebd93e004385b0d138e758d61, type: 3}
+  traits:
+  - {fileID: 11400000, guid: a5c7e9e035714cd4c888241a1b2d473b, type: 2}
+  - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
   attackDelay: 5.5
   heroRole: 1

@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Naga
   m_EditorClassIdentifier: 
   traitName: Naga
-  traitIcon: {fileID: 0}
+  traitIcon: {fileID: 21300000, guid: fee0ac5733250224ca056f3c95cdd2b1, type: 3}
   symbol: "\U0001F40D"
-  description: poison spread
+  description: Serpentblood mystics. Poison/control.
   uiColor: {r: 1, g: 0.9435326, b: 0.06132078, a: 0}
+  activationSound: {fileID: 0}
+  tooltip: 
   tierBonuses:
-  - requiredCount: 3
-    bonusDescription: First strike deals AoE shock.
-  - requiredCount: 6
-    bonusDescription: Grants nearby allies bonus move speed.
-  - requiredCount: 8
-    bonusDescription: Grants nearby allies bonus move speed.
+  - requiredCount: 2
+    bonusDescription: Venom slows movement
+  - requiredCount: 4
+    bonusDescription: Venom jumps to nearby enemies

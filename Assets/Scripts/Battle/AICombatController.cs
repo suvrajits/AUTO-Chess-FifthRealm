@@ -127,9 +127,17 @@ public class AICombatController : NetworkBehaviour
     {
         yield return new WaitForSeconds(delay);
 
-        if (target != null && unit != null && unit.IsAlive)
+        if (target != null && unit != null && unit.IsAlive && target.IsAlive)
         {
-            target.TakeDamage((int)unit.Attack);
+            int damage = (int)unit.Attack;
+            target.TakeDamage(damage);
+
+            // 🩸 Lifesteal Hook — this unit heals based on damage dealt
+            if (unit.HasLifesteal())
+            {
+                float healAmount = damage * unit.GetLifestealPercentage();
+                unit.Heal(Mathf.RoundToInt(healAmount));
+            }
         }
 
         unit.AnimatorHandler?.SetRunning(false);

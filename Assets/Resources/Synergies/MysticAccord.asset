@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22ab025f8e06dc1498aea8ae1a9df655, type: 3}
   m_Name: MysticAccord
   m_EditorClassIdentifier: 
-  synergyName: MysticAccord
+  synergyName: Rishi Accord
   icon: {fileID: 0}
   description: Spells apply bonus debuff
   requiredTraits:

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Raze_Assassin
+  m_Name: Vanakavi
   m_EditorClassIdentifier: 
   heroId: 8
-  heroName: Raze Assassin
+  heroName: Vanakavi
   maxHealth: 300
   attackDamage: 70
   attackRange: 1
@@ -23,5 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 6eb4fb8134c6c284ab05c072d5631512, type: 3}
   description: 
   heroPrefab: {fileID: 6542240709122820643, guid: 20d43ed3960cb3c479357affa7bfb991, type: 3}
+  traits:
+  - {fileID: 11400000, guid: e7bc616ddf7bdad46acc42264326d171, type: 2}
+  - {fileID: 11400000, guid: f5bc0805623a091428702bc497a5a00c, type: 2}
   attackDelay: 4.8
   heroRole: 0

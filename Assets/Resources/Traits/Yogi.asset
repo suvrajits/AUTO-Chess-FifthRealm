@@ -13,10 +13,12 @@ MonoBehaviour:
   m_Name: Yogi
   m_EditorClassIdentifier: 
   traitName: Yogi
-  traitIcon: {fileID: 0}
+  traitIcon: {fileID: 21300000, guid: 066b5a73a29f11442a36c3c64c2564ef, type: 3}
   symbol: "\U0001F52E"
   description: scale + lifesteal
   uiColor: {r: 1, g: 0.9435326, b: 0.06132078, a: 0}
+  activationSound: {fileID: 0}
+  tooltip: 
   tierBonuses:
   - requiredCount: 3
     bonusDescription: First strike deals AoE shock.

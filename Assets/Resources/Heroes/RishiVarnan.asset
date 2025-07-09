@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1e410ffe708453d46bd0af50d5cfd046, type: 3}
-  m_Name: Hero_Mage
+  m_Name: RishiVarnan
   m_EditorClassIdentifier: 
   heroId: 3
-  heroName: Mage
+  heroName: Rishi Varnan
   maxHealth: 200
   attackDamage: 12
   attackRange: 4.5
@@ -23,4 +23,8 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: b87325bd0b025e24a815d7ea8db4d7f0, type: 3}
   description: 
   heroPrefab: {fileID: 2915216289379390591, guid: a3db81143bc887d4cae4f01e8a8c632a, type: 3}
+  traits:
+  - {fileID: 11400000, guid: 07ae414c627feed45bef83bd4883cb57, type: 2}
+  - {fileID: 11400000, guid: 67ef07ec9d6c2dc448c108f118d2c1aa, type: 2}
   attackDelay: 5.5
+  heroRole: 2

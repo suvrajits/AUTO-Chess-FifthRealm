@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22ab025f8e06dc1498aea8ae1a9df655, type: 3}
   m_Name: SacredHarmony
   m_EditorClassIdentifier: 
-  synergyName: Sacred Harmony
+  synergyName: Deva Concord
   icon: {fileID: 0}
   description: Heal every 5s, gain wisdom
   requiredTraits:

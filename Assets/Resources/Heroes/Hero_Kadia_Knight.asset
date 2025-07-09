@@ -23,4 +23,7 @@ MonoBehaviour:
   heroIcon: {fileID: 21300000, guid: 316d9ade3e41f30458368404add77679, type: 3}
   description: 
   heroPrefab: {fileID: 1040356374170298340, guid: 1a0828072ace53b4186c7a1e6d12914a, type: 3}
+  traits:
+  - {fileID: 11400000, guid: f5bc0805623a091428702bc497a5a00c, type: 2}
   attackDelay: 3.5
+  heroRole: 2
