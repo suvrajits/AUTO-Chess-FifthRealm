@@ -1,6 +1,7 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public enum BuffType
 {
@@ -13,27 +14,37 @@ public enum BuffType
 public class BuffManager : MonoBehaviour
 {
     private HeroUnit hero;
-
     private readonly Dictionary<BuffType, Coroutine> activeBuffs = new();
 
     private float currentShield = 0;
+
+    // ✅ Poison stack tracking
+    private Dictionary<HeroUnit, int> poisonStackCounts = new();
+    private PoisonStackUI poisonUIInstance;
+
+    // ✅ Prefab to assign from HeroUnit
+    public GameObject poisonStackUIPrefab;
+    private NetworkVariable<int> poisonStackCount = new NetworkVariable<int>(
+    0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
+);
 
     void Awake()
     {
         hero = GetComponent<HeroUnit>();
     }
 
-    // Core entry point
+    // 📍 Entry point to apply buff
     public void ApplyBuff(BuffType type, float value, float duration, HeroUnit source = null)
     {
-        if (activeBuffs.ContainsKey(type))
+        if (type != BuffType.Poison && activeBuffs.ContainsKey(type))
         {
             StopCoroutine(activeBuffs[type]);
             activeBuffs.Remove(type);
         }
 
         Coroutine buffRoutine = StartCoroutine(HandleBuff(type, value, duration, source));
-        activeBuffs[type] = buffRoutine;
+        if (type != BuffType.Poison)
+            activeBuffs[type] = buffRoutine;
     }
 
     private IEnumerator HandleBuff(BuffType type, float value, float duration, HeroUnit source)
@@ -41,14 +52,7 @@ public class BuffManager : MonoBehaviour
         switch (type)
         {
             case BuffType.Poison:
-                float poisonTickRate = 1f;
-                float poisonElapsed = 0f;
-                while (poisonElapsed < duration)
-                {
-                    hero.TakeDamage(Mathf.RoundToInt(value));
-                    yield return new WaitForSeconds(poisonTickRate);
-                    poisonElapsed += poisonTickRate;
-                }
+                yield return StartCoroutine(ApplyStackingPoison(hero, value, duration, source));
                 break;
 
             case BuffType.Bleed:
@@ -71,16 +75,78 @@ public class BuffManager : MonoBehaviour
                 break;
 
             case BuffType.LifestealAura:
-                hero.EnableLifesteal(value); // Assume this sets a flag in HeroUnit
+                hero.EnableLifesteal(value);
                 yield return new WaitForSeconds(duration);
                 hero.DisableLifesteal();
                 break;
         }
 
-        activeBuffs.Remove(type);
+        if (activeBuffs.ContainsKey(type))
+            activeBuffs.Remove(type);
     }
 
-    // For damage taken: apply shield if active
+    private IEnumerator ApplyStackingPoison(HeroUnit hero, float damagePerTick, float duration, HeroUnit sourceUnit)
+    {
+        if (sourceUnit == null || hero == null) yield break;
+
+        // Add or increment poison stack for source
+        if (!poisonStackCounts.ContainsKey(sourceUnit))
+            poisonStackCounts[sourceUnit] = 0;
+        poisonStackCounts[sourceUnit]++;
+
+        UpdatePoisonUI();
+
+        float tickRate = 0.5f;
+        float elapsed = 0f;
+
+        while (elapsed < duration)
+        {
+            if (hero == null || !hero.IsAlive) yield break;
+
+            hero.TakeDamage(Mathf.RoundToInt(damagePerTick), sourceUnit);
+            yield return new WaitForSeconds(tickRate);
+            elapsed += tickRate;
+        }
+
+        // Decrement after duration ends
+        if (poisonStackCounts.ContainsKey(sourceUnit))
+        {
+            poisonStackCounts[sourceUnit]--;
+            if (poisonStackCounts[sourceUnit] <= 0)
+                poisonStackCounts.Remove(sourceUnit);
+        }
+
+        UpdatePoisonUI();
+    }
+
+    private void UpdatePoisonUI()
+    {
+        if (poisonStackUIPrefab == null || hero == null)
+            return;
+
+        // 🔁 Total stacks from all attackers
+        int totalStacks = 0;
+        foreach (var kvp in poisonStackCounts)
+            totalStacks += kvp.Value;
+
+        // ✅ Server sets the network variable
+        if (NetworkManager.Singleton.IsServer)
+            poisonStackCount.Value = totalStacks;
+
+        // ✅ Lazy instantiate UI (once per client)
+        if (poisonUIInstance == null)
+        {
+            GameObject go = Instantiate(poisonStackUIPrefab, transform.position, Quaternion.identity);
+            poisonUIInstance = go.GetComponent<PoisonStackUI>();
+            poisonUIInstance?.Init(transform);
+        }
+
+        // ✅ Always update the displayed stack count from the synced value
+        poisonUIInstance?.SetStacks(poisonStackCount.Value);
+    }
+
+
+    // 🔰 Optional: Visual shield support
     public float AbsorbDamage(float incoming)
     {
         if (currentShield > 0)
@@ -91,5 +157,32 @@ public class BuffManager : MonoBehaviour
         }
 
         return incoming;
+    }
+    public void OnNetworkSpawn()
+    {
+        poisonStackCount.OnValueChanged += (oldVal, newVal) =>
+        {
+            if (poisonUIInstance != null)
+            {
+                poisonUIInstance.SetStacks(newVal);
+            }
+        };
+    }
+    public void ClearAllPoison()
+    {
+        poisonStackCounts.Clear();
+        poisonUIInstance?.SetStacks(0);
+    }
+    public void StopAllBuffs()
+    {
+        foreach (var pair in activeBuffs)
+        {
+            if (pair.Value != null)
+                StopCoroutine(pair.Value);
+        }
+
+        activeBuffs.Clear();
+        poisonStackCounts.Clear();
+        poisonUIInstance?.SetStacks(0);
     }
 }

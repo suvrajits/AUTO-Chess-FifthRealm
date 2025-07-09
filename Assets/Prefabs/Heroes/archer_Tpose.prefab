@@ -346,6 +346,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8565298365309763084}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -3875411152437418769}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -5897372283866477929}
   m_SourcePrefab: {fileID: 100100000, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}
 --- !u!4 &1612191595029408505 stripped
 Transform:
@@ -518,7 +524,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  TransitionStateInfoList: []
+  TransitionStateInfoList:
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 315139327
+    DestinationState: 1768251340
+    TransitionDuration: 0.25
+    TriggerNameHash: 565580769
+    TransitionIndex: 0
   m_Animator: {fileID: 4665600993191587971}
 --- !u!114 &4302144160132044212
 MonoBehaviour:
@@ -560,6 +573,8 @@ MonoBehaviour:
   contextMenuPrefab: {fileID: 2751397781761584403, guid: 51427581d2c78ff47995d510d14ffb1f, type: 3}
   contextMenuAnchor: {fileID: 5017941950015380536}
   contextMenuInstance: {fileID: 0}
+  poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
+  poisonStackUIInstance: {fileID: 0}
 --- !u!114 &8565298365309763084
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -573,6 +588,31 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &-3875411152437418769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095430681682866243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
+--- !u!114 &-5897372283866477929
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2095430681682866243}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd2ee95b2b416fa42bed53521efa3cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!95 &4665600993191587971 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 743a1552c32495b488bd08e0bd4d14b5, type: 3}

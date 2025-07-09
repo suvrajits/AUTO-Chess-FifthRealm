@@ -37,7 +37,8 @@ public class HeroUnit : NetworkBehaviour
     [HideInInspector] public GridTile currentTile;
     public float moveSpeed = 2f;
 
-    private bool isInCombat = false;
+    private bool isInCombat;
+    public bool IsInCombat => isInCombat;
     private bool hasSpawned = false;
 
     public GameObject healthBarPrefab;
@@ -58,6 +59,11 @@ public class HeroUnit : NetworkBehaviour
     public BuffManager BuffManager { get; private set; }
     private bool hasLifestealAura = false;
     private float lifestealPercentage = 0f;
+    private TraitEffectHandler traitEffectHandler;
+
+    private float bonusAttack = 0f;
+    private float bonusMaxHealth = 0f;
+    public GameObject poisonStackUIPrefab;
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -150,6 +156,12 @@ public class HeroUnit : NetworkBehaviour
         }
 
         currentHealth.OnValueChanged += OnHealthChanged;
+
+        traitEffectHandler = GetComponent<TraitEffectHandler>();
+        if (traitEffectHandler == null)
+            traitEffectHandler = gameObject.AddComponent<TraitEffectHandler>();
+
+        traitEffectHandler.Initialize(this, heroData.traits);
     }
 
 
@@ -219,7 +231,7 @@ public class HeroUnit : NetworkBehaviour
             Die();
     }
 
-    public void TakeDamage(int amount)
+    public void TakeDamage(int amount, HeroUnit attacker = null)
     {
         if (!IsAlive || amount <= 0) return;
 
@@ -228,10 +240,14 @@ public class HeroUnit : NetworkBehaviour
             float absorbed = BuffManager.AbsorbDamage(amount);
             amount = Mathf.RoundToInt(absorbed); // Remaining after shield
         }
+
         Debug.Log($"🎯 {heroData.heroName} received {amount} damage.");
         ApplyDamage(amount);
 
+        // 🛡 Trigger Raksha Reflect Trait (if applicable)
+        GetComponent<TraitEffectHandler>()?.OnDamaged(attacker, amount);
     }
+
 
     public void Die()
     {
@@ -590,5 +606,15 @@ public class HeroUnit : NetworkBehaviour
     public bool HasLifesteal() => hasLifestealAura;
 
     public float GetLifestealPercentage() => lifestealPercentage;
+    public void AddBonusAttack(float value)
+    {
+        bonusAttack += value;
+        attack += value;
+    }
 
+    public void AddBonusMaxHealth(float value)
+    {
+        bonusMaxHealth += value;
+        currentHealth.Value += value;
+    }
 }

@@ -454,6 +454,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8927680093336099054}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -1288234953722372108}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -6645508898502532571}
   m_SourcePrefab: {fileID: 100100000, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
 --- !u!95 &531786749321415395 stripped
 Animator:
@@ -595,6 +601,8 @@ MonoBehaviour:
   contextMenuPrefab: {fileID: 2751397781761584403, guid: 51427581d2c78ff47995d510d14ffb1f, type: 3}
   contextMenuAnchor: {fileID: 4941022171228999127}
   contextMenuInstance: {fileID: 0}
+  poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
+  poisonStackUIInstance: {fileID: 0}
 --- !u!114 &8993915607624669916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -621,7 +629,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
-  TransitionStateInfoList: []
+  TransitionStateInfoList:
+  - IsCrossFadeExit: 0
+    Layer: 0
+    OriginatingState: 315139327
+    DestinationState: 1768251340
+    TransitionDuration: 0.25
+    TriggerNameHash: 565580769
+    TransitionIndex: 0
   m_Animator: {fileID: 531786749321415395}
 --- !u!114 &6650578959275438780
 MonoBehaviour:
@@ -686,3 +701,28 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
+--- !u!114 &-1288234953722372108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542240709122820643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
+--- !u!114 &-6645508898502532571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542240709122820643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd2ee95b2b416fa42bed53521efa3cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

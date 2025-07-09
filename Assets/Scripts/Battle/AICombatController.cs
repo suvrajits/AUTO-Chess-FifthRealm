@@ -10,7 +10,7 @@ public class AICombatController : NetworkBehaviour
 
     private float cooldownTimer = 0f;
     private bool isInBattle = false;
-
+    private TraitEffectHandler traitHandler;
     private void Awake()
     {
         unit = GetComponent<HeroUnit>();
@@ -18,6 +18,10 @@ public class AICombatController : NetworkBehaviour
 
         if (data == null)
             Debug.LogError($"❌ AICombatController: Missing HeroData on {name}");
+
+        unit = GetComponent<HeroUnit>();
+        data = unit.heroData;
+        traitHandler = GetComponent<TraitEffectHandler>();
     }
     void Update()
     {
@@ -130,14 +134,19 @@ public class AICombatController : NetworkBehaviour
         if (target != null && unit != null && unit.IsAlive && target.IsAlive)
         {
             int damage = (int)unit.Attack;
-            target.TakeDamage(damage);
 
-            // 🩸 Lifesteal Hook — this unit heals based on damage dealt
+            // 🗡️ Apply damage with attacker reference (for Raksha reflect)
+            target.TakeDamage(damage, unit);
+
+            // 🩸 Lifesteal Hook — heal based on damage dealt
             if (unit.HasLifesteal())
             {
                 float healAmount = damage * unit.GetLifestealPercentage();
                 unit.Heal(Mathf.RoundToInt(healAmount));
             }
+
+            // ⚡ Trait effect handler — AoE shock, bleed, poison, etc.
+            traitHandler?.OnAttack(target);
         }
 
         unit.AnimatorHandler?.SetRunning(false);
