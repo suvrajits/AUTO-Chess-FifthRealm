@@ -67,20 +67,38 @@ public class BattleManager : NetworkBehaviour
 
     public void BeginCombat(List<HeroUnit> teamA, List<HeroUnit> teamB)
     {
-        teamAUnits = teamA.Where(u => u != null && u.IsAlive).ToList();
-        teamBUnits = teamB.Where(u => u != null && u.IsAlive).ToList();
+        if (!IsServer)
+        {
+            Debug.LogWarning("⛔ BeginCombat called on non-server.");
+            return;
+        }
+
+        if (isBattleOngoing)
+        {
+            Debug.LogWarning("⚠️ BeginCombat already in progress, skipping.");
+            return;
+        }
 
         isBattleOngoing = true;
         SetPhase(GamePhase.Battle);
+
+        teamAUnits = teamA.Where(u => u != null && u.IsAlive).ToList();
+        teamBUnits = teamB.Where(u => u != null && u.IsAlive).ToList();
+
+        Debug.Log($"⚔️ BeginCombat triggered. TeamA: {teamAUnits.Count}, TeamB: {teamBUnits.Count}");
 
         foreach (var unit in teamAUnits.Concat(teamBUnits))
         {
             var ai = unit.GetComponent<AICombatController>();
             ai?.SetBattleMode(true);
+
+            // ✅ Optional: ensure HealthBar shows on all clients
+            unit.SetInBattlefield(true); // This enables health bars and poison stacks
         }
 
-        Debug.Log("⚔️ Battle started!");
+        // ✅ Optional: Sync UI or camera if needed
     }
+
 
     private void Update()
     {

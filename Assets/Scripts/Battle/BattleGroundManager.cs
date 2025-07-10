@@ -70,46 +70,12 @@ public class BattleGroundManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void StartBattleServerRpc()
     {
-        if (battleInProgress) return;
-
-        battleInProgress = true;
-
-        PickTeams(); // Split units into teamAUnits and teamBUnits
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
-        {
-            var player = PlayerNetworkState.GetPlayerByClientId(clientId);
-            if (player == null) continue;
-
-            var aliveUnits = BattleManager.Instance.GetAliveUnitsForPlayer(clientId);
-            player.TraitTracker?.RecalculateTraits(aliveUnits, player.PlayerLevel.Value);
-        }
-
-
-        // ✅ Track ALL participants for post-battle revival
-        allBattleParticipants.Clear();
-        allBattleParticipants.AddRange(teamAUnits);
-        allBattleParticipants.AddRange(teamBUnits);
-
-        // ✅ Save their original tiles for later teleport
-        foreach (var unit in allBattleParticipants)
-        {
-            if (unit != null && unit.currentTile != null)
-            {
-                originalTileMemory[unit] = unit.currentTile;
-            }
-        }
-
-        TeleportToBattleGrid(teamAUnits, true);
-        TeleportToBattleGrid(teamBUnits, false);
-        TeleportPlayersToSpectatorSpot();
-
-        Invoke(nameof(InvokeBattleStart), 2f);
+        Debug.Log("🧪 Manual StartBattleServerRpc triggered");
+        PickTeams();
+        InternalStartBattle(teamAUnits, teamBUnits);
     }
 
-    private void InvokeBattleStart()
-    {
-        BattleManager.Instance.BeginCombat(teamAUnits, teamBUnits);
-    }
+
 
 
     private void PickTeams()
@@ -278,7 +244,8 @@ public class BattleGroundManager : NetworkBehaviour
             player.CurrentRound.Value++;
             Debug.Log($"📈 Player {player.OwnerClientId} now at Round {player.CurrentRound.Value}");
         }
-        
+
+        RoundManager.Instance.ScheduleNextRoundWithDelay(3f);
     }
 
     private void TeleportPlayersBackToOriginalPositions()
@@ -312,5 +279,55 @@ public class BattleGroundManager : NetworkBehaviour
         bool isWinner = winningClientIds.Contains(NetworkManager.Singleton.LocalClientId);
         RewardUI.Instance?.ShowRoundResult(isWinner);
     }
+    public void StartCustomBattle(List<HeroUnit> teamA, List<HeroUnit> teamB)
+    {
+        Debug.Log($"📦 StartCustomBattle received {teamA.Count} vs {teamB.Count} units");
+        InternalStartBattle(teamA, teamB);
+    }
 
+    private void InvokeBattleStart()
+    {
+        Debug.Log("⚔️ [BattleGroundManager] InvokeBattleStart()");
+        if (!IsServer) return;
+
+        Debug.Log("⚔️ Battle officially starting via InvokeBattleStart()");
+        BattleManager.Instance.BeginCombat(teamAUnits, teamBUnits);
+    }
+    private void InternalStartBattle(List<HeroUnit> teamA, List<HeroUnit> teamB)
+    {
+        if (battleInProgress) return;
+
+        battleInProgress = true;
+
+        teamAUnits = teamA;
+        teamBUnits = teamB;
+
+        foreach (var clientId in teamA.Concat(teamB).Select(u => u.OwnerClientId).Distinct())
+        {
+            var player = PlayerNetworkState.GetPlayerByClientId(clientId);
+            if (player == null) continue;
+            var aliveUnits = BattleManager.Instance.GetAliveUnitsForPlayer(clientId);
+            player.TraitTracker?.RecalculateTraits(aliveUnits, player.PlayerLevel.Value);
+        }
+
+        allBattleParticipants.Clear();
+        allBattleParticipants.AddRange(teamAUnits);
+        allBattleParticipants.AddRange(teamBUnits);
+
+        foreach (var unit in allBattleParticipants)
+        {
+            if (unit != null && unit.currentTile != null)
+            {
+                originalTileMemory[unit] = unit.currentTile;
+            }
+        }
+
+        TeleportToBattleGrid(teamAUnits, true);
+        TeleportToBattleGrid(teamBUnits, false);
+        TeleportPlayersToSpectatorSpot();
+
+        Debug.Log("🧠 [BattleGroundManager] InternalStartBattle completed, invoking battle in 2s");
+        Invoke(nameof(InvokeBattleStart), 2f);
+    }
+    
 }

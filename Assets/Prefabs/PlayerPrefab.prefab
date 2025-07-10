@@ -68,7 +68,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 80
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -314,6 +314,8 @@ MonoBehaviour:
     m_InternalValue: 1
   PlacedUnitCount:
     m_InternalValue: 0
+  PlayerLevel:
+    m_InternalValue: 1
 --- !u!114 &5420571145694361456
 MonoBehaviour:
   m_ObjectHideFlags: 0
