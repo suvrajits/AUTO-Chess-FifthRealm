@@ -659,7 +659,10 @@ public class HeroUnit : NetworkBehaviour
     {
         isInBattle = active;
 
-        // ✅ Add this inside the method:
+        // ✅ Lazy init safeguard
+        if (BuffManager == null)
+            BuffManager = GetComponent<BuffManager>();
+
         if (active)
         {
             BuffManager?.TryStartMantraAura();

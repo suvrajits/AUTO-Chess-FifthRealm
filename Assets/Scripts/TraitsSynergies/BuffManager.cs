@@ -31,12 +31,6 @@ public class BuffManager : NetworkBehaviour
     private Coroutine mantraAuraCoroutine;
     private TraitEffectHandler traitHandler;
 
-    void Awake()
-    {
-        hero = GetComponent<HeroUnit>();
-        traitHandler = hero.TraitEffectHandler;
-
-    }
 
     // 📍 Entry point to apply buff
     public void ApplyBuff(BuffType type, float value, float duration, HeroUnit source = null)
@@ -196,6 +190,15 @@ public class BuffManager : NetworkBehaviour
     {
         base.OnNetworkSpawn();
 
+        hero = GetComponent<HeroUnit>();
+        traitHandler = hero?.TraitEffectHandler;
+
+        if (traitHandler == null)
+        {
+            Debug.LogWarning($"⚠️ BuffManager.OnNetworkSpawn: traitHandler is null on {hero?.name}");
+        }
+
+
         poisonStackCount.OnValueChanged += (oldVal, newVal) =>
         {
             if (poisonUIInstance == null && poisonStackUIPrefab != null)
@@ -286,11 +289,18 @@ public class BuffManager : NetworkBehaviour
 
     public void TryStartMantraAura()
     {
+        if (traitHandler == null)
+        {
+            Debug.LogWarning($"❌ BuffManager.TryStartMantraAura(): traitHandler is null on {name}");
+            return;
+        }
+
         if (traitHandler.HasTrait("Mantra") && mantraAuraCoroutine == null)
         {
             mantraAuraCoroutine = StartCoroutine(MantraAura());
         }
     }
+
 
     public void StopMantraAura()
     {
