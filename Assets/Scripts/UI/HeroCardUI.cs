@@ -2,6 +2,7 @@
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections.Generic;
 
 public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -19,7 +20,8 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
     // 👇 Drag preview
     private GameObject dragPreview;
-
+    public Transform traitIconContainer; // UI horizontal layout group
+    public GameObject traitIconPrefab;
     public void Setup(HeroCardInstance instance, UnitSelectionUI selectionUIRef, int cardIndex)
     {
         cardInstance = instance;
@@ -34,6 +36,8 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             heroName.text = assignedHero.heroName;
 
         GenerateStars(instance.starLevel);
+
+        SetTraits(assignedHero.traits);
 
         GetComponent<Button>().onClick.RemoveAllListeners();
         GetComponent<Button>().onClick.AddListener(OnClick);
@@ -144,5 +148,21 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             }
         }
     }
+    public void SetTraits(List<TraitDefinition> traits)
+    {
+        // Clear existing icons
+        foreach (Transform child in traitIconContainer)
+            Destroy(child.gameObject);
+
+        foreach (var trait in traits)
+        {
+            GameObject iconGO = Instantiate(traitIconPrefab, traitIconContainer);
+            Image iconImage = iconGO.GetComponent<Image>();
+            if (iconImage != null)
+                iconImage.sprite = trait.traitIcon;
+            // Optional: tooltip setup here
+        }
+    }
+
 
 }

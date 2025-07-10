@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RishiVarnan
   m_EditorClassIdentifier: 
   heroId: 3
-  heroName: Rishi Varnan
+  heroName: Mage
   maxHealth: 200
   attackDamage: 12
   attackRange: 4.5

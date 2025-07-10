@@ -20,7 +20,9 @@ MonoBehaviour:
   activationSound: {fileID: 0}
   tooltip: 
   tierBonuses:
-  - requiredCount: 3
-    bonusDescription: AoE shock on first strike
+  - requiredCount: 2
+    description: Chance to dodge all attacks briefly
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Apply bleed on hit
+    description: Apply bleed on hit
+    tier: 2

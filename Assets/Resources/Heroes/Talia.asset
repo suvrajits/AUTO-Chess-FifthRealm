@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Talia
   m_EditorClassIdentifier: 
   heroId: 5
-  heroName: Talia
+  heroName: Assassin
   maxHealth: 220
   attackDamage: 40
   attackRange: 1.2

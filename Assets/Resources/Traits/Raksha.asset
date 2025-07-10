@@ -21,6 +21,8 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 2
-    bonusDescription: Gain strength every 10s
+    description: 
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Lifesteal aura
+    description: 
+    tier: 2

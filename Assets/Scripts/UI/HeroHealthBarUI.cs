@@ -54,4 +54,8 @@ public class HeroHealthBarUI : MonoBehaviour
             activeFillImage.fillAmount = currentHealth / maxHealth;
         }
     }
+    public void SetVisible(bool visible)
+    {
+        gameObject.SetActive(visible);
+    }
 }

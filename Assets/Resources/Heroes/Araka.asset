@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Araka
   m_EditorClassIdentifier: 
   heroId: 1
-  heroName: Araka
+  heroName: Knight
   maxHealth: 380
   attackDamage: 30
   attackRange: 1.5

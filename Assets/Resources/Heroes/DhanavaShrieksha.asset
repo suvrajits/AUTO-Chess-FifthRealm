@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: DhanavaShrieksha
   m_EditorClassIdentifier: 
   heroId: 2
-  heroName: Dhanava Shrieksha
+  heroName: Archar
   maxHealth: 240
   attackDamage: 18
   attackRange: 6

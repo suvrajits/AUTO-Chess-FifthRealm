@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "TheFifthRealm/Trait")]
@@ -15,9 +15,11 @@ public class TraitDefinition : ScriptableObject
     public List<TraitTierBonus> tierBonuses;
 }
 
+
 [System.Serializable]
 public class TraitTierBonus
 {
     public int requiredCount;
-    public string bonusDescription;
+    public string description;
+    public int tier;
 }

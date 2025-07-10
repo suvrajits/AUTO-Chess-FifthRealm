@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: NaaginiVasuki
   m_EditorClassIdentifier: 
   heroId: 4
-  heroName: Naagini Vasuki
+  heroName: Healer
   maxHealth: 280
   attackDamage: 5
   attackRange: 3.5

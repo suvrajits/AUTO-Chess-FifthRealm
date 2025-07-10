@@ -65,14 +65,22 @@ public class HeroUnit : NetworkBehaviour
     private float bonusMaxHealth = 0f;
     public GameObject poisonStackUIPrefab;
     public PlayerNetworkState OwnerPlayerNetworkState => NetworkManager.Singleton.ConnectedClients[OwnerClientId].PlayerObject.GetComponent<PlayerNetworkState>();
+    private float attackSpeedMultiplier = 1f;
+    public float GetModifiedAttackSpeed() => heroData.attackSpeed * attackSpeedMultiplier;
+    public TraitEffectHandler TraitEffectHandler { get; private set; }
+    private bool isInBattle;
+    private Animator animator;
 
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
         stateMachine = GetComponent<HeroStateMachine>();
         BuffManager = GetComponent<BuffManager>();
+      
         if (BuffManager == null)
             BuffManager = gameObject.AddComponent<BuffManager>();
+        
+        animator = GetComponentInChildren<Animator>();
     }
     private void Update()
     {
@@ -178,6 +186,11 @@ public class HeroUnit : NetworkBehaviour
         {
             healthBarUIInstance.SetHealth(newValue);
         }
+        if (traitEffectHandler != null && traitEffectHandler.HasAgniTrait && traitEffectHandler.HasAgniSynergyTier2)
+        {
+            traitEffectHandler?.CheckAgniLowHealthBuff(CurrentHealth, heroData.maxHealth);
+        }
+
     }
 
     public void SetFaction(Faction f)
@@ -625,4 +638,41 @@ public class HeroUnit : NetworkBehaviour
         bonusMaxHealth += value;
         currentHealth.Value += value;
     }
+    public void ApplyAttackSpeedMultiplier(float multiplier)
+    {
+        attackSpeedMultiplier = multiplier;
+        Debug.Log($"🔥 {heroData.heroName} Agni buff: Attack Speed x{multiplier}");
+    }
+    public void ResetAttackSpeedMultiplier()
+    {
+        if (attackSpeedMultiplier != 1f)
+        {
+            Debug.Log($"🔥 {heroData.heroName} Agni buff ended: Attack Speed reset.");
+            attackSpeedMultiplier = 1f;
+        }
+    }
+    public void SetAttackSpeedMultiplier(float multiplier)
+    {
+        attackSpeedMultiplier = multiplier;
+    }
+    public void SetInBattlefield(bool active)
+    {
+        isInBattle = active;
+
+        // ✅ Add this inside the method:
+        if (active)
+        {
+            BuffManager?.TryStartMantraAura();
+        }
+        else
+        {
+            BuffManager?.StopMantraAura();
+        }
+
+        // existing logic...
+        animator.SetBool("InBattle", active);
+        healthBarUIInstance?.SetVisible(active);
+    }
+
+
 }

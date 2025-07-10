@@ -21,6 +21,8 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 2
-    bonusDescription: Bonus crit chance
+    description: 
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Execution threshold increases
+    description: 
+    tier: 2

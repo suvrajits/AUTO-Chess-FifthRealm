@@ -63,6 +63,17 @@ public class TraitTracker : NetworkBehaviour
     {
         return activeBonuses.Keys.Any(t => t.traitName == traitName);
     }
+    public int GetSynergyTier(string traitName)
+    {
+        foreach (var kvp in activeBonuses)
+        {
+            if (kvp.Key.traitName == traitName)
+            {
+                return kvp.Value.requiredCount; // e.g., 1, 2, 3, 4
+            }
+        }
+        return 0;
+    }
 
 
 

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Vanakavi
   m_EditorClassIdentifier: 
   heroId: 8
-  heroName: Vanakavi
+  heroName: Raze Assassin
   maxHealth: 300
   attackDamage: 70
   attackRange: 1

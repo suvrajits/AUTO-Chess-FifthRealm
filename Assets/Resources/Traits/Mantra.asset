@@ -21,6 +21,9 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 2
-    bonusDescription: Reduced spell cooldowns
+    description: Heal nearby allies every 2s for 5% max HP
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Allied spells gain bonus damage
+    description: 'Heal every 1s for 7.5% max HP + grant 10% bonus move speed while
+      healing '
+    tier: 2

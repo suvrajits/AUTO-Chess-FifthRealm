@@ -8,7 +8,8 @@ public enum BuffType
     Poison,
     Bleed,
     Shield,
-    LifestealAura
+    LifestealAura,
+    MantraAura
 }
 
 public class BuffManager : NetworkBehaviour
@@ -26,11 +27,15 @@ public class BuffManager : NetworkBehaviour
     public GameObject poisonStackUIPrefab;
     private NetworkVariable<int> poisonStackCount = new NetworkVariable<int>(
     0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server
-);
+    );
+    private Coroutine mantraAuraCoroutine;
+    private TraitEffectHandler traitHandler;
 
     void Awake()
     {
         hero = GetComponent<HeroUnit>();
+        traitHandler = hero.TraitEffectHandler;
+
     }
 
     // 📍 Entry point to apply buff
@@ -78,6 +83,27 @@ public class BuffManager : NetworkBehaviour
                 hero.EnableLifesteal(value);
                 yield return new WaitForSeconds(duration);
                 hero.DisableLifesteal();
+                break;
+
+            case BuffType.MantraAura:
+                float mantraTickRate = value > 6f ? 1f : 2f; // Tier 2 = 7.5% -> faster tick
+                float mantraElapsed = 0f;
+
+                while (hero != null && hero.IsAlive && mantraElapsed < duration)
+                {
+                    Collider[] hits = Physics.OverlapSphere(hero.transform.position, 3f);
+                    foreach (var hit in hits)
+                    {
+                        if (hit.TryGetComponent(out HeroUnit ally) && ally != hero && ally.Faction == hero.Faction && ally.IsAlive)
+                        {
+                            float healAmount = ally.heroData.maxHealth * (value / 100f);
+                            ally.Heal(Mathf.RoundToInt(healAmount));
+                        }
+                    }
+
+                    mantraElapsed += mantraTickRate;
+                    yield return new WaitForSeconds(mantraTickRate);
+                }
                 break;
         }
 
@@ -256,4 +282,59 @@ public class BuffManager : NetworkBehaviour
         if (poisonUIInstance != null && poisonStackCount.Value > 0)
             poisonUIInstance.gameObject.SetActive(true);
     }
+
+
+    public void TryStartMantraAura()
+    {
+        if (traitHandler.HasTrait("Mantra") && mantraAuraCoroutine == null)
+        {
+            mantraAuraCoroutine = StartCoroutine(MantraAura());
+        }
+    }
+
+    public void StopMantraAura()
+    {
+        if (mantraAuraCoroutine != null)
+        {
+            StopCoroutine(mantraAuraCoroutine);
+            mantraAuraCoroutine = null;
+        }
+    }
+
+    private IEnumerator MantraAura()
+    {
+        WaitForSeconds delay = new WaitForSeconds(2f);
+
+        while (hero != null && BattleManager.Instance.CurrentPhase == GamePhase.Battle)
+        {
+            ApplyMantraAuraHealing();
+            yield return delay;
+        }
+
+        StopMantraAura(); // clean up if battle state ends
+    }
+
+    private void ApplyMantraAuraHealing()
+    {
+        int tier = traitHandler.traitTracker?.GetSynergyTier("Mantra") ?? 0;
+        if (tier <= 0) return;
+
+        float value = tier == 1 ? 4f : 10f; // percentage-based healing
+
+        float radius = 4f;
+        Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent(out HeroUnit ally) &&
+                ally != hero &&  // exclude self
+                ally.Faction == hero.Faction &&
+                ally.IsAlive)
+            {
+                float healAmount = ally.heroData.maxHealth * (value / 100f);
+                ally.Heal(Mathf.RoundToInt(healAmount));
+            }
+        }
+    }
+
 }

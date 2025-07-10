@@ -15,7 +15,10 @@ public class TraitEffectHandler : MonoBehaviour
     private bool isYogiActive = false;
     private int yogiStacks = 0;
     private int maxYogiStacks = 3;
-    private TraitTracker traitTracker;
+    public TraitTracker traitTracker;
+    public bool HasAgniTrait => HasTrait("Agni");
+    public bool HasAgniSynergyTier2 => traitTracker?.GetSynergyTier("Agni") >= 2;
+    public bool HasAgniSynergyTier4 => traitTracker?.GetSynergyTier("Agni") >= 4;
     public void Initialize(HeroUnit hero, List<TraitDefinition> traitList)
     {
         unit = hero;
@@ -36,6 +39,19 @@ public class TraitEffectHandler : MonoBehaviour
 
             ApplyYogiBuff();
         }
+        // 🔥 Agni Tier 2 — Monitor HP and grant attack speed bonus under 50%
+        if (HasTrait("Agni") && traitTracker != null && traitTracker.IsSynergyActive("Agni"))
+        {
+            float hpPercent = unit.CurrentHealth / unit.heroData.maxHealth;
+            if (hpPercent < 0.5f)
+            {
+                unit.ApplyAttackSpeedMultiplier(1.5f); // e.g., +50% speed
+            }
+            else
+            {
+                unit.ResetAttackSpeedMultiplier(); // Reset if above 50%
+            }
+        }
     }
 
     public void OnBattleStart()
@@ -44,6 +60,14 @@ public class TraitEffectHandler : MonoBehaviour
         yogiTimer = 0f;
         yogiStacks = 0;
         isYogiActive = HasTrait("Yogi");
+        if (HasTrait("Mantra") && traitTracker.IsSynergyActive("Mantra"))
+        {
+            int tier = traitTracker.GetSynergyTier("Mantra"); // Returns 2 or 4
+            float healPercent = (tier >= 4) ? 7.5f : 5f;
+            float duration = 20f; // duration of battle phase
+
+            unit.BuffManager?.ApplyBuff(BuffType.MantraAura, healPercent, duration);
+        }
     }
 
     public void OnAttack(HeroUnit target)
@@ -141,7 +165,53 @@ public class TraitEffectHandler : MonoBehaviour
                 ReflectDamage(attacker, damageTaken);
             }
         }
+        if (traitTracker != null && traitTracker.GetSynergyTier("Agni") >= 4)
+        {
+            TriggerAgniRetaliationAoE(unit.transform.position, damageTaken);
+        }
     }
+    private void TriggerAgniRetaliationAoE(Vector3 center, int damageTaken)
+    {
+        float aoeRadius = 2.5f;
+        float aoeDamageMultiplier = 0.35f; // 35% of incoming damage
+
+        int aoeDamage = Mathf.RoundToInt(damageTaken * aoeDamageMultiplier);
+
+        Collider[] hits = Physics.OverlapSphere(center, aoeRadius);
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent(out HeroUnit other))
+            {
+                if (other != unit && other.Faction != unit.Faction && other.IsAlive)
+                {
+                    other.TakeDamage(aoeDamage, unit);
+                    Debug.Log($"🔥 Agni retaliation hit {other.heroData.heroName} for {aoeDamage} AoE damage!");
+                }
+            }
+        }
+
+        // Optional: Add VFX or camera shake
+    }
+
+    private void TriggerAgniAoE(HeroUnit attacker)
+    {
+        float radius = 1.5f;
+        int aoeDamage = Mathf.RoundToInt(unit.Attack * 0.3f);
+
+        Collider[] hits = Physics.OverlapSphere(transform.position, radius);
+        foreach (var hit in hits)
+        {
+            if (hit.TryGetComponent(out HeroUnit target) &&
+                target != unit && target.Faction != unit.Faction && target.IsAlive)
+            {
+                target.TakeDamage(aoeDamage, unit);
+            }
+        }
+
+        // Optional VFX
+        Debug.Log($"🔥 Agni AoE triggered by {unit.heroData.heroName} for {aoeDamage} damage.");
+    }
+
     private void ReflectDamage(HeroUnit attacker, int damageTaken)
     {
         float reflectPercentage = 0.25f; // Reflect 25%
@@ -189,7 +259,7 @@ public class TraitEffectHandler : MonoBehaviour
             Debug.Log($"🧘 Yogi 4-unit bonus activated: Lifesteal enabled.");
         }
     }
-    private bool HasTrait(string traitName)
+    public bool HasTrait(string traitName)
     {
         return traits.Exists(t => t.traitName == traitName);
     }
@@ -211,6 +281,13 @@ public class TraitEffectHandler : MonoBehaviour
 
             target.TakeDamage((int)target.CurrentHealth + 999, unit); // Guaranteed overkill
         }
+    }
+    public void CheckAgniLowHealthBuff(float currentHP, float maxHP)
+    {
+        if (!HasAgniSynergyTier2) return;
+
+        bool belowThreshold = currentHP <= maxHP * 0.5f;
+        unit.SetAttackSpeedMultiplier(belowThreshold ? 1.25f : 1f); // Example: +25%
     }
 
 }

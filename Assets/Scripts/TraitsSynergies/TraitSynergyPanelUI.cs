@@ -44,7 +44,7 @@ public class TraitSynergyPanelUI : MonoBehaviour
             var text = entry.transform.Find("Text").GetComponent<TMP_Text>();
 
             icon.sprite = kvp.Key.traitIcon;
-            text.text = $"{kvp.Key.symbol} {kvp.Key.traitName} ({localTracker.traitCounts[kvp.Key]}/{GetMaxTier(kvp.Key)})\n<size=70%>{kvp.Value.bonusDescription}</size>";
+            text.text = $"{kvp.Key.symbol} {kvp.Key.traitName} ({localTracker.traitCounts[kvp.Key]}/{GetMaxTier(kvp.Key)})\n<size=70%>{kvp.Value.description}</size>";
         }
 
         foreach (var synergy in localTracker.activeAdvancedSynergies)

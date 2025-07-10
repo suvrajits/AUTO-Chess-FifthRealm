@@ -21,8 +21,8 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 3
-    bonusDescription: First strike deals AoE shock.
+    description: First strike deals AoE shock
+    tier: 1
   - requiredCount: 6
-    bonusDescription: Grants nearby allies bonus move speed.
-  - requiredCount: 8
-    bonusDescription: Grants nearby allies bonus move speed.
+    description: Grants nearby allies bonus move speed
+    tier: 2

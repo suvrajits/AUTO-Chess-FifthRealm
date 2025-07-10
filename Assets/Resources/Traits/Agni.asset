@@ -21,6 +21,8 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 2
-    bonusDescription: Bonus attack speed under 50% HP
+    description: 
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Deal area damage when hit
+    description: 
+    tier: 2

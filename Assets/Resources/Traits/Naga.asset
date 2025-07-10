@@ -21,6 +21,8 @@ MonoBehaviour:
   tooltip: 
   tierBonuses:
   - requiredCount: 2
-    bonusDescription: Venom slows movement
+    description: 
+    tier: 1
   - requiredCount: 4
-    bonusDescription: Venom jumps to nearby enemies
+    description: 
+    tier: 2

@@ -13,7 +13,8 @@ public class HeroCardShopUI : MonoBehaviour
 
     private HeroData hero;
     private Action<int> onBuyClicked;
-
+    public Transform traitIconContainer; // e.g., a HorizontalLayoutGroup
+    public GameObject traitIconPrefab;
     /// <summary>
     /// Called by ShopUIManager when rendering a new hero card.
     /// </summary>
@@ -29,6 +30,7 @@ public class HeroCardShopUI : MonoBehaviour
         buyButton.onClick.RemoveAllListeners();
         buyButton.onClick.AddListener(OnClickBuy);
         SetBuyable(true); // Default to enabled until updated by gold logic
+        SetTraits(hero.traits);
     }
 
     private void OnClickBuy()
@@ -49,5 +51,18 @@ public class HeroCardShopUI : MonoBehaviour
     public void SetBuyable(bool canBuy)
     {
         buyButton.interactable = canBuy;
+    }
+    private void SetTraits(System.Collections.Generic.List<TraitDefinition> traits)
+    {
+        foreach (Transform child in traitIconContainer)
+            Destroy(child.gameObject);
+
+        foreach (var trait in traits)
+        {
+            GameObject iconGO = Instantiate(traitIconPrefab, traitIconContainer);
+            Image img = iconGO.GetComponent<Image>();
+            if (img != null)
+                img.sprite = trait.traitIcon;
+        }
     }
 }

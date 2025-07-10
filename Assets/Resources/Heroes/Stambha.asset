@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Stambha
   m_EditorClassIdentifier: 
   heroId: 6
-  heroName: Stambha
+  heroName: Brute
   maxHealth: 420
   attackDamage: 42
   attackRange: 1.5
