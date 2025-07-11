@@ -64,16 +64,7 @@ public class PlayerShopState : NetworkBehaviour
     }
     public void RerollShopFree()
     {
-        if (!IsServer || player == null || player.GoldManager == null)
-            return;
-
-        if (!player.GoldManager.TrySpendGold(ShopManager.Instance.RerollCost))
-        {
-            Debug.LogWarning($"❌ [Server] Not enough gold to reroll for client {OwnerClientId}");
-            return;
-        }
-
-        GenerateNewShop();
+     GenerateNewShop();
     }
 
     public void PurchaseHero(int heroId)

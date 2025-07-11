@@ -118,12 +118,36 @@ public class ShopManager : NetworkBehaviour
         shop.RerollShopFree(); // Or RerollShopFree() if you have one
     }
     [ClientRpc]
-    public void RequestClientFreeRerollClientRpc(ClientRpcParams rpcParams = default)
+    private void RequestClientFreeRerollClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
     {
-        Debug.Log("🛒 [Client] Received free reroll RPC.");
+        if (!IsClient) return;
 
-        TryFreeReroll();
+        ulong localClientId = NetworkManager.Singleton.LocalClientId;
+        Debug.Log($"📩 Free reroll RPC received by client {localClientId}");
+
+        StartCoroutine(WaitForShopUIAndRender(heroIds.ToList(), localClientId));
     }
+    private IEnumerator WaitForShopUIAndRender(List<int> heroIds, ulong clientId)
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (elapsed < timeout)
+        {
+            if (ShopUIManager.Instance != null)
+            {
+                Debug.Log($"🟢 Rendering shop UI for client {clientId}");
+                ShopUIManager.Instance.RenderShop(heroIds);
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Debug.LogWarning($"⚠️ Shop UI not ready in time for client {clientId}");
+    }
+
 
     [ServerRpc(RequireOwnership = false)]
     private void TryRerollServerRpc(ServerRpcParams rpcParams = default)
@@ -211,33 +235,22 @@ public class ShopManager : NetworkBehaviour
 
     public void RerollAllShopsFree()
     {
-        if (!IsServer)
-        {
-            Debug.LogWarning("🚫 RerollAllShopsFree called on non-server.");
-            return;
-        }
+        if (!IsServer) return;
 
-        Debug.Log("🔁 [ShopManager] Free reroll for all players (via ForceRenderClientRpc).");
+        Debug.Log("🔁 [ShopManager] Free reroll for all players.");
 
         foreach (var kvp in PlayerShopState.AllShops)
         {
             ulong clientId = kvp.Key;
             PlayerShopState shop = kvp.Value;
 
-            shop.RerollShopFree();
+            shop.RerollShopFree(); // ✅ No gold cost
 
             List<int> heroIds = shop.CurrentShop.ConvertAll(h => h.heroId);
-
-            var rpcParams = new ClientRpcParams
+            RequestClientFreeRerollClientRpc(heroIds.ToArray(), new ClientRpcParams
             {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new[] { clientId }
-                }
-            };
-
-            Debug.Log($"📦 Sending ForceRenderClientRpc for {clientId} with {heroIds.Count} heroes.");
-            ForceRenderClientRpc(heroIds.ToArray(), rpcParams);
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+            });
         }
     }
 

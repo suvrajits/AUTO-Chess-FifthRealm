@@ -13,7 +13,19 @@ public class ShopUIManager : MonoBehaviour
     [SerializeField] private Button rerollButton;
 
     private List<HeroCardShopUI> activeCards = new();
-    
+    public static ShopUIManager Instance { get; private set; }
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Multiple instances of ShopUIManager detected.");
+        }
+    }
+
     private void Start()
     {
         rerollButton.onClick.RemoveAllListeners();
@@ -128,5 +140,6 @@ public class ShopUIManager : MonoBehaviour
     {
         StartCoroutine(CheckForDeferredShopRender());
     }
+
 
 }
