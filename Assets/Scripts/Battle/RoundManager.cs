@@ -73,8 +73,9 @@ public class RoundManager : NetworkBehaviour
                 BattleManager.Instance.CurrentPhase == GamePhase.Results
             );
 
+            
             yield return StartCoroutine(PostBattlePhase());
-
+            ShopManager.Instance?.RerollAllShopsFree();
             // ✅ Reset phase to waiting before next round
             BattleManager.Instance.SetPhase(GamePhase.Waiting);
             roundInProgress = false;
@@ -92,7 +93,7 @@ public class RoundManager : NetworkBehaviour
     {
         Debug.Log("🪙 Battle ended. Distributing rewards...");
         PostBattleRewardSystem.Instance.GrantGold();
-        ShopManager.Instance?.RerollAllShopsFree();
+        
         yield return new WaitForSeconds(postBattleDelay);
     }
 

@@ -105,6 +105,25 @@ public class ShopManager : NetworkBehaviour
     {
         TryRerollServerRpc();
     }
+    public void TryFreeReroll()
+    {
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
+        {
+            Debug.LogWarning($"❌ No PlayerShopState found for {clientId} (free reroll)");
+            return;
+        }
+
+        shop.RerollShopFree(); // Or RerollShopFree() if you have one
+    }
+    [ClientRpc]
+    public void RequestClientFreeRerollClientRpc(ClientRpcParams rpcParams = default)
+    {
+        Debug.Log("🛒 [Client] Received free reroll RPC.");
+
+        TryFreeReroll();
+    }
 
     [ServerRpc(RequireOwnership = false)]
     private void TryRerollServerRpc(ServerRpcParams rpcParams = default)
@@ -185,26 +204,30 @@ public class ShopManager : NetworkBehaviour
 
     public void RerollAllShopsFree()
     {
-        if (!IsServer) return;
-
-        Debug.Log("🔁 [ShopManager] Free reroll for all players.");
-
-        foreach (var kvp in PlayerShopState.AllShops)
+        if (!IsServer)
         {
-            ulong clientId = kvp.Key;
-            PlayerShopState shop = kvp.Value;
+            Debug.LogWarning("🚫 RerollAllShopsFree called on non-server.");
+            return;
+        }
 
-            shop.RerollShopFree();
+        Debug.Log("🔁 [ShopManager] Free reroll for all players (via RPC).");
 
-            List<int> heroIds = shop.CurrentShop.ConvertAll(h => h.heroId);
-            ForceRenderClientRpc(heroIds.ToArray(), new ClientRpcParams
+        var allClients = PlayerShopState.AllShops.Keys.ToArray();
+
+        foreach (var clientId in allClients)
+        {
+            var rpcParams = new ClientRpcParams
             {
-                Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
-            });
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new[] { clientId }
+                }
+            };
 
-            Debug.Log($"🛒 Synced reroll to client {clientId}");
+            RequestClientFreeRerollClientRpc(rpcParams);
         }
     }
+
 
     public static bool HasDeferredShop() => deferredHeroIds != null && deferredHeroIds.Count > 0;
     public static List<int> ConsumeDeferredShop()

@@ -110,6 +110,11 @@ public class ShopUIManager : MonoBehaviour
         ShopManager.Instance.TryReroll();
     }
 
+    public void OnClickFreeReroll()
+    {
+        ShopManager.Instance.TryFreeReroll();
+    }
+
     public void Clear()
     {
         foreach (var card in activeCards)
