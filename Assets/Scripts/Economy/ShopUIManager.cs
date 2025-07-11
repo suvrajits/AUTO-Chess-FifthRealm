@@ -124,4 +124,9 @@ public class ShopUIManager : MonoBehaviour
         activeCards.Clear();
     }
 
+    private void OnEnable()
+    {
+        StartCoroutine(CheckForDeferredShopRender());
+    }
+
 }

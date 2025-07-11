@@ -198,6 +198,13 @@ public class ShopManager : NetworkBehaviour
     {
         if (!IsClient) return;
 
+        ulong localId = NetworkManager.Singleton.LocalClientId;
+        if (rpcParams.Send.TargetClientIds != null && !rpcParams.Send.TargetClientIds.Contains(localId))
+        {
+            Debug.LogWarning($"🚫 ForceRenderClientRpc received but not for this client: {localId}");
+            return;
+        }
+
         StartCoroutine(WaitForShopUIAndRender(heroIds));
     }
 
@@ -210,12 +217,17 @@ public class ShopManager : NetworkBehaviour
             return;
         }
 
-        Debug.Log("🔁 [ShopManager] Free reroll for all players (via RPC).");
+        Debug.Log("🔁 [ShopManager] Free reroll for all players (via ForceRenderClientRpc).");
 
-        var allClients = PlayerShopState.AllShops.Keys.ToArray();
-
-        foreach (var clientId in allClients)
+        foreach (var kvp in PlayerShopState.AllShops)
         {
+            ulong clientId = kvp.Key;
+            PlayerShopState shop = kvp.Value;
+
+            shop.RerollShopFree();
+
+            List<int> heroIds = shop.CurrentShop.ConvertAll(h => h.heroId);
+
             var rpcParams = new ClientRpcParams
             {
                 Send = new ClientRpcSendParams
@@ -224,9 +236,11 @@ public class ShopManager : NetworkBehaviour
                 }
             };
 
-            RequestClientFreeRerollClientRpc(rpcParams);
+            Debug.Log($"📦 Sending ForceRenderClientRpc for {clientId} with {heroIds.Count} heroes.");
+            ForceRenderClientRpc(heroIds.ToArray(), rpcParams);
         }
     }
+
 
 
     public static bool HasDeferredShop() => deferredHeroIds != null && deferredHeroIds.Count > 0;
