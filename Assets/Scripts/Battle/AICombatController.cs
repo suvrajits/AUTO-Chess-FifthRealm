@@ -45,7 +45,10 @@ public class AICombatController : NetworkBehaviour
     public void TickAI()
     {
         if (!isInBattle || !unit.IsAlive || BattleManager.Instance.IsBattleOver())
+        {
+            Debug.Log($"🛑 Skipping TickAI for {unit.name} — inBattle={isInBattle}, isAlive={unit.IsAlive}");
             return;
+        }
 
         unit.SnapToGroundedTile(); //  Keep centered + upright every frame
 

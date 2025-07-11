@@ -62,6 +62,13 @@ public class PlayerShopState : NetworkBehaviour
 
         GenerateNewShop();
     }
+    public void RerollShopFree()
+    {
+        if (!IsServer || player == null || player.GoldManager == null) return;
+
+        Debug.Log($"🎁 [Server] Free reroll triggered for Client {OwnerClientId}");
+        GenerateNewShop(); // ✅ This pushes update to client
+    }
 
     public void PurchaseHero(int heroId)
     {
@@ -101,7 +108,7 @@ public class PlayerShopState : NetworkBehaviour
         ShopManager.Instance.SyncShopToClient(OwnerClientId, CurrentShop);
     }
 
-    private void GenerateNewShop()
+    public void GenerateNewShop()
     {
         CurrentShop.Clear();
 

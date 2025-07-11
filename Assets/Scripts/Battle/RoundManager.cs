@@ -3,6 +3,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+
 public class RoundManager : NetworkBehaviour
 {
     public static RoundManager Instance;
@@ -14,27 +15,30 @@ public class RoundManager : NetworkBehaviour
     private int roundNumber = 0;
     private bool roundInProgress = false;
     private List<ulong> waitingPlayers = new();
-    private List<List<ulong>> currentMatches = new(); // Each match = list of clientIds
+    private List<List<ulong>> currentMatches = new();
     private int roundIndex = 0;
-    public NetworkVariable<int> CurrentRound = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
+    public NetworkVariable<int> CurrentRound = new(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private ulong? idlePlayerThisRound = null;
+
     private void Awake()
     {
         Instance = this;
     }
-    
+
     private bool CanStartNextBattle()
     {
-        // ✅ You may customize this based on your game state
         var alivePlayers = PlayerNetworkState.AllPlayers.Values.Count(p => p.IsAlive);
         return alivePlayers >= 2;
     }
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsServer)
         {
+            Debug.Log("🧠 RoundManager OnNetworkSpawn → Starting RoundLoop");
             StartCoroutine(RoundLoop());
         }
     }
@@ -43,14 +47,16 @@ public class RoundManager : NetworkBehaviour
     {
         while (true)
         {
-            yield return new WaitUntil(() => !roundInProgress);
+            yield return new WaitUntil(() =>
+                BattleManager.Instance != null &&
+                BattleManager.Instance.CurrentPhase == GamePhase.Waiting &&
+                !BattleGroundManager.Instance.IsBattleInProgress() &&
+                PlayerNetworkState.AllPlayers.Count(p => p.Value != null && p.Value.IsAlive) >= 2
+            );
 
             roundInProgress = true;
             roundNumber++;
             CurrentRound.Value = roundNumber;
-
-            // 🔥 ADD THIS LINE HERE
-            BattleManager.Instance.SetPhase(GamePhase.Placement);
 
             Debug.Log($"🔁 Starting Round {roundNumber}");
             yield return StartCoroutine(PreBattlePhase());
@@ -62,26 +68,34 @@ public class RoundManager : NetworkBehaviour
                 StartMatch(match);
             }
 
-            yield return new WaitUntil(() => BattleManager.Instance.IsBattleOver());
+            yield return new WaitUntil(() =>
+                BattleManager.Instance != null &&
+                BattleManager.Instance.CurrentPhase == GamePhase.Results
+            );
+
             yield return StartCoroutine(PostBattlePhase());
 
+            // ✅ Reset phase to waiting before next round
+            BattleManager.Instance.SetPhase(GamePhase.Waiting);
             roundInProgress = false;
         }
     }
 
     private IEnumerator PreBattlePhase()
     {
-        Debug.Log("Countdown before battle begins...");
+        Debug.Log("⏳ PreBattlePhase: Setting placement phase");
+        BattleManager.Instance.SetPhase(GamePhase.Placement);
         yield return new WaitForSeconds(roundCountdown);
     }
 
     private IEnumerator PostBattlePhase()
     {
-        Debug.Log(" Battle ended. Distributing rewards...");
+        Debug.Log("🪙 Battle ended. Distributing rewards...");
         PostBattleRewardSystem.Instance.GrantGold();
+        ShopManager.Instance?.RerollAllShopsFree();
         yield return new WaitForSeconds(postBattleDelay);
     }
-    
+
     private void BuildMatchups()
     {
         waitingPlayers = PlayerNetworkState.AllPlayers.Keys
@@ -90,7 +104,6 @@ public class RoundManager : NetworkBehaviour
 
         currentMatches.Clear();
 
-        // Shuffle player list
         waitingPlayers = waitingPlayers.OrderBy(x => UnityEngine.Random.value).ToList();
 
         for (int i = 0; i + 1 < waitingPlayers.Count; i += 4)
@@ -102,13 +115,12 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
-        // If 3 remaining, make a 1v1 + 1 idle
         int rem = waitingPlayers.Count % 4;
         if (rem == 3)
         {
             var lastThree = waitingPlayers.Skip(waitingPlayers.Count - 3).ToList();
             currentMatches.Add(lastThree.Take(2).ToList());
-            idlePlayerThisRound = lastThree[2]; // ✅ track who is sitting out
+            idlePlayerThisRound = lastThree[2];
         }
         else if (rem == 2)
         {
@@ -120,6 +132,7 @@ public class RoundManager : NetworkBehaviour
             idlePlayerThisRound = null;
         }
     }
+
     private void StartMatch(List<ulong> clientIds)
     {
         var allUnits = new List<HeroUnit>();
@@ -133,7 +146,6 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
-        // Assign teams: if 4 players, 2v2; if 2 players, 1v1
         var teamA = new List<HeroUnit>();
         var teamB = new List<HeroUnit>();
 
@@ -162,8 +174,16 @@ public class RoundManager : NetworkBehaviour
             }
         }
 
+        if (teamA.Count == 0 || teamB.Count == 0)
+        {
+            Debug.LogWarning("⚠️ Invalid match created. Skipping StartCustomBattle.");
+            return;
+        }
+
+        Debug.Log($"🏟️ Match Starting: TeamA={teamA.Count}, TeamB={teamB.Count}");
         BattleGroundManager.Instance.StartCustomBattle(teamA, teamB);
     }
+
     public void ScheduleNextRoundWithDelay(float delaySeconds)
     {
         StartCoroutine(ScheduleNextRoundCoroutine(delaySeconds));
@@ -172,10 +192,12 @@ public class RoundManager : NetworkBehaviour
     private IEnumerator ScheduleNextRoundCoroutine(float delay)
     {
         yield return new WaitForSeconds(delay);
-        roundInProgress = false; // allows the main loop to start the next round
+        roundInProgress = false;
     }
+
     public void StartNewRound()
     {
+        if (roundInProgress) return;
         roundInProgress = true;
         roundNumber++;
         CurrentRound.Value = roundNumber;
@@ -183,6 +205,4 @@ public class RoundManager : NetworkBehaviour
         Debug.Log($"🔁 Round {roundNumber} started");
         BuildMatchups();
     }
-
-
 }

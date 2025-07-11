@@ -2,6 +2,7 @@
 using Unity.Netcode;
 using System.Collections.Generic;
 using System.Linq;
+using System.Collections;
 
 public enum GamePhase
 {
@@ -67,36 +68,34 @@ public class BattleManager : NetworkBehaviour
 
     public void BeginCombat(List<HeroUnit> teamA, List<HeroUnit> teamB)
     {
-        if (!IsServer)
-        {
-            Debug.LogWarning("⛔ BeginCombat called on non-server.");
-            return;
-        }
+        Debug.Log("⚔️ [BattleManager] BeginCombat called.");
 
-        if (isBattleOngoing)
-        {
-            Debug.LogWarning("⚠️ BeginCombat already in progress, skipping.");
-            return;
-        }
-
-        isBattleOngoing = true;
         SetPhase(GamePhase.Battle);
 
-        teamAUnits = teamA.Where(u => u != null && u.IsAlive).ToList();
-        teamBUnits = teamB.Where(u => u != null && u.IsAlive).ToList();
+        // ✅ ACTIVATE COMBAT SYSTEM
+        isBattleOngoing = true;
 
-        Debug.Log($"⚔️ BeginCombat triggered. TeamA: {teamAUnits.Count}, TeamB: {teamBUnits.Count}");
-
-        foreach (var unit in teamAUnits.Concat(teamBUnits))
+        foreach (var unit in teamA.Concat(teamB))
         {
-            var ai = unit.GetComponent<AICombatController>();
-            ai?.SetBattleMode(true);
-
-            // ✅ Optional: ensure HealthBar shows on all clients
-            unit.SetInBattlefield(true); // This enables health bars and poison stacks
+            unit.SetInBattlefield(true); // ✅ required for visuals and team sync
+            unit.GetComponent<AICombatController>()?.SetBattleMode(true); // ✅ enables AI
         }
 
-        // ✅ Optional: Sync UI or camera if needed
+        StartCoroutine(CombatLoop());
+    }
+
+    private IEnumerator CombatLoop()
+    {
+        Debug.Log("🎮 [BattleManager] CombatLoop started.");
+
+        while (CurrentPhase == GamePhase.Battle)
+        {
+            CheckVictoryCondition(); // ✅ Check if one team has won
+
+            yield return new WaitForSeconds(0.5f); // ✅ Check every 0.5s
+        }
+
+        Debug.Log("🏁 [BattleManager] CombatLoop exiting — phase has ended.");
     }
 
 
@@ -122,19 +121,20 @@ public class BattleManager : NetworkBehaviour
 
     private void CheckVictoryCondition()
     {
-        bool teamAAlive = teamAUnits.Any(u => u != null && u.IsAlive);
-        bool teamBAlive = teamBUnits.Any(u => u != null && u.IsAlive);
+        bool teamAAlive = teamAUnits.Any(u => u.IsAlive);
+        bool teamBAlive = teamBUnits.Any(u => u.IsAlive);
 
-        if (teamAAlive && teamBAlive) return;
+        if (!teamAAlive || !teamBAlive)
+        {
+            Debug.Log("🏁 Victory condition met. Ending battle.");
 
-        isBattleOngoing = false;
-        SetPhase(GamePhase.Results);
+            // ✅ Safely stop battle systems
+            EndBattle();
 
-        string winner = teamAAlive ? "Team A" : teamBAlive ? "Team B" : "Draw";
-        Debug.Log($"🏆 Battle ended! Winner: {winner}");
-
-        EndBattle();
+            SetPhase(GamePhase.Results); // ✅ triggers post-battle flow
+        }
     }
+
 
     private void EndBattle()
     {

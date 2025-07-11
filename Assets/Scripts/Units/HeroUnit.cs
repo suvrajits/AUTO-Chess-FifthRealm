@@ -546,6 +546,9 @@ public class HeroUnit : NetworkBehaviour
         if (healthBarUIInstance != null)
             healthBarUIInstance.gameObject.SetActive(false);
 
+        if (poisonStackUIPrefab != null)
+            poisonStackUIPrefab.gameObject.SetActive(false);
+
         Debug.Log($"👻 Corpse hidden for {heroData.heroName}");
     }
 

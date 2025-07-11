@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using System.Collections;
 
 public class ShopUIManager : MonoBehaviour
 {
@@ -19,13 +20,45 @@ public class ShopUIManager : MonoBehaviour
         rerollButton.onClick.AddListener(OnClickReroll);
         rerollCostText.text = $"{ShopManager.Instance.RerollCost}";
 
-        // Tell server we are ready to receive our personal shop list
         ShopManager.Instance.RequestInitialShop();
+
+        StartCoroutine(CheckForDeferredShopRender());
+    }
+    private IEnumerator CheckForDeferredShopRender()
+    {
+        yield return new WaitForSeconds(0.1f);
+
+        if (ShopManager.TryConsumeDeferredReroll(out var ids))
+        {
+            Debug.Log("🟢 Deferred shop found, rendering immediately.");
+            RenderShop(new List<int>(ids));
+        }
+    }
+
+    private IEnumerator WaitForDeferredShopAndRender()
+    {
+        float timeout = 5f;
+        float elapsed = 0f;
+
+        while (elapsed < timeout)
+        {
+            if (ShopManager.TryConsumeDeferredReroll(out var ids))
+            {
+                Debug.Log("🟢 Deferred shop data found. Rendering...");
+                RenderShop(new List<int>(ids));
+                yield break;
+            }
+
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+
+        Debug.LogWarning("⚠️ No deferred shop data received in time.");
     }
 
     public void RenderShop(List<int> heroIds)
     {
-        Clear();
+        ClearShopUI();
 
         if (heroIds == null || heroIds.Count == 0)
         {
@@ -48,9 +81,22 @@ public class ShopUIManager : MonoBehaviour
             activeCards.Add(card);
         }
 
+        LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)cardContainer);
         rerollButton.interactable = true;
+
+        Debug.Log($"✅ RenderShop completed. Cards: {heroIds.Count}");
     }
 
+
+
+    private void ClearShopUI()
+    {
+        foreach (Transform child in cardContainer)
+        {
+            Destroy(child.gameObject);
+        }
+        activeCards.Clear();
+    }
 
     private void OnCardBuyClicked(int heroId)
     {
@@ -72,4 +118,5 @@ public class ShopUIManager : MonoBehaviour
         }
         activeCards.Clear();
     }
+
 }

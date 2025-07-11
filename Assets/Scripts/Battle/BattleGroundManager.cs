@@ -227,7 +227,7 @@ public class BattleGroundManager : NetworkBehaviour
             Debug.Log($"🎗️ Granting round loss reward to Client {clientId}");
             RewardManager.Instance?.GrantRoundLossReward(clientId);
         }
-
+        
         // 🧾 Show round result UI
         ShowRoundResultClientRpc(winningTeam.Select(u => u.OwnerClientId).Distinct().ToArray());
 
@@ -282,7 +282,11 @@ public class BattleGroundManager : NetworkBehaviour
     public void StartCustomBattle(List<HeroUnit> teamA, List<HeroUnit> teamB)
     {
         Debug.Log($"📦 StartCustomBattle received {teamA.Count} vs {teamB.Count} units");
-        InternalStartBattle(teamA, teamB);
+
+        InternalStartBattle(teamA, teamB); // setup teleport and visuals
+
+        // ✅ Trigger actual combat immediately — safer than delayed Invoke()
+        BattleManager.Instance.BeginCombat(teamA, teamB);
     }
 
     private void InvokeBattleStart()
@@ -329,5 +333,8 @@ public class BattleGroundManager : NetworkBehaviour
         Debug.Log("🧠 [BattleGroundManager] InternalStartBattle completed, invoking battle in 2s");
         Invoke(nameof(InvokeBattleStart), 2f);
     }
-    
+    public bool IsBattleInProgress()
+    {
+        return battleInProgress;
+    }
 }

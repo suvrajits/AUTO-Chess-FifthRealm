@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -11,7 +12,10 @@ public class ShopManager : NetworkBehaviour
     [SerializeField] private int rerollCost = 2;
 
     public static ShopManager Instance { get; private set; }
+    private static List<int> deferredHeroIds = null;
     public int RerollCost => rerollCost;
+    private static Dictionary<ulong, int[]> deferredRerollData = new();
+    
 
     private void Awake()
     {
@@ -141,10 +145,10 @@ public class ShopManager : NetworkBehaviour
     private void SyncShopClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
     {
         if (!IsClient) return;
-        StartCoroutine(WaitForShopUIAndRender(new List<int>(heroIds)));
+        StartCoroutine(WaitForShopUIAndRender(heroIds.ToArray()));
     }
 
-    private IEnumerator WaitForShopUIAndRender(List<int> heroIds)
+    private IEnumerator WaitForShopUIAndRender(int[] heroIds)
     {
         float timeout = 5f;
         float elapsed = 0f;
@@ -160,12 +164,112 @@ public class ShopManager : NetworkBehaviour
 
         if (ui != null)
         {
-            ui.RenderShop(heroIds);
+            Debug.Log("🟢 Shop UI ready, rendering heroIds.");
+            ui.RenderShop(new List<int>(heroIds));
         }
         else
         {
-            Debug.LogError("❌ ShopUIManager not found in scene after timeout.");
+            Debug.LogWarning("⚠️ Shop UI not found in time. Deferring...");
+            ulong localId = NetworkManager.Singleton.LocalClientId;
+            deferredRerollData[localId] = heroIds;
         }
+    }
+    [ClientRpc]
+    private void ForceRenderClientRpc(int[] heroIds, ClientRpcParams rpcParams = default)
+    {
+        if (!IsClient) return;
+
+        StartCoroutine(WaitForShopUIAndRender(heroIds));
+    }
+
+
+    public void RerollAllShopsFree()
+    {
+        if (!IsServer) return;
+
+        Debug.Log("🔁 [ShopManager] Free reroll for all players.");
+
+        foreach (var kvp in PlayerShopState.AllShops)
+        {
+            ulong clientId = kvp.Key;
+            PlayerShopState shop = kvp.Value;
+
+            shop.RerollShopFree();
+
+            List<int> heroIds = shop.CurrentShop.ConvertAll(h => h.heroId);
+            ForceRenderClientRpc(heroIds.ToArray(), new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+            });
+
+            Debug.Log($"🛒 Synced reroll to client {clientId}");
+        }
+    }
+
+    public static bool HasDeferredShop() => deferredHeroIds != null && deferredHeroIds.Count > 0;
+    public static List<int> ConsumeDeferredShop()
+    {
+        var copy = deferredHeroIds;
+        deferredHeroIds = null;
+        return copy;
+    }
+   
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestFreshShopServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
+        {
+            Debug.LogWarning($"❌ No PlayerShopState for {clientId}");
+            return;
+        }
+
+        shop.RerollShop(); // Uses existing server-side logic, no gold deducted
+
+        // Force sync to client immediately
+        List<int> heroIds = shop.CurrentShop.ConvertAll(h => h.heroId);
+        ForceRenderClientRpc(heroIds.ToArray(), new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+        });
+    }
+    public void RequestFreshShop()
+    {
+        if (!IsClient) return;
+        RequestFreshShopServerRpc();
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void RequestFreeShopServerRpc(ServerRpcParams rpcParams = default)
+    {
+        ulong clientId = rpcParams.Receive.SenderClientId;
+
+        if (!PlayerShopState.AllShops.TryGetValue(clientId, out var shop))
+        {
+            Debug.LogWarning($"❌ No PlayerShopState for {clientId}");
+            return;
+        }
+
+        shop.RerollShopFree(); // ✅ Free version that doesn’t deduct gold
+    }
+    public void RequestFreeShop()
+    {
+        if (!IsClient) return;
+        RequestFreeShopServerRpc();
+    }
+    public static bool TryConsumeDeferredReroll(out List<int> heroIds)
+    {
+        heroIds = null;
+        ulong localId = NetworkManager.Singleton.LocalClientId;
+
+        if (deferredRerollData.TryGetValue(localId, out var ids))
+        {
+            heroIds = new List<int>(ids);
+            deferredRerollData.Remove(localId);
+            return true;
+        }
+
+        return false;
     }
 
 }
