@@ -64,6 +64,11 @@ public class RoundHUDUI : MonoBehaviour
             StartCoroutine(FlashUnitCapRed());
     }
 
+    public void UpdatePhaseTimerText(string placementDuration)
+    {
+        phaseTimerText.text = placementDuration;
+    }
+
     private System.Collections.IEnumerator FlashUnitCapRed()
     {
         isFlashing = true;
