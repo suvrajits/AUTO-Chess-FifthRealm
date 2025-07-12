@@ -7,6 +7,7 @@ public class RoundHUDUI : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TMP_Text roundText;
     [SerializeField] private TMP_Text unitCapText;
+    [SerializeField] private TMP_Text phaseTimerText;
 
     [Header("Flash Colors")]
     [SerializeField] private Color normalColor = Color.white;
