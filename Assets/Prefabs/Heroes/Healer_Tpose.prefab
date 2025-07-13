@@ -62,6 +62,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1911070692351975758}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8391008763305327656
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 368186801963686526}
+  m_Layer: 8
+  m_Name: HitPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &368186801963686526
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8391008763305327656}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 5962158636851049033}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &2094109875216959141
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -379,6 +410,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
       insertIndex: 1
       addedObject: {fileID: 4861818796644747159}
+    - targetCorrespondingSourceObject: {fileID: -3480699329000672020, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 368186801963686526}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
       insertIndex: -1
@@ -525,7 +559,7 @@ MonoBehaviour:
   contextMenuAnchor: {fileID: 2590971639158175819}
   contextMenuInstance: {fileID: 0}
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
-  poisonStackUIInstance: {fileID: 0}
+  hitPointTransform: {fileID: 368186801963686526}
 --- !u!114 &4467621458889790851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -659,6 +693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
 --- !u!114 &334464029105551253
 MonoBehaviour:
@@ -672,6 +707,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd2ee95b2b416fa42bed53521efa3cdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  traitTracker: {fileID: 0}
 --- !u!4 &1911070692351975758 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
@@ -680,5 +716,10 @@ Transform:
 --- !u!95 &5504894629598821172 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
+  m_PrefabInstance: {fileID: 2094109875216959141}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5962158636851049033 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3480699329000672020, guid: 4d242a339ce32c544adb69d824d108d5, type: 3}
   m_PrefabInstance: {fileID: 2094109875216959141}
   m_PrefabAsset: {fileID: 0}

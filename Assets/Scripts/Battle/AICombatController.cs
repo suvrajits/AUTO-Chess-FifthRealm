@@ -126,6 +126,16 @@ public class AICombatController : NetworkBehaviour
         unit.AnimatorHandler?.SetRunning(false);
         unit.AnimatorHandler?.TriggerAttack();
 
+        if (data.unitType == UnitType.Ranged) // or Archer, Mage, etc.
+        {
+            var combat = unit.GetComponent<HeroCombatController>();
+            if (combat != null)
+            {
+                combat.SetTarget(target);           // 🏹 tell the arrow who to aim at
+                combat.TriggerAttackAnimation();    // 🧠 triggers the anim event → arrow launch
+            }
+        }
+
         StartCoroutine(DelayedHit(target, data.attackDelay));
         cooldownTimer = data.attackSpeed;
     }

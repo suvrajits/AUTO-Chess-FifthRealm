@@ -70,7 +70,7 @@ public class HeroUnit : NetworkBehaviour
     public TraitEffectHandler TraitEffectHandler { get; private set; }
     private bool isInBattle;
     private Animator animator;
-
+    public Transform hitPointTransform;
     private void Awake()
     {
         AnimatorHandler = GetComponent<HeroAnimatorHandler>();
@@ -172,6 +172,7 @@ public class HeroUnit : NetworkBehaviour
             traitEffectHandler = gameObject.AddComponent<TraitEffectHandler>();
 
         traitEffectHandler.Initialize(this, heroData.traits);
+        Initialize();
     }
 
 
@@ -680,5 +681,31 @@ public class HeroUnit : NetworkBehaviour
         healthBarUIInstance?.SetVisible(active);
     }
 
+    public void Initialize()
+    {
+        var combat = GetComponent<HeroCombatController>();
+        var animEvents = GetComponent<HeroAnimatorEvents>();
 
+        if (combat == null)
+        {
+            Debug.LogError($"❌ HeroCombatController is missing on {gameObject.name}");
+            return;
+        }
+
+        if (animEvents == null)
+        {
+            Debug.LogError($"❌ HeroAnimatorEvents is missing on {gameObject.name}");
+            return;
+        }
+
+        combat.Init(this);
+        animEvents.Init(combat);
+
+        Debug.Log($"[HeroUnit] ✅ Initialized HeroCombat + AnimatorEvents on {gameObject.name}");
+    }
+
+    public Vector3 GetHitPoint()
+    {
+        return hitPointTransform != null ? hitPointTransform.position : transform.position + Vector3.up * 1.2f;
+    }
 }

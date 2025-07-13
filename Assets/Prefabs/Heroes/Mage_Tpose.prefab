@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4796816322894039394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3744214632045731913}
+  m_Layer: 8
+  m_Name: HitPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3744214632045731913
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4796816322894039394}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 7712298304122412482}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8364626204077190736
 GameObject:
   m_ObjectHideFlags: 0
@@ -315,6 +346,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: eeb619fb537355f47931e57c446b8113, type: 3}
       insertIndex: 1
       addedObject: {fileID: 6258015754232979937}
+    - targetCorrespondingSourceObject: {fileID: -3480699329000672020, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3744214632045731913}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: eeb619fb537355f47931e57c446b8113, type: 3}
       insertIndex: -1
@@ -574,7 +608,7 @@ MonoBehaviour:
   contextMenuAnchor: {fileID: 7159937834492905966}
   contextMenuInstance: {fileID: 0}
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
-  poisonStackUIInstance: {fileID: 0}
+  hitPointTransform: {fileID: 3744214632045731913}
 --- !u!114 &7684120441726415463
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -600,6 +634,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
 --- !u!114 &-6909468693580542193
 MonoBehaviour:
@@ -613,6 +648,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd2ee95b2b416fa42bed53521efa3cdf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  traitTracker: {fileID: 0}
+--- !u!4 &7712298304122412482 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3480699329000672020, guid: eeb619fb537355f47931e57c446b8113, type: 3}
+  m_PrefabInstance: {fileID: 2645165581609281838}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &8493526926028805311 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: eeb619fb537355f47931e57c446b8113, type: 3}
