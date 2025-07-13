@@ -26,5 +26,7 @@ MonoBehaviour:
   traits:
   - {fileID: 11400000, guid: 713f3e32df357a649a9f6ff36734dccb, type: 2}
   - {fileID: 11400000, guid: c168d63bb89cc6e46b85080e033acad0, type: 2}
+  unitType: 0
+  heroClass: 4
   attackDelay: 4.2
   heroRole: 0

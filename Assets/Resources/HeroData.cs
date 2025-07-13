@@ -17,7 +17,7 @@ public class HeroData : ScriptableObject
     public GameObject heroPrefab;
     public List<TraitDefinition> traits;
     public UnitType unitType;
-
+    public HeroClass heroClass;
     [Tooltip("Delay between animation start and hit frame in seconds")]
     public float attackDelay = 0.25f;
 
@@ -35,7 +35,15 @@ public enum HeroRole
 public enum UnitType
 {
     Melee,
-    Ranged,
-    Mage,
-    // Add more if needed later
+    Ranged
+}
+
+public enum HeroClass 
+{ 
+    Knight, 
+    Archer, 
+    Mage, 
+    Healer, 
+    Brute,
+    Assassin
 }

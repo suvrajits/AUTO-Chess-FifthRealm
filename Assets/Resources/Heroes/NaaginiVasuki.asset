@@ -27,5 +27,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a5c7e9e035714cd4c888241a1b2d473b, type: 2}
   - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
   unitType: 1
+  heroClass: 3
   attackDelay: 5.5
   heroRole: 1
