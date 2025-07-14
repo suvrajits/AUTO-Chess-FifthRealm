@@ -5013,7 +5013,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c3e8c4ae05aa224fa9cdc6ef90cd774, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 15
-  arcHeightFactor: 0.15
+  speed: 10
+  arcHeightFactor: 0.1
   trailFX: {fileID: 7763209903276287117}
   impactEffectPrefab: {fileID: 0}
