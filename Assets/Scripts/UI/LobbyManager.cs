@@ -9,7 +9,6 @@ using Unity.Services.Authentication;
 using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class LobbyManager : NetworkBehaviour
@@ -18,7 +17,6 @@ public class LobbyManager : NetworkBehaviour
 
     [Header("UI References")]
     public GameObject lobbyPanel;
-    public GameObject heroSelectionPanel;
     public TMP_Text joinCodeText;
     public Transform playerListContent;
     public GameObject playerSlotPrefab;
@@ -26,21 +24,20 @@ public class LobbyManager : NetworkBehaviour
     public Button readyButton;
     public Button leaveButton;
 
-    [SerializeField] private GameObject gameGridPrefab;
-
-    private Dictionary<string, GameObject> playerSlots = new();
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
-
     public List<PlayerStatus> ConnectedPlayers = new List<PlayerStatus>();
+
     private Lobby currentLobby;
     private float heartbeatInterval = 15f;
-    private new bool IsHost => NetworkManager.Singleton.IsHost;
+    private bool IsHost => NetworkManager.Singleton.IsHost;
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
+
+    #region Lobby Hosting / Joining
 
     public async Task<string> HostGameFromUI()
     {
@@ -49,9 +46,7 @@ public class LobbyManager : NetworkBehaviour
         string joinCode = await RelayManager.Instance.CreateRelayHostAsync();
         if (!string.IsNullOrEmpty(joinCode))
         {
-            string playerName = AuthenticationService.Instance?.PlayerName;
-            if (string.IsNullOrEmpty(playerName))
-                playerName = $"Player_{UnityEngine.Random.Range(1000, 9999)}";
+            string playerName = AuthenticationService.Instance?.PlayerName ?? $"Player_{UnityEngine.Random.Range(1000, 9999)}";
 
             var options = new CreateLobbyOptions
             {
@@ -69,11 +64,8 @@ public class LobbyManager : NetworkBehaviour
             Debug.Log($"🟢 Lobby created: {currentLobby.Id} - JoinCode: {joinCode}");
 
             StartHeartbeatLoop();
-
             lobbyPanel.SetActive(true);
-            heroSelectionPanel.SetActive(false);
             joinCodeText.text = $"Join Code: {joinCode}";
-
             return joinCode;
         }
 
@@ -84,9 +76,9 @@ public class LobbyManager : NetworkBehaviour
     {
         try
         {
-            if (NetworkManager.Singleton.IsClient || NetworkManager.Singleton.IsHost || NetworkManager.Singleton.IsServer)
+            if (NetworkManager.Singleton.IsListening)
             {
-                Debug.LogWarning("[LobbyManager] Netcode already active. Shutting down...");
+                Debug.LogWarning("[LobbyManager] Shutting down existing session...");
                 NetworkManager.Singleton.Shutdown();
                 await Task.Delay(500);
             }
@@ -120,31 +112,15 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
-    public void ToggleReadyState()
-    {
-        Debug.Log("Toggling Ready State (simulate)");
-    }
+    #endregion
+
+    #region UI Events
 
     public void StartGame()
     {
         if (!IsHost) return;
-
         Debug.Log("[LobbyManager] Host starting game...");
-        lobbyPanel.SetActive(false);
-        heroSelectionPanel.SetActive(true);
-        HideLobbyPanelClientRpc();
-
-        GameObject instance = Instantiate(gameGridPrefab);
-        instance.GetComponent<NetworkObject>().Spawn();
-    }
-
-    [ClientRpc]
-    private void HideLobbyPanelClientRpc()
-    {
-        if (lobbyPanel != null && lobbyPanel.activeSelf)
-            lobbyPanel.SetActive(false);
-
-        heroSelectionPanel.SetActive(true);
+        StartCoroutine(BeginGameAfterDelay(1.5f));
     }
 
     public void LeaveLobby()
@@ -161,28 +137,19 @@ public class LobbyManager : NetworkBehaviour
         NetworkManager.Singleton.Shutdown();
     }
 
-    public void AddPlayer(string playerId, bool isReady)
+    private IEnumerator BeginGameAfterDelay(float delay)
     {
-        if (playerSlots.ContainsKey(playerId)) return;
+        yield return new WaitForSeconds(delay);
 
-        GameObject slot = Instantiate(playerSlotPrefab, playerListContent);
-        slot.GetComponentInChildren<TMP_Text>().text = playerId + (isReady ? " ✅" : " ❌");
-        playerSlots[playerId] = slot;
+        if (!IsHost) yield break;
+
+        Debug.Log("[LobbyManager] Loading GameScene...");
+        _ = SceneTransitionManager.LoadSceneAsync("GameScene");
     }
 
-    public void UpdateReadyState(string playerId, bool isReady)
-    {
-        if (playerSlots.TryGetValue(playerId, out var slot))
-            slot.GetComponentInChildren<TMP_Text>().text = playerId + (isReady ? " ✅" : " ❌");
-    }
+    #endregion
 
-    public void ClearLobbyUI()
-    {
-        foreach (var obj in playerSlots.Values)
-            Destroy(obj);
-
-        playerSlots.Clear();
-    }
+    #region Player Slot Management
 
     public void RegisterLocalPlayer(PlayerStatus player)
     {
@@ -202,12 +169,12 @@ public class LobbyManager : NetworkBehaviour
     private void AddPlayerSlotUI(PlayerStatus player)
     {
         GameObject slot = Instantiate(playerSlotPrefab, playerListContent);
+        slot.name = $"PlayerSlot_{player.OwnerClientId}";
+
         TMP_Text nameText = slot.GetComponentInChildren<TMP_Text>();
         nameText.text = $"Player {player.OwnerClientId}";
 
-        slot.name = $"PlayerSlot_{player.OwnerClientId}";
         playerSlotInstances[player.OwnerClientId] = slot;
-
         UpdateReadyVisual(slot, player.IsReady.Value);
     }
 
@@ -224,14 +191,13 @@ public class LobbyManager : NetworkBehaviour
             img.color = isReady ? Color.green : Color.red;
     }
 
-    private IEnumerator BeginGameAfterDelay(float delay)
+    public void ClearLobbyUI()
     {
-        yield return new WaitForSeconds(delay);
+        foreach (var obj in playerSlotInstances.Values)
+            Destroy(obj);
 
-        if (!IsHost) yield break;
-
-        Debug.Log("[LobbyManager] Starting game scene...");
-        Destroy(gameObject);
-        NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+        playerSlotInstances.Clear();
     }
+
+    #endregion
 }
