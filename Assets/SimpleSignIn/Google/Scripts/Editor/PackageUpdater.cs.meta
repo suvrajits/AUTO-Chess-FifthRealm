@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 697cc3e0197f54b4883129f5511d88d0
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 250663
+  packageName: Simple Sign-In with Google
+  packageVersion: 4.7
+  assetPath: Assets/SimpleSignIn/Google/Scripts/Editor/PackageUpdater.cs
+  uploadId: 701613

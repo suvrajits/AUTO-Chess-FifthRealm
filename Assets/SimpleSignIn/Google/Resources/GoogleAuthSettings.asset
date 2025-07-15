@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3776f1bd18e76c5458fe42ea58050c95, type: 3}
+  m_Name: GoogleAuthSettings
+  m_EditorClassIdentifier: 
+  ClientIdGeneric: 275731233438-nv59vdj6ornprhtppnm8qle2jt3ebjol.apps.googleusercontent.com
+  CustomUriSchemeGeneric: simple.oauth
+  ClientIdWindows: 275731233438-nv59vdj6ornprhtppnm8qle2jt3ebjol.apps.googleusercontent.com
+  ClientSecretWindows: 
+  CustomUriSchemeWindows: simple.oauth
+  ClientIdWebGL: 275731233438-3hvi982vbhpcpkjihioa4d3gum074lds.apps.googleusercontent.com
+  ClientSecretWebGL: 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
+  ClientIdDesktop: 275731233438-v1anl61611mmer6ohqes9a310mkc2di8.apps.googleusercontent.com
+  ClientSecretDesktop: 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
