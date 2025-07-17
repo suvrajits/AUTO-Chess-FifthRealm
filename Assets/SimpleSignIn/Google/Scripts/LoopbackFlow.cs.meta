@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 173cfc6dbbf2afd468a6bdc3d7ebd845
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 250663
+  packageName: Simple Sign-In with Google
+  packageVersion: 4.7
+  assetPath: Assets/SimpleSignIn/Google/Scripts/LoopbackFlow.cs
+  uploadId: 701613
