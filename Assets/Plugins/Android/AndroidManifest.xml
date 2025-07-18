@@ -1,33 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:tools="http://schemas.android.com/tools"
-          package="com.igamerjam.fifthrealm"> <!-- ✅ Add your actual package name -->
-
-  <application
-      android:theme="@style/UnityThemeSelector"
-      android:label="@string/app_name"
-      android:icon="@mipmap/app_icon"> <!-- ✅ Ensure icon and name are set -->
-
-    <activity
-        android:name="com.unity3d.player.UnityPlayerActivity"
-        android:exported="true" 
-        android:theme="@style/UnityThemeSelector">
-
-      <!-- ✅ Main launcher intent -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <application>
+    <activity android:name="com.unity3d.player.UnityPlayerActivity" android:theme="@style/UnityThemeSelector">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
-
-      <!-- Optional deep linking -->
+      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
         <category android:name="android.intent.category.DEFAULT" />
         <category android:name="android.intent.category.BROWSABLE" />
-      </intent-filter>
-
-      <meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+        <data android:scheme="com.igamerjam.oauth" />
+      </intent-filter>	  
     </activity>
-
   </application>
 </manifest>
