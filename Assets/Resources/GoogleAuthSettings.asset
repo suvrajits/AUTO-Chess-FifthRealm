@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3776f1bd18e76c5458fe42ea58050c95, type: 3}
   m_Name: GoogleAuthSettings
   m_EditorClassIdentifier: 
-  ClientIdGeneric: 275731233438-nv59vdj6ornprhtppnm8qle2jt3ebjol.apps.googleusercontent.com
-  CustomUriSchemeGeneric: simple.oauth
+  Id: Default
+  ClientIdGeneric: 560988972350-tvnephraur50ujlc168uga4pfriq356a.apps.googleusercontent.com
+  CustomUriSchemeGeneric: com.igamerjam.oauth
   ClientIdWindows: 275731233438-nv59vdj6ornprhtppnm8qle2jt3ebjol.apps.googleusercontent.com
   ClientSecretWindows: 
   CustomUriSchemeWindows: simple.oauth
@@ -21,3 +22,9 @@ MonoBehaviour:
   ClientSecretWebGL: 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
   ClientIdDesktop: 275731233438-v1anl61611mmer6ohqes9a310mkc2di8.apps.googleusercontent.com
   ClientSecretDesktop: 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
+  AccessScopes:
+  - openid
+  - email
+  - profile
+  ManualCancellation: 0
+  UseSafariViewController: 1

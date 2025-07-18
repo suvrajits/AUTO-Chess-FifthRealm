@@ -34,7 +34,7 @@ public class GoogleSignInManager : MonoBehaviour
             PlayerPrefs.SetString("PlayerName", user.name);
             PlayerPrefs.SetString("PlayerEmail", user.email);
             PlayerPrefs.SetString("PlayerPhoto", user.picture);
-            SceneManager.LoadScene("InitScene");
+            SceneManager.LoadScene("NecodeSetup");
         }
         else
         {
