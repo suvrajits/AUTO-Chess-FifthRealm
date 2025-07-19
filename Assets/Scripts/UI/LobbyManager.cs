@@ -35,6 +35,7 @@ public class LobbyManager : NetworkBehaviour
     private Lobby currentLobby;
     private float heartbeatInterval = 15f;
     private new bool IsHost => NetworkManager.Singleton.IsHost;
+    public Lobby CurrentLobby { get; private set; }
 
     private void Awake()
     {
@@ -233,5 +234,26 @@ public class LobbyManager : NetworkBehaviour
         Debug.Log("[LobbyManager] Starting game scene...");
         Destroy(gameObject);
         NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+    }
+    public async Task CreateLobbyAsync()
+    {
+        var options = new CreateLobbyOptions
+        {
+            IsPrivate = false,
+            Player = new Player(AuthenticationService.Instance.PlayerId),
+            Data = new Dictionary<string, DataObject>
+            {
+                { "joinCode", new DataObject(DataObject.VisibilityOptions.Public, "temp") }
+            }
+        };
+
+        CurrentLobby = await Lobbies.Instance.CreateLobbyAsync("AutoMatchLobby", 4, options);
+        Debug.Log($"📦 Created lobby: {CurrentLobby.Id}");
+    }
+
+    public async Task JoinLobbyAsync(Lobby lobby)
+    {
+        CurrentLobby = await Lobbies.Instance.JoinLobbyByIdAsync(lobby.Id);
+        Debug.Log("👥 Joined lobby successfully.");
     }
 }

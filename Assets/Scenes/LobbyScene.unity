@@ -224,7 +224,7 @@ GameObject:
   - component: {fileID: 936101004}
   - component: {fileID: 936101003}
   m_Layer: 5
-  m_Name: LoginCanvas
+  m_Name: LobbyCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

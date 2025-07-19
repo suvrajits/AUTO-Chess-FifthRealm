@@ -15,6 +15,7 @@ public class MultiplayerUI : MonoBehaviour
     public TMP_InputField joinCodeInput;
     public Button hostButton;
     public Button joinButton;
+    [SerializeField] private GameObject lobbyPanel;
 
     private void Awake()
     {
@@ -126,5 +127,13 @@ public class MultiplayerUI : MonoBehaviour
         }
 
         SetButtonsInteractable(true);
+    }
+    public void ShowLobbyPanel()
+    {
+        if (lobbyPanel != null)
+        {
+            lobbyPanel.SetActive(true);
+            Debug.Log("📺 Lobby panel shown.");
+        }
     }
 }

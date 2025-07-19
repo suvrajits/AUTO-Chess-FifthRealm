@@ -9,6 +9,9 @@ using Unity.Services.Authentication;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Networking.Transport.Relay;
+using System.Collections.Generic;
+using Unity.Services.Lobbies.Models;
+using Unity.Services.Lobbies;
 
 public class RelayManager : MonoBehaviour
 {
@@ -19,6 +22,7 @@ public class RelayManager : MonoBehaviour
 
     private float joinCodeLifetime = 540f; // 9 minutes
     private float joinCodeTimer = 0f;
+    private Allocation allocation;
 
     private void Awake()
     {
@@ -208,6 +212,24 @@ public class RelayManager : MonoBehaviour
             MultiplayerUI.Instance?.OnClientConnectedConfirmed();
         }
     }
+     public async Task HostRelayAsync()
+    {
+        allocation = await RelayService.Instance.CreateAllocationAsync(4);
+        string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        await Lobbies.Instance.UpdateLobbyAsync(
+            LobbyManager.Instance.CurrentLobby.Id,
+            new UpdateLobbyOptions
+            {
+                Data = new Dictionary<string, DataObject>
+                {
+                    { "joinCode", new DataObject(DataObject.VisibilityOptions.Public, joinCode) }
+                }
+            });
+
+        Debug.Log($"🔗 Hosted Relay. JoinCode: {joinCode}");
+    }
+
 
 
 }
