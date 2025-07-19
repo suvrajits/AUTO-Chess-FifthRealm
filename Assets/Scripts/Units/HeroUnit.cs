@@ -171,7 +171,10 @@ public class HeroUnit : NetworkBehaviour
         if (traitEffectHandler == null)
             traitEffectHandler = gameObject.AddComponent<TraitEffectHandler>();
 
-        traitEffectHandler.Initialize(this, heroData.traits);
+        if (IsServer)
+        {
+            traitEffectHandler.Initialize(this, heroData.traits);
+        }
         Initialize();
     }
 
