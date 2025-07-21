@@ -70,7 +70,7 @@ public class BattleGroundManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void StartBattleServerRpc()
     {
-        Debug.Log("🧪 Manual StartBattleServerRpc triggered");
+        Debug.Log("🧪 StartBattleServerRpc triggered");
         PickTeams();
         InternalStartBattle(teamAUnits, teamBUnits);
     }

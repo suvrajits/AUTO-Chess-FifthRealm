@@ -1,32 +1,98 @@
-using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using Unity.Netcode;
 
 public class MatchStartManager : NetworkBehaviour
 {
     public static MatchStartManager Instance;
 
-    [SerializeField] private GameObject botPlayerPrefab;
-    [SerializeField] private Transform botSpawnAnchor;
+    [Header("UI Panels")]
+    [SerializeField] private GameObject lobbyPanel;
+    [SerializeField] private GameObject heroSelectionPanel;
+
+    [Header("Prefabs")]
+    [SerializeField] private GameObject gameGridPrefab;
+    public static event System.Action OnMatchStarted;
+
+    private bool hasMatchStarted = false;
 
     private void Awake()
     {
-        Instance = this;
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
+    /// <summary>
+    /// Can be called by CountdownTimer, Host UI button, or auto-start logic.
+    /// Handles hiding lobby, showing selection, and spawning grid.
+    /// </summary>
     public void StartMatch()
     {
-        Debug.Log("🚀 Starting multiplayer match...");
-        NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+        if (hasMatchStarted)
+        {
+            Debug.LogWarning("⚠️ MatchStartManager: Match already started. Ignoring duplicate trigger.");
+            return;
+        }
+
+        if (!IsServer)
+        {
+            Debug.LogWarning("⚠️ Only the server can start the match.");
+            return;
+        }
+
+        Debug.Log("🚀 Starting match...");
+        hasMatchStarted = true;
+
+        // Hide lobby and show hero selection on host
+        if (lobbyPanel != null)
+            lobbyPanel.SetActive(false);
+
+        if (heroSelectionPanel != null)
+            heroSelectionPanel.SetActive(true);
+
+        // Sync UI state to all clients
+        HideLobbyPanelClientRpc();
+
+        // Validate prefab registration
+        if (gameGridPrefab != null)
+        {
+            var netObj = gameGridPrefab.GetComponent<NetworkObject>();
+            if (netObj == null)
+            {
+                Debug.LogError("❌ gameGridPrefab is missing a NetworkObject component.");
+                return;
+            }
+
+            GameObject grid = Instantiate(gameGridPrefab);
+            grid.GetComponent<NetworkObject>().Spawn();
+        }
+        else
+        {
+            Debug.LogError("❌ gameGridPrefab not assigned.");
+        }
+
+        // Optional: Notify other systems
+        OnMatchStarted?.Invoke();
     }
 
-    public void StartMatchWithBot()
+    [ClientRpc]
+    private void HideLobbyPanelClientRpc()
     {
-        Debug.Log("🤖 Injecting bot and starting match...");
+        if (lobbyPanel != null)
+            lobbyPanel.SetActive(false);
 
-        GameObject bot = Instantiate(botPlayerPrefab, botSpawnAnchor.position, Quaternion.identity);
-        bot.GetComponent<NetworkObject>().Spawn();
-
-        StartMatch();
+        if (heroSelectionPanel != null)
+            heroSelectionPanel.SetActive(true);
+    }
+    public void ResetMatch()
+    {
+        hasMatchStarted = false;
+        Debug.Log("🔁 MatchStartManager: Match state reset.");
     }
 }

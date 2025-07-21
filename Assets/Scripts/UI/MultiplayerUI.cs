@@ -22,10 +22,11 @@ public class MultiplayerUI : MonoBehaviour
         if (Instance == null) Instance = this;
     }
 
-    private void Start()
+    private async void Start()
     {
         hostButton.onClick.AddListener(() => _ = HostGame());
         joinButton.onClick.AddListener(() => _ = JoinGameViaCode(joinCodeInput.text));
+        await LobbyManager.Instance.TryAutoMatchLobbyAsync();
     }
 
     private void SetButtonsInteractable(bool state)

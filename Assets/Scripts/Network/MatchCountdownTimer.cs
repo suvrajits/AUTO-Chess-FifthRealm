@@ -1,61 +1,94 @@
-using System.Collections;
-using Unity.Netcode;
 using UnityEngine;
+using Unity.Netcode;
+using TMPro;
 
 public class MatchCountdownTimer : NetworkBehaviour
 {
-    [SerializeField] private float countdownDuration = 20f;
+    public static MatchCountdownTimer Instance;
 
-    private NetworkVariable<float> countdownTime = new NetworkVariable<float>(0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    [SerializeField] private TMP_Text countdownText; // Optional for UI
+    [SerializeField] private float countdownDuration = 60f;
 
-    private Coroutine countdownRoutine;
+    private NetworkVariable<float> countdownTime = new NetworkVariable<float>(
+        value: 0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private bool hasMatchStarted = false;
+
+    private void Awake()
+    {
+        if (Instance == null)
+            Instance = this;
+        else
+            Destroy(gameObject);
+    }
 
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsServer)
         {
-            StartCountdown();
-        }
-
-        CountdownUI.Instance?.BindCountdown(countdownTime);
-    }
-
-    private void StartCountdown()
-    {
-        if (countdownRoutine == null)
-        {
-            countdownRoutine = StartCoroutine(CountdownRoutine());
+            countdownTime.Value = countdownDuration;
+            Debug.Log("⏱️ Match countdown started (60s).");
         }
     }
 
-    private IEnumerator CountdownRoutine()
+    public void StartCountdown()
     {
+        if (!IsServer) return;
+
+        Debug.Log("⏱️ Host initiating 60-second countdown.");
         countdownTime.Value = countdownDuration;
+        hasMatchStarted = false;
 
-        while (countdownTime.Value > 0f)
+        if (countdownText != null)
+            countdownText.gameObject.SetActive(true);
+    }
+
+    private void Update()
+    {
+        if (IsServer && !hasMatchStarted)
         {
-            yield return new WaitForSeconds(1f);
-            countdownTime.Value -= 1f;
+            HandleCountdownLogic();
+        }
 
-            if (NetworkManager.Singleton.ConnectedClients.Count >= 4)
-            {
-                Debug.Log("🎯 Full lobby. Starting match early.");
+        if (IsClient || IsHost)
+        {
+            UpdateCountdownUI();
+        }
+    }
+
+    private void HandleCountdownLogic()
+    {
+        if (countdownTime.Value <= 0f || hasMatchStarted)
+            return;
+
+        countdownTime.Value -= Time.deltaTime;
+        countdownTime.Value = Mathf.Max(0f, countdownTime.Value);
+
+        int currentPlayers = NetworkManager.Singleton.ConnectedClients.Count;
+
+        if (countdownTime.Value <= 0f || currentPlayers >= 4)
+        {
+            Debug.Log($"🎮 Triggering match start. TimeLeft={countdownTime.Value:F1}s, Players={currentPlayers}");
+            hasMatchStarted = true;
+
+            if (MatchStartManager.Instance != null)
                 MatchStartManager.Instance.StartMatch();
-                yield break;
-            }
+            else
+                Debug.LogError("❌ MatchStartManager.Instance not found.");
         }
+    }
 
-        int realPlayers = NetworkManager.Singleton.ConnectedClients.Count;
+    private void UpdateCountdownUI()
+    {
+        if (countdownText == null) return;
 
-        if (realPlayers >= 2)
-        {
-            Debug.Log("⏱ Countdown expired with 2+ players. Starting match.");
-            MatchStartManager.Instance.StartMatch();
-        }
-        else
-        {
-            Debug.Log("⏱ Countdown expired with < 2 players. Injecting bot and starting match.");
-            MatchStartManager.Instance.StartMatchWithBot();
-        }
+        int secondsRemaining = Mathf.CeilToInt(countdownTime.Value);
+        int currentPlayers = NetworkManager.Singleton.ConnectedClients.Count;
+        countdownText.text = $"Match starts in {secondsRemaining}s... ({currentPlayers}/4)";
     }
 }

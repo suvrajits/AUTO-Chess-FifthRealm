@@ -24,6 +24,9 @@ public class RelayManager : MonoBehaviour
     private float joinCodeTimer = 0f;
     private Allocation allocation;
 
+    private string currentJoinCode;
+    public string GetJoinCode() => currentJoinCode;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -170,7 +173,6 @@ public class RelayManager : MonoBehaviour
         Debug.Log("[RelayManager] Relay reset complete.");
     }
 
-    public string GetJoinCode() => cachedJoinCode;
     private void OnEnable()
     {
         if (NetworkManager.Singleton != null)
