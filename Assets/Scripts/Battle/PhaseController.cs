@@ -22,12 +22,9 @@ public class PhaseController : NetworkBehaviour
         Instance = this;
     }
 
+
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-        {
-            StartCoroutine(PhaseLoop());
-        }
         if (IsClient)
         {
             syncedPhaseTimer.OnValueChanged += (oldVal, newVal) =>
@@ -36,7 +33,20 @@ public class PhaseController : NetworkBehaviour
             };
         }
     }
-    
+
+    public void StartPhaseLoop()
+    {
+         if (IsServer)
+        StartCoroutine(DelayedStart());
+    }
+
+    private IEnumerator DelayedStart()
+    {
+        yield return new WaitForSeconds(5f);
+        Debug.Log("🔁 PhaseController: Starting round loop...");
+        StartCoroutine(PhaseLoop());
+    }
+
     private IEnumerator PhaseLoop()
     {
         while (true)

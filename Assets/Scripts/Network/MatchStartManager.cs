@@ -49,37 +49,42 @@ public class MatchStartManager : NetworkBehaviour
         Debug.Log("🚀 Starting match...");
         hasMatchStarted = true;
 
-        // Hide lobby and show hero selection on host
+        // 🔒 UI transitions on host
         if (lobbyPanel != null)
             lobbyPanel.SetActive(false);
 
         if (heroSelectionPanel != null)
             heroSelectionPanel.SetActive(true);
 
-        // Sync UI state to all clients
+        // 🌐 Propagate UI transition to all clients
         HideLobbyPanelClientRpc();
 
-        // Validate prefab registration
+        // 🧱 Spawn the game grid prefab
         if (gameGridPrefab != null)
         {
-            var netObj = gameGridPrefab.GetComponent<NetworkObject>();
-            if (netObj == null)
+            GameObject grid = Instantiate(gameGridPrefab);
+            var netObj = grid.GetComponent<NetworkObject>();
+
+            if (netObj != null)
+            {
+                netObj.Spawn();
+                Debug.Log("✅ gameGridPrefab spawned and networked.");
+            }
+            else
             {
                 Debug.LogError("❌ gameGridPrefab is missing a NetworkObject component.");
-                return;
             }
-
-            GameObject grid = Instantiate(gameGridPrefab);
-            grid.GetComponent<NetworkObject>().Spawn();
         }
         else
         {
-            Debug.LogError("❌ gameGridPrefab not assigned.");
+            Debug.LogError("❌ gameGridPrefab not assigned in inspector.");
         }
 
-        // Optional: Notify other systems
+        // 🎮 Trigger phase controller and signal listeners
+        PhaseController.Instance?.StartPhaseLoop();
         OnMatchStarted?.Invoke();
     }
+
 
     [ClientRpc]
     private void HideLobbyPanelClientRpc()
