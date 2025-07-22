@@ -83,12 +83,19 @@ public class MatchCountdownTimer : NetworkBehaviour
         }
     }
 
-    private void UpdateCountdownUI()
+   private void UpdateCountdownUI()
     {
         if (countdownText == null) return;
 
         int secondsRemaining = Mathf.CeilToInt(countdownTime.Value);
-        int currentPlayers = NetworkManager.Singleton.ConnectedClients.Count;
+        int currentPlayers = 1; // fallback default
+
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            currentPlayers = NetworkManager.Singleton.ConnectedClientsList.Count;
+        }
+
         countdownText.text = $"Match starts in {secondsRemaining}s... ({currentPlayers}/4)";
     }
+
 }

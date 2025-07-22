@@ -40,12 +40,19 @@ public class LobbyManager : NetworkBehaviour
     private const string JoinCodeKey = "joinCode";
     private const int MaxPlayers = 4;
     [SerializeField] private GameObject matchCountdownTimerPrefab;
+    private float lastLobbyQueryTime = -60f;
+    private const float lobbyQueryCooldown = 10f;
 
 
     private void Awake()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
+    }
+
+    private async void Start()
+    {
+        await Test_FindExistingLobbyAsync();
     }
 
     public async Task<string> HostGameFromUI()
@@ -304,80 +311,131 @@ public class LobbyManager : NetworkBehaviour
         CurrentLobby = await Lobbies.Instance.JoinLobbyByIdAsync(lobby.Id);
         Debug.Log("👥 Joined lobby successfully.");
     }
+    private float lastQueryTime = -10f; // Declare this at the class level
+
     public async Task TryAutoMatchLobbyAsync()
     {
+        // ⏱️ Prevent rate limit
+        if (Time.time - lastQueryTime < 1f)
+        {
+            Debug.LogWarning("⏱️ Query throttled.");
+            return;
+        }
+        lastQueryTime = Time.time;
+
         Debug.Log("🔍 Searching for available lobbies...");
 
-        // Step 1: Query for existing public lobbies
-        try
+        long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+        // 🔍 Try joining any available lobby
+        bool joined = await TryJoinAvailableLobby(nowUnix);
+        if (joined) return;
+
+        // 🧭 Otherwise, host a new one
+        long countdownEnd = nowUnix + 60;
+        await CreateAndHostNewLobby(countdownEnd);
+    }
+    private async Task<bool> TryJoinAvailableLobby(long nowUnix)
+    {
+        Debug.Log("🔍 Searching for lobby to join...");
+
+        const int maxAttempts = 5;
+        int attempt = 0;
+
+        while (attempt < maxAttempts)
         {
-            var response = await LobbyService.Instance.QueryLobbiesAsync(new QueryLobbiesOptions
+            attempt++;
+            Debug.Log($"🔁 Attempt {attempt}/{maxAttempts}");
+
+            try
             {
-                Filters = new List<QueryFilter>
+                var queryOptions = new QueryLobbiesOptions
                 {
-                    new QueryFilter(
-                        field: QueryFilter.FieldOptions.AvailableSlots,
-                        op: QueryFilter.OpOptions.GT,
-                        value: "0"
-                    )
-                },
-                Order = new List<QueryOrder>
+                    Count = 25,
+                    Filters = new List<QueryFilter>
+                    {
+                        new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT),
+                        new QueryFilter(QueryFilter.FieldOptions.S2, nowUnix.ToString(), QueryFilter.OpOptions.GT)
+                    }
+                };
+
+                var response = await LobbyService.Instance.QueryLobbiesAsync(queryOptions);
+
+                foreach (var lobby in response.Results)
                 {
-                    // Sort by most recently created
-                    new QueryOrder(false, QueryOrder.FieldOptions.Created)
+                    Debug.Log($"📦 Found lobby candidate: {lobby.Id}");
+
+                    if (!lobby.Data.TryGetValue("JoinCode", out var joinCodeData) || string.IsNullOrEmpty(joinCodeData.Value))
+                    {
+                        Debug.LogWarning("⛔ Skipping lobby with missing JoinCode.");
+                        continue;
+                    }
+
+                    if (!lobby.Data.TryGetValue("countdownEndTime", out var countdownData) ||
+                        !long.TryParse(countdownData.Value, out long countdownEnd) ||
+                        countdownEnd < nowUnix)
+                    {
+                        Debug.LogWarning($"⏭️ Skipping expired lobby (countdownEnd: {countdownData?.Value})");
+                        continue;
+                    }
+
+                    try
+                    {
+                        await RelayManager.Instance.JoinRelayAsync(joinCodeData.Value);
+                        CurrentLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobby.Id);
+
+                        Debug.Log($"✅ Successfully joined lobby: {lobby.Id}");
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogError($"❌ Failed to join Relay or Lobby: {ex.Message}");
+                        continue;
+                    }
                 }
-            });
-
-            if (response.Results != null && response.Results.Count > 0)
-            {
-                var lobby = response.Results[0];
-                Debug.Log($"🎯 Joining existing lobby: {lobby.Id}");
-
-                if (!lobby.Data.TryGetValue("JoinCode", out var joinCodeData) || string.IsNullOrEmpty(joinCodeData.Value))
-                {
-                    Debug.LogError("❌ JoinCode missing or invalid in lobby metadata.");
-                    return;
-                }
-                string joinCode = joinCodeData.Value;
-                await RelayManager.Instance.JoinRelayAsync(joinCode);
-
-                CurrentLobby = await LobbyService.Instance.JoinLobbyByIdAsync(lobby.Id);
-                Debug.Log($"✅ Joined lobby: {lobby.Id}");
-
-                return;
             }
-        }
-        catch (LobbyServiceException e)
-        {
-            Debug.LogWarning($"⚠️ Failed to query/join lobbies: {e.Message}");
+            catch (LobbyServiceException ex)
+            {
+                Debug.LogWarning($"⚠️ Lobby query failed: {ex.Message}");
+            }
+
+            await Task.Delay(1000); // wait 1 second before next attempt
         }
 
-        // Step 2: No lobbies found — become host
-        Debug.Log("📭 No lobbies found. Becoming host...");
+        Debug.LogError("❌ No joinable lobby found after retries.");
+        return false;
+    }
 
-        string newJoinCode = await RelayManager.Instance.CreateRelayHostAsync();
-        if (string.IsNullOrEmpty(newJoinCode))
+    private async Task CreateAndHostNewLobby(long countdownEndTimestamp)
+    {
+        Debug.Log("📭 No valid lobby found. Creating a new one...");
+
+        string joinCode = await RelayManager.Instance.CreateRelayHostAsync();
+        if (string.IsNullOrEmpty(joinCode))
         {
             Debug.LogError("❌ Relay allocation failed. Cannot create lobby.");
             return;
         }
 
-        // Generate fallback player name
         string playerName = AuthenticationService.Instance?.PlayerName;
         if (string.IsNullOrEmpty(playerName))
             playerName = $"Player_{UnityEngine.Random.Range(1000, 9999)}";
 
-        // Step 3: Create a new lobby and attach join code
         var options = new CreateLobbyOptions
         {
             IsPrivate = false,
             Player = new Player(id: AuthenticationService.Instance.PlayerId),
             Data = new Dictionary<string, DataObject>
             {
-                { "JoinCode", new DataObject(DataObject.VisibilityOptions.Public, newJoinCode) },
+                { "JoinCode", new DataObject(DataObject.VisibilityOptions.Public, joinCode) },
                 { "GameMode", new DataObject(DataObject.VisibilityOptions.Public, "Standard") },
                 { "Region", new DataObject(DataObject.VisibilityOptions.Public, "auto") },
-                { "HostName", new DataObject(DataObject.VisibilityOptions.Public, playerName) }
+                { "HostName", new DataObject(DataObject.VisibilityOptions.Public, playerName) },
+                { "countdownEndTime", new DataObject(DataObject.VisibilityOptions.Public, countdownEndTimestamp.ToString()) },
+                { "S2", new DataObject(
+                    visibility: DataObject.VisibilityOptions.Public,
+                    value: countdownEndTimestamp.ToString(),
+                    index: DataObject.IndexOptions.S2) }
             }
         };
 
@@ -386,32 +444,85 @@ public class LobbyManager : NetworkBehaviour
             var newLobby = await LobbyService.Instance.CreateLobbyAsync("BattleLobby", 4, options);
             CurrentLobby = newLobby;
 
-            Debug.Log($"🟢 Lobby created: {newLobby.Id} - JoinCode: {newJoinCode}");
+            Debug.Log($"🟢 Created new lobby: {newLobby.Id} (JoinCode: {joinCode})");
 
-            // Start relay host
             NetworkManager.Singleton.StartHost();
             await Task.Delay(500);
 
-            // ✅ Spawn the countdown timer prefab (only host does this)
             if (matchCountdownTimerPrefab != null)
             {
                 var timer = Instantiate(matchCountdownTimerPrefab);
                 timer.GetComponent<NetworkObject>().Spawn();
-                Debug.Log("⏱️ MatchCountdownTimer prefab spawned.");
+                Debug.Log("⏱️ MatchCountdownTimer spawned.");
             }
             else
             {
-                Debug.LogError("❌ matchCountdownTimerPrefab not assigned in LobbyManager.");
+                Debug.LogError("❌ MatchCountdownTimer prefab not assigned.");
             }
 
-            // Start countdown on host only
             MatchCountdownTimer.Instance?.StartCountdown();
-
         }
         catch (LobbyServiceException ex)
         {
             Debug.LogError($"❌ Lobby creation failed: {ex.Message}");
         }
     }
-    
+    public async Task Test_FindExistingLobbyAsync(string expectedLobbyName = "BattleLobby", string expectedJoinCode = null)
+    {
+        Debug.Log("🔍 Testing if lobby is discoverable...");
+
+        int attempts = 0;
+        while (attempts < 10)
+        {
+            await Task.Delay(1000);
+            attempts++;
+
+            try
+            {
+                long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                await UnityServicesManager.InitUnityServicesIfNeeded();
+
+                var queryOptions = new QueryLobbiesOptions
+                {
+                    Count = 25,
+                    Filters = new List<QueryFilter>
+                    {
+                        new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
+                    }
+                };
+
+                var response = await LobbyService.Instance.QueryLobbiesAsync(queryOptions);
+
+                foreach (var lobby in response.Results)
+                {
+                    // Check for name match
+                    bool nameMatches = lobby.Name == expectedLobbyName;
+
+                    // Initialize the joinCodeMatches
+                    bool joinCodeMatches = false;
+                    string foundJoinCode = null;
+
+                    if (lobby.Data.TryGetValue("JoinCode", out var jc))
+                    {
+                        foundJoinCode = jc.Value;
+                        joinCodeMatches = expectedJoinCode == null || jc.Value == expectedJoinCode;
+                    }
+
+                    if (nameMatches && joinCodeMatches)
+                    {
+                        Debug.Log($"✅ Lobby found after {attempts}s → Name: {lobby.Name}, JoinCode: {foundJoinCode}");
+                        return;
+                    }
+                }
+                Debug.Log($"🔄 Lobby not found yet (attempt {attempts}/10). Retrying...");
+            }
+            catch (LobbyServiceException ex)
+            {
+                Debug.LogError($"❌ Lobby query failed: {ex.Message}");
+                return;
+            }
+        }
+
+        Debug.LogError("❌ Test FAILED: Lobby not found within 10 seconds.");
+    }
 }
