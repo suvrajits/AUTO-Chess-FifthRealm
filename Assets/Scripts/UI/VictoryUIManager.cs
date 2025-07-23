@@ -7,29 +7,29 @@ using Unity.Netcode;
 
 public class VictoryUIManager : NetworkBehaviour
 {
-    [SerializeField] private CanvasGroup panelGroup;
+    //[SerializeField] private CanvasGroup panelGroup;
     [SerializeField] private TextMeshProUGUI resultText;
     [SerializeField] private Button playAgainButton;
 
     private void Awake()
     {
         HidePanel();
-        playAgainButton.onClick.AddListener(OnPlayAgainClicked);
+        //playAgainButton.onClick.AddListener(OnPlayAgainClicked);
     }
 
     public void ShowResult(string result)
     {
         resultText.text = result;
-        panelGroup.alpha = 1f;
-        panelGroup.interactable = true;
-        panelGroup.blocksRaycasts = true;
+        //panelGroup.alpha = 1f;
+        //panelGroup.interactable = true;
+        //panelGroup.blocksRaycasts = true;
     }
 
     private void HidePanel()
     {
-        panelGroup.alpha = 0f;
-        panelGroup.interactable = false;
-        panelGroup.blocksRaycasts = false;
+        //panelGroup.alpha = 0f;
+        //panelGroup.interactable = false;
+        //panelGroup.blocksRaycasts = false;
     }
 
     private void OnPlayAgainClicked()

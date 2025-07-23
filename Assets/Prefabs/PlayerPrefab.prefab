@@ -28,13 +28,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3630193776731704526}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.42261827, y: 0, z: 0, w: 0.9063079}
-  m_LocalPosition: {x: 0, y: 5, z: 0}
+  m_LocalRotation: {x: 0.25000006, y: 0.25000006, z: -0.06698733, w: 0.9330127}
+  m_LocalPosition: {x: -0.72, y: 1.06, z: 4.59}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 7251887659737496752}
-  m_LocalEulerAnglesHint: {x: 50, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 30, y: 30, z: 0}
 --- !u!20 &2857463836730549054
 Camera:
   m_ObjectHideFlags: 0
@@ -66,11 +66,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
+  near clip plane: -4.04
   far clip plane: 1000
   field of view: 80
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 3.65
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -150,7 +150,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c3efdd41fc588143897dfcd504e1d0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   playerCamera: {fileID: 2857463836730549054}
 --- !u!1 &5248960081774751608
 GameObject:
@@ -220,9 +219,6 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -281,10 +277,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 3665479693
+  GlobalObjectIdHash: 3176547909
   InScenePlacedSourceGlobalObjectIdHash: 3665479693
-  DeferredDespawnTick: 0
-  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -292,8 +286,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &6580057356572303317
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -306,7 +298,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be8bf7c4ade64084faaec9d28b32fb20, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   playerShopStatePrefab: {fileID: 764726777193650823, guid: 223bd437890d89c4f921814b474e017f, type: 3}
   IsEliminated:
     m_InternalValue: 0
@@ -328,7 +319,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c0fff02bcabfed844b2ef0d0e7f10ade, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   tileLayer:
     serializedVersion: 2
     m_Bits: 64
@@ -344,7 +334,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3a14950a063b9540bee35171f470db8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   maxGold: 200
   CurrentGold:
     m_InternalValue: 10
@@ -360,7 +349,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d0b6a54023456942bbb881f14a58fe6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   maxCapacity: 5
   cards: []
 --- !u!114 &-5118120816032408663
@@ -375,7 +363,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1762a4bd640ffe147be1efeb9e768cea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   startingHealth: 20
   CurrentHealth:
     m_InternalValue: 20
@@ -407,5 +394,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 037e1978dbde7f046be61d1473677148, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   activeAdvancedSynergies: []

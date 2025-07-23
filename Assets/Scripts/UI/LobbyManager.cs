@@ -26,7 +26,7 @@ public class LobbyManager : NetworkBehaviour
     public Button readyButton;
     public Button leaveButton;
 
-    [SerializeField] private GameObject gameGridPrefab;
+    //[SerializeField] private GameObject gameGridPrefab;
 
     private Dictionary<string, GameObject> playerSlots = new();
     private readonly Dictionary<ulong, GameObject> playerSlotInstances = new();
@@ -48,11 +48,6 @@ public class LobbyManager : NetworkBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-    }
-
-    private async void Start()
-    {
-        await Test_FindExistingLobbyAsync();
     }
 
     public async Task<string> HostGameFromUI()
@@ -138,6 +133,7 @@ public class LobbyManager : NetworkBehaviour
         Debug.Log("Toggling Ready State (simulate)");
     }
 
+    //StartGame() not being used
     public void StartGame()
     {
         if (!IsHost) return;
@@ -147,8 +143,8 @@ public class LobbyManager : NetworkBehaviour
         heroSelectionPanel.SetActive(true);
         HideLobbyPanelClientRpc();
 
-        GameObject instance = Instantiate(gameGridPrefab);
-        instance.GetComponent<NetworkObject>().Spawn();
+        //GameObject instance = Instantiate(gameGridPrefab);
+        //instance.GetComponent<NetworkObject>().Spawn();
     }
 
     [ClientRpc]
@@ -466,63 +462,5 @@ public class LobbyManager : NetworkBehaviour
         {
             Debug.LogError($"❌ Lobby creation failed: {ex.Message}");
         }
-    }
-    public async Task Test_FindExistingLobbyAsync(string expectedLobbyName = "BattleLobby", string expectedJoinCode = null)
-    {
-        Debug.Log("🔍 Testing if lobby is discoverable...");
-
-        int attempts = 0;
-        while (attempts < 10)
-        {
-            await Task.Delay(1000);
-            attempts++;
-
-            try
-            {
-                long nowUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-                await UnityServicesManager.InitUnityServicesIfNeeded();
-
-                var queryOptions = new QueryLobbiesOptions
-                {
-                    Count = 25,
-                    Filters = new List<QueryFilter>
-                    {
-                        new QueryFilter(QueryFilter.FieldOptions.AvailableSlots, "0", QueryFilter.OpOptions.GT)
-                    }
-                };
-
-                var response = await LobbyService.Instance.QueryLobbiesAsync(queryOptions);
-
-                foreach (var lobby in response.Results)
-                {
-                    // Check for name match
-                    bool nameMatches = lobby.Name == expectedLobbyName;
-
-                    // Initialize the joinCodeMatches
-                    bool joinCodeMatches = false;
-                    string foundJoinCode = null;
-
-                    if (lobby.Data.TryGetValue("JoinCode", out var jc))
-                    {
-                        foundJoinCode = jc.Value;
-                        joinCodeMatches = expectedJoinCode == null || jc.Value == expectedJoinCode;
-                    }
-
-                    if (nameMatches && joinCodeMatches)
-                    {
-                        Debug.Log($"✅ Lobby found after {attempts}s → Name: {lobby.Name}, JoinCode: {foundJoinCode}");
-                        return;
-                    }
-                }
-                Debug.Log($"🔄 Lobby not found yet (attempt {attempts}/10). Retrying...");
-            }
-            catch (LobbyServiceException ex)
-            {
-                Debug.LogError($"❌ Lobby query failed: {ex.Message}");
-                return;
-            }
-        }
-
-        Debug.LogError("❌ Test FAILED: Lobby not found within 10 seconds.");
     }
 }

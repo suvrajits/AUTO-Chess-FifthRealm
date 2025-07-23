@@ -47,8 +47,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 4077827989
   InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -56,8 +54,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &4618473746611864117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -70,8 +66,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a8f60f0bfecc4ff43a7e3712968a41df, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   battleTilePrefab: {fileID: 7408603165626389945, guid: a34ba8afb99001940aa606b480008d90, type: 3}
   battleArenaAnchor: {fileID: 0}
   gridSizeX: 8
   gridSizeY: 8
+  sharedSpectatorAnchor: {fileID: 0}
