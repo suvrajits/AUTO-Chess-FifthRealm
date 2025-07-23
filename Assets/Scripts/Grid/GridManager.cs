@@ -14,6 +14,11 @@ public class GridManager : MonoBehaviour
     private readonly Vector3 gridOffset = new Vector3(-3.5f, 1f, -9f);
 
     public Dictionary<ulong, Dictionary<Vector2Int, GridTile>> playerTileMaps = new();
+    public List<GameObject> arenaPrefabs; // assign in inspector, index = playerId
+    private Dictionary<ulong, GameObject> playerArenaPrefabs = new();
+    public Vector3 arenaLocalOffset = new Vector3(0, 0, 5f);
+    public Vector3 arenaRotationEuler = new Vector3(0, 0, 0);
+    
 
     // Fixed player colors per client ID
     public static readonly Dictionary<ulong, Color> PlayerColors = new()
@@ -31,6 +36,11 @@ public class GridManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        // Build the playerArenaPrefabs dictionary based on player ID index
+        for (int i = 0; i < arenaPrefabs.Count && i < 8; i++)
+        {
+            playerArenaPrefabs[(ulong)i] = arenaPrefabs[i];
+        }
     }
 
     private void Start()
@@ -77,6 +87,21 @@ public class GridManager : MonoBehaviour
         }
 
         playerTileMaps[playerId] = tileMap;
+        // ✅ Spawn arena prefab for this player
+        if (playerArenaPrefabs.TryGetValue(playerId, out GameObject arenaPrefab) && arenaPrefab != null)
+        {
+            Vector3 arenaPos = offset + arenaLocalOffset; // e.g., behind or beside the grid
+            Quaternion arenaRot = Quaternion.Euler(arenaRotationEuler);
+
+            GameObject arenaInstance = Instantiate(arenaPrefab, arenaPos, arenaRot, transform);
+            arenaInstance.name = $"Arena_Player_{playerId}";
+
+            Debug.Log($"🎯 Spawned arena for player {playerId} at {arenaPos}");
+        }
+        else
+        {
+            Debug.LogWarning($"⚠️ No arena prefab assigned for player {playerId}.");
+        }
     }
 
     public bool TryGetTile(ulong playerId, Vector2Int coord, out GridTile tile)

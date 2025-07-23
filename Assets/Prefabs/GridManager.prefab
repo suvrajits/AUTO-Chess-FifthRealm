@@ -49,6 +49,17 @@ MonoBehaviour:
   tilePrefab: {fileID: 7408603165626389945, guid: 403e7002c5a95474298f6288f029399b, type: 3}
   gridSize: 8
   spacing: 1.05
+  arenaPrefabs:
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  - {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  arenaLocalOffset: {x: 0, y: 0, z: 0}
+  arenaRotationEuler: {x: 0, y: 0, z: 0}
 --- !u!114 &10294765990429612
 MonoBehaviour:
   m_ObjectHideFlags: 0
