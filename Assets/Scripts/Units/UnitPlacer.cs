@@ -1,14 +1,23 @@
-﻿using Unity.Netcode;
+﻿using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class UnitPlacer : NetworkBehaviour
 {
     public LayerMask tileLayer;
-    private Camera mainCamera;
 
-    private void Start()
+    public static UnitPlacer Instance { get; private set; }
+
+    private void Awake()
     {
-        mainCamera = Camera.main;
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject); // Prevent duplicates
+        }
     }
 
     // ✅ New method for drag-and-drop placement
@@ -141,4 +150,10 @@ public class UnitPlacer : NetworkBehaviour
             _ => Faction.Neutral
         };
     }
+    public void OnDraggingOverTile(GridTile tile)
+    {
+        if (tile == null || !tile.IsOwnedBy(NetworkManager.Singleton.LocalClientId))
+            return;
+    }
+
 }

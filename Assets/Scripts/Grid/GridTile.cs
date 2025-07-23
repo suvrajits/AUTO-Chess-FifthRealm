@@ -11,6 +11,8 @@ public class GridTile : MonoBehaviour
 
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
+    [SerializeField] private GameObject glowObject;
+    private Material glowMaterial;
 
     public void Init(Vector2Int position, ulong ownerClientId, Color ownerColor)
     {
@@ -22,6 +24,16 @@ public class GridTile : MonoBehaviour
         propertyBlock = new MaterialPropertyBlock();
 
         SetTileColor(ownerColor);
+    }
+    private void Awake()
+    {
+        tileRenderer = GetComponent<Renderer>();
+        propertyBlock = new MaterialPropertyBlock();
+
+        if (glowObject != null)
+            glowMaterial = glowObject.GetComponent<Renderer>()?.material;
+
+        SetVisible(false); // start hidden
     }
 
     public void SetTileColor(Color color)
@@ -48,5 +60,25 @@ public class GridTile : MonoBehaviour
     public bool IsOwnedBy(ulong clientId)
     {
         return OwnerClientId == clientId;
+    }
+    public void SetVisible(bool visible)
+    {
+        if (tileRenderer != null)
+            tileRenderer.enabled = visible;
+
+        if (glowObject != null)
+            glowObject.SetActive(visible);
+    }
+
+    public void EnableGlow(bool isPulsing = false)
+    {
+        SetVisible(true);
+        if (glowMaterial != null)
+            glowMaterial.SetFloat("_PulseSpeed", isPulsing ? 2f : 0f);
+    }
+
+    public void DisableGlow()
+    {
+        SetVisible(false);
     }
 }

@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
@@ -22,6 +23,10 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     private GameObject dragPreview;
     public Transform traitIconContainer; // UI horizontal layout group
     public GameObject traitIconPrefab;
+    private Camera mainCamera;
+    private GridTile currentHoveredTile;
+    private List<GridTile> eligibleTiles = new();
+    private bool isDraggingCard = false;
     public void Setup(HeroCardInstance instance, UnitSelectionUI selectionUIRef, int cardIndex)
     {
         cardInstance = instance;
@@ -98,38 +103,76 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
     {
         if (cardInstance == null || cardInstance.baseHero == null) return;
 
+        mainCamera = Camera.main;
+
+        // 🔥 Activate glow mode for eligible tiles
+        eligibleTiles.Clear();
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+
+        if (GridManager.Instance.playerTileMaps.TryGetValue(clientId, out var tiles))
+        {
+            foreach (var tile in tiles.Values)
+            {
+                if (!tile.IsOccupied)
+                {
+                    tile.EnableGlow(); // Show static golden glow
+                    eligibleTiles.Add(tile);
+                }
+            }
+        }
+
+        // ✅ Notify TileSelector for hover pulse
+        TileSelector.Instance?.SetDraggingState(true);
+
+        // 🧩 Show drag preview icon under finger/cursor
         dragPreview = new GameObject("DragPreview");
         dragPreview.transform.SetParent(transform.root, false);
         Image previewImage = dragPreview.AddComponent<Image>();
         previewImage.raycastTarget = false;
         previewImage.sprite = cardInstance.baseHero.heroIcon;
-        previewImage.color = new Color(1f, 1f, 1f, 0.6f); // 60% opacity
+        previewImage.color = new Color(1f, 1f, 1f, 0.6f); // Slightly transparent
 
         RectTransform rect = dragPreview.GetComponent<RectTransform>();
         rect.sizeDelta = new Vector2(100, 100);
     }
 
+
     public void OnDrag(PointerEventData eventData)
     {
         if (dragPreview != null)
-        {
             dragPreview.transform.position = eventData.position;
+
+        if (mainCamera == null) return;
+
+        if (Physics.Raycast(mainCamera.ScreenPointToRay(eventData.position), out RaycastHit hit, 100f, LayerMask.GetMask("Tile")))
+        {
+            GridTile tile = hit.collider.GetComponent<GridTile>();
+            if (tile != null)
+            {
+                TileSelector.Instance?.OnDraggingOverTile(tile);
+            }
         }
     }
 
+
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (dragPreview == null)
-        {
-            // This drag likely wasn't initialized, so exit early to avoid null errors.
-            Debug.LogWarning("⚠️ OnEndDrag called but dragPreview was null. Possibly not an actual drag.");
-            return;
-        }
+        if (dragPreview != null)
+            Destroy(dragPreview);
 
-        Destroy(dragPreview);
         dragPreview = null;
 
-        // Try to raycast onto the board
+        // ❌ Clear hover pulse effect
+        TileSelector.Instance?.SetDraggingState(false);
+
+        // ❌ Disable glow for all previously eligible tiles
+        foreach (var tile in eligibleTiles)
+            tile.DisableGlow();
+
+        eligibleTiles.Clear();
+        currentHoveredTile = null;
+
+        // 🧠 Raycast from pointer to find tile under cursor
         Ray ray = Camera.main.ScreenPointToRay(eventData.position);
         if (Physics.Raycast(ray, out RaycastHit hit, 100f, LayerMask.GetMask("Tile")))
         {
@@ -137,17 +180,12 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
             if (tile != null)
             {
                 UnitPlacer placer = FindFirstObjectByType<UnitPlacer>();
-                if (placer != null)
-                {
-                    placer.TryPlaceUnitFromDeck(cardInstance, tile);
-                }
-                else
-                {
-                    Debug.LogWarning("❌ UnitPlacer not found in scene.");
-                }
+                placer?.TryPlaceUnitFromDeck(cardInstance, tile);
             }
         }
     }
+
+
     public void SetTraits(List<TraitDefinition> traits)
     {
         // Clear existing icons
@@ -164,5 +202,9 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         }
     }
 
+    public void SetDraggingState(bool isDragging)
+    {
+        isDraggingCard = isDragging;
+    }
 
 }
