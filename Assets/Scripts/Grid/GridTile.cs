@@ -62,4 +62,8 @@ public class GridTile : MonoBehaviour
     {
         return OwnerClientId == clientId;
     }
+    public bool HasUnit()
+    {
+        return OccupyingUnit != null;
+    }
 }

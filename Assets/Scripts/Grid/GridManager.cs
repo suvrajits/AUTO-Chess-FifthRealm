@@ -115,7 +115,8 @@ public class GridManager : MonoBehaviour
         {
             foreach (var tile in kvp.Value.Values)
             {
-                tile.Show(visible);
+                bool shouldShow = visible && !tile.HasUnit();
+                tile.Show(shouldShow);
             }
         }
 
