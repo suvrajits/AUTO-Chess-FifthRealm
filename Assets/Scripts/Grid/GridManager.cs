@@ -18,7 +18,7 @@ public class GridManager : MonoBehaviour
     private Dictionary<ulong, GameObject> playerArenaPrefabs = new();
     public Vector3 arenaLocalOffset = new Vector3(0, 0, 5f);
     public Vector3 arenaRotationEuler = new Vector3(0, 0, 0);
-    
+
 
     // Fixed player colors per client ID
     public static readonly Dictionary<ulong, Color> PlayerColors = new()
@@ -109,4 +109,17 @@ public class GridManager : MonoBehaviour
         tile = null;
         return playerTileMaps.TryGetValue(playerId, out var map) && map.TryGetValue(coord, out tile);
     }
+    public void ShowAllTiles(bool visible)
+    {
+        foreach (var kvp in playerTileMaps)
+        {
+            foreach (var tile in kvp.Value.Values)
+            {
+                tile.Show(visible);
+            }
+        }
+
+        Debug.Log($"🟦 Grid visibility set to: {(visible ? "ON" : "OFF")}");
+    }
+
 }

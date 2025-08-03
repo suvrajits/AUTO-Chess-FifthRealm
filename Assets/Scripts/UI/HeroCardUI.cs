@@ -107,6 +107,13 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         RectTransform rect = dragPreview.GetComponent<RectTransform>();
         rect.sizeDelta = new Vector2(100, 100);
+
+        // ✅ Show tiles when dragging starts
+        if (GridManager.Instance != null)
+        {
+            GridManager.Instance.ShowAllTiles(true);
+            Debug.Log("✨ Drag started: Grid tiles revealed.");
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -128,6 +135,13 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
 
         Destroy(dragPreview);
         dragPreview = null;
+
+        // ✅ Hide tiles when dragging ends
+        if (GridManager.Instance != null)
+        {
+            GridManager.Instance.ShowAllTiles(false);
+            Debug.Log("🧹 Drag ended: Grid tiles hidden.");
+        }
 
         // Try to raycast onto the board
         Ray ray = Camera.main.ScreenPointToRay(eventData.position);

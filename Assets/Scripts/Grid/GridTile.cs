@@ -11,6 +11,7 @@ public class GridTile : MonoBehaviour
 
     private Renderer tileRenderer;
     private MaterialPropertyBlock propertyBlock;
+    private MeshRenderer meshRenderer;
 
     public void Init(Vector2Int position, ulong ownerClientId, Color ownerColor)
     {
@@ -22,6 +23,18 @@ public class GridTile : MonoBehaviour
         propertyBlock = new MaterialPropertyBlock();
 
         SetTileColor(ownerColor);
+    }
+
+    private void Awake()
+    {
+        meshRenderer = GetComponent<MeshRenderer>();
+        Show(false); // default: hidden
+    }
+
+    public void Show(bool visible)
+    {
+        if (meshRenderer != null)
+            meshRenderer.enabled = visible;
     }
 
     public void SetTileColor(Color color)
