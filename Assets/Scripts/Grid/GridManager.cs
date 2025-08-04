@@ -98,14 +98,18 @@ public class GridManager : MonoBehaviour
         tile = null;
         return playerTileMaps.TryGetValue(playerId, out var map) && map.TryGetValue(coord, out tile);
     }
-    public void ShowAllTiles(bool visible)
+    public void ShowAllTiles(bool visible, bool pulse = false)
     {
         foreach (var kvp in playerTileMaps)
         {
             foreach (var tile in kvp.Value.Values)
             {
-                bool shouldShow = visible && !tile.HasUnit();
-                tile.Show(shouldShow);
+                bool showTile = visible && !tile.HasUnit();
+
+                if (showTile)
+                    tile.EnableGlow(pulse);
+                else
+                    tile.DisableGlow();
             }
         }
 

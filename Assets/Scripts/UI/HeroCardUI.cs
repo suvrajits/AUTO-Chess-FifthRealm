@@ -111,8 +111,7 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         // ✅ Show tiles when dragging starts
         if (GridManager.Instance != null)
         {
-            GridManager.Instance.ShowAllTiles(true);
-            Debug.Log("✨ Drag started: Grid tiles revealed.");
+            GridManager.Instance.ShowAllTiles(true, pulse: true);
         }
     }
 
@@ -140,7 +139,6 @@ public class HeroCardUI : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDr
         if (GridManager.Instance != null)
         {
             GridManager.Instance.ShowAllTiles(false);
-            Debug.Log("🧹 Drag ended: Grid tiles hidden.");
         }
 
         // Try to raycast onto the board
