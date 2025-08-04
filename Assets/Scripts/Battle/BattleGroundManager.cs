@@ -60,7 +60,7 @@ public class BattleGroundManager : NetworkBehaviour
                     continue;
                 }
 
-                tile.Init(new Vector2Int(x, y), 0, Color.gray);
+                tile.Init(new Vector2Int(x, y), 0);
                 tile.GetComponent<NetworkObject>().Spawn();
                 battleGrid[x, y] = tile;
             }

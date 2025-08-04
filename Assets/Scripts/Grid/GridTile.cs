@@ -13,7 +13,7 @@ public class GridTile : MonoBehaviour
     private MaterialPropertyBlock propertyBlock;
     private MeshRenderer meshRenderer;
 
-    public void Init(Vector2Int position, ulong ownerClientId, Color ownerColor)
+    public void Init(Vector2Int position, ulong ownerClientId)
     {
         GridPosition = position;
         OwnerClientId = ownerClientId;
@@ -22,8 +22,9 @@ public class GridTile : MonoBehaviour
         tileRenderer = GetComponent<Renderer>();
         propertyBlock = new MaterialPropertyBlock();
 
-        SetTileColor(ownerColor);
+        // Color assignment removed — glow material is now used.
     }
+
 
     private void Awake()
     {
@@ -35,18 +36,6 @@ public class GridTile : MonoBehaviour
     {
         if (meshRenderer != null)
             meshRenderer.enabled = visible;
-    }
-
-    public void SetTileColor(Color color)
-    {
-        if (tileRenderer == null)
-            tileRenderer = GetComponent<Renderer>();
-
-        if (propertyBlock == null)
-            propertyBlock = new MaterialPropertyBlock();
-
-        propertyBlock.SetColor("_BaseColor", color);
-        tileRenderer.SetPropertyBlock(propertyBlock);
     }
 
     public void AssignUnit(HeroUnit unit)

@@ -21,18 +21,7 @@ public class GridManager : MonoBehaviour
 
 
     // Fixed player colors per client ID
-    public static readonly Dictionary<ulong, Color> PlayerColors = new()
-    {
-        { 0, Color.red },
-        { 1, Color.cyan },
-        { 2, Color.green },
-        { 3, Color.yellow },
-        { 4, Color.magenta },
-        { 5, Color.blue },
-        { 6, new Color(1f, 0.5f, 0f) }, // Orange
-        { 7, new Color(0.5f, 0f, 1f) }  // Purple
-    };
-
+    
     private void Awake()
     {
         Instance = this;
@@ -50,7 +39,7 @@ public class GridManager : MonoBehaviour
 
     private void GenerateGridsForAllPlayers()
     {
-        foreach (var kvp in PlayerColors)
+        foreach (var kvp in PlayerNetworkState.AllPlayers)
         {
             ulong playerId = kvp.Key;
             int index = (int)playerId;
@@ -67,11 +56,11 @@ public class GridManager : MonoBehaviour
         }
     }
 
+
     private void GeneratePlayerGrid(ulong playerId, Vector3 offset)
     {
         Dictionary<Vector2Int, GridTile> tileMap = new();
-        Color color = PlayerColors[playerId];
-
+        
         for (int x = 0; x < gridSize; x++)
         {
             for (int z = 0; z < gridSize; z++)
@@ -81,7 +70,7 @@ public class GridManager : MonoBehaviour
                 GameObject tileObj = Instantiate(tilePrefab, worldPos, Quaternion.identity, transform);
 
                 GridTile gridTile = tileObj.GetComponent<GridTile>();
-                gridTile.Init(coord, playerId, color);
+                gridTile.Init(coord, playerId);
                 tileMap[coord] = gridTile;
             }
         }
