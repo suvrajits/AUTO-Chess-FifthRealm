@@ -5527,7 +5527,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1471602014932065850, guid: 0020dffa4ca7dd349a5afcbc85cea7dc, type: 3}
       propertyPath: placementDuration
-      value: 60
+      value: 20
       objectReference: {fileID: 0}
     - target: {fileID: 6121011329106879665, guid: 0020dffa4ca7dd349a5afcbc85cea7dc, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -5800,6 +5800,10 @@ PrefabInstance:
       propertyPath: countdownText
       value: 
       objectReference: {fileID: 1049369592}
+    - target: {fileID: 5130208770694686186, guid: 138669ca6a289f647a810b53384bb857, type: 3}
+      propertyPath: countdownDuration
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 6316537670004040274, guid: 138669ca6a289f647a810b53384bb857, type: 3}
       propertyPath: m_Name
       value: MatchCountDownTimer

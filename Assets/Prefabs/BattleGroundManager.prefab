@@ -71,3 +71,6 @@ MonoBehaviour:
   gridSizeX: 8
   gridSizeY: 8
   sharedSpectatorAnchor: {fileID: 0}
+  battleArenaPrefab: {fileID: 7385711695954894618, guid: 3a3519b10f5ad6c40ba22975def28f99, type: 3}
+  battleArenaOffset: {x: -3.5, y: 0, z: -3.5}
+  battleArenaRotationEuler: {x: 0, y: 0, z: 0}

@@ -29,6 +29,17 @@ public class BattleGroundManager : NetworkBehaviour
     private bool battleInProgress = false;
     private List<HeroUnit> allBattleParticipants = new();
 
+    [Header("Battle Arena")]
+    public GameObject battleArenaPrefab;        // Assign in Inspector
+    public Vector3 battleArenaOffset = new Vector3(-3.5f, 0f, -3.5f);
+    public Vector3 battleArenaRotationEuler = new Vector3(0f, 0f, 0f);
+
+    private GameObject spawnedBattleArena;      // Track instance
+
+    [Header("Battle Grid Settings")]
+    public int battleGridRows = 4;   // Match player rows
+    public int battleGridCols = 8;   // Match player columns
+    public float tileSpacing = 1.05f; // Match GridManager
 
     private void Awake()
     {
@@ -45,27 +56,65 @@ public class BattleGroundManager : NetworkBehaviour
 
     private void CreateBattleArena()
     {
-        battleGrid = new GridTile[gridSizeX, gridSizeY];
+        battleGrid = new GridTile[battleGridCols, battleGridRows];
 
-        for (int x = 0; x < gridSizeX; x++)
+        Vector3 origin = battleArenaAnchor.position - new Vector3((battleGridCols - 1) * tileSpacing / 2f, 0, (battleGridRows - 1) * tileSpacing / 2f);
+
+        for (int x = 0; x < battleGridCols; x++)
         {
-            for (int y = 0; y < gridSizeY; y++)
+            for (int z = 0; z < battleGridRows; z++)
             {
-                Vector3 pos = battleArenaAnchor.position + new Vector3(x, 0, y);
+                Vector3 pos = origin + new Vector3(x * tileSpacing, 0, z * tileSpacing);
                 GameObject tileObj = Instantiate(battleTilePrefab, pos, Quaternion.identity);
 
                 if (!tileObj.TryGetComponent(out GridTile tile))
                 {
-                    Debug.LogError($"❌ Battle tile prefab missing GridTile component at ({x},{y})");
+                    Debug.LogError($"❌ Battle tile prefab missing GridTile component at ({x},{z})");
                     continue;
                 }
 
-                tile.Init(new Vector2Int(x, y), 0);
-                tile.GetComponent<NetworkObject>().Spawn();
-                battleGrid[x, y] = tile;
+                tile.Init(new Vector2Int(x, z), 0);
+
+                var tileNetObj = tile.GetComponent<NetworkObject>();
+                if (tileNetObj != null)
+                {
+                    tileNetObj.Spawn(); // ✅ Network spawn tile
+                }
+                else
+                {
+                    Debug.LogError($"❌ Battle tile at ({x},{z}) missing NetworkObject component.");
+                }
+
+                battleGrid[x, z] = tile;
             }
         }
+
+        // ✅ Spawn visual battle arena prefab for all clients
+        if (battleArenaPrefab != null)
+        {
+            Vector3 arenaPos = battleArenaAnchor.position + battleArenaOffset;
+            Quaternion arenaRot = Quaternion.Euler(battleArenaRotationEuler);
+
+            spawnedBattleArena = Instantiate(battleArenaPrefab, arenaPos, arenaRot);
+            spawnedBattleArena.name = "BattleArena_Visual";
+
+            var arenaNetObj = spawnedBattleArena.GetComponent<NetworkObject>();
+            if (arenaNetObj != null)
+            {
+                arenaNetObj.Spawn(); // ✅ Network spawn arena
+                Debug.Log($"🏟️ Spawned 3D battle arena at {arenaPos}");
+            }
+            else
+            {
+                Debug.LogWarning("⚠️ BattleArena prefab missing NetworkObject component. It won't be visible to clients.");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ No battleArenaPrefab assigned to BattleGroundManager.");
+        }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void StartBattleServerRpc()
@@ -243,6 +292,11 @@ public class BattleGroundManager : NetworkBehaviour
         {
             player.CurrentRound.Value++;
             Debug.Log($"📈 Player {player.OwnerClientId} now at Round {player.CurrentRound.Value}");
+        }
+        if (spawnedBattleArena != null)
+        {
+            Destroy(spawnedBattleArena);
+            spawnedBattleArena = null;
         }
 
         RoundManager.Instance.ScheduleNextRoundWithDelay(3f);

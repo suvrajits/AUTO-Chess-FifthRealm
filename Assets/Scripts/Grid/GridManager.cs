@@ -8,6 +8,7 @@ public class GridManager : MonoBehaviour
     [Header("Grid Settings")]
     public GameObject tilePrefab;
     public int gridSize = 8;
+    public int gridRows = 4;
     public float spacing = 1.05f;
 
     // Offset to apply relative to each spawn anchor
@@ -63,7 +64,7 @@ public class GridManager : MonoBehaviour
         
         for (int x = 0; x < gridSize; x++)
         {
-            for (int z = 0; z < gridSize; z++)
+            for (int z = 0; z < gridRows; z++)
             {
                 Vector2Int coord = new Vector2Int(x, z);
                 Vector3 worldPos = offset + new Vector3(x * spacing, 0, z * spacing);
