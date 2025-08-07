@@ -5802,7 +5802,7 @@ PrefabInstance:
       objectReference: {fileID: 1049369592}
     - target: {fileID: 5130208770694686186, guid: 138669ca6a289f647a810b53384bb857, type: 3}
       propertyPath: countdownDuration
-      value: 5
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 6316537670004040274, guid: 138669ca6a289f647a810b53384bb857, type: 3}
       propertyPath: m_Name
@@ -6395,6 +6395,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: LobbyPanel
       objectReference: {fileID: 0}
+    - target: {fileID: 1362942763198187808, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
+      propertyPath: m_Value
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1395050832937213718, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
       propertyPath: m_Type
       value: 0
@@ -6402,7 +6406,7 @@ PrefabInstance:
     - target: {fileID: 1395050832937213718, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 627448dc18834dd4f99f4fa194887817, type: 3}
+      objectReference: {fileID: 21300000, guid: f4e1f8a043f336b408460fc6e66dc7dd, type: 3}
     - target: {fileID: 1689268440385272049, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
       propertyPath: m_AnchoredPosition.x
       value: 0.0000038146973

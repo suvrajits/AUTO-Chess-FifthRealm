@@ -355,6 +355,11 @@ public class BattleGroundManager : NetworkBehaviour
     {
         if (battleInProgress) return;
 
+        if (spawnedBattleArena == null)
+        {
+            CreateBattleArena();
+        }
+
         battleInProgress = true;
 
         teamAUnits = teamA;

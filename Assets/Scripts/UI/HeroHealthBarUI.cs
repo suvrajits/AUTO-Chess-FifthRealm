@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 using Unity.Netcode;
+using System.Collections.Generic;
 
 public class HeroHealthBarUI : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class HeroHealthBarUI : MonoBehaviour
     private float currentHealth;
 
     private Image activeFillImage;
+    public Transform traitIconsContainer;    // Drag TraitIconPanel here
+    public GameObject traitIconPrefab;
 
     private void Start()
     {
@@ -57,5 +60,25 @@ public class HeroHealthBarUI : MonoBehaviour
     public void SetVisible(bool visible)
     {
         gameObject.SetActive(visible);
+    }
+    private List<GameObject> traitIcons = new();
+    public void InitTraitIcons(List<TraitDefinition> traits)
+    {
+        // Clear old icons
+        foreach (var icon in traitIcons)
+            Destroy(icon);
+        traitIcons.Clear();
+
+        foreach (var trait in traits)
+        {
+            GameObject iconGO = Instantiate(traitIconPrefab, traitIconsContainer);
+            iconGO.transform.localScale = new Vector3(1.3f, 6f, 1.3f);
+
+            Image img = iconGO.GetComponent<Image>();
+            if (img != null && trait.traitIcon != null)
+                img.sprite = trait.traitIcon;
+
+            traitIcons.Add(iconGO);
+        }
     }
 }

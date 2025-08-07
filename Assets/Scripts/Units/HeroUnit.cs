@@ -140,6 +140,7 @@ public class HeroUnit : NetworkBehaviour
             {
                 healthBarUIInstance.Init(CurrentHealth);
                 healthBarUIInstance.SetHealth(CurrentHealth);
+                healthBarUIInstance.InitTraitIcons(heroData.traits);
             }
             else
             {

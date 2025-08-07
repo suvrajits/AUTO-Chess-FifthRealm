@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7625021256544646377}
   - component: {fileID: 4555037822762013448}
   - component: {fileID: 6921783590802079809}
+  - component: {fileID: -597370458612641315}
   m_Layer: 5
   m_Name: TraitIconPrefab
   m_TagString: Untagged
@@ -75,3 +76,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &-597370458612641315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3451737763592372359}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7eebd1f44b5ddc94592e21a5a1eaf92d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
