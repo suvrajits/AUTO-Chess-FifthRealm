@@ -418,6 +418,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 03c29c71d25d85a48886d04deca8d95e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2247000878304712963}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 03c29c71d25d85a48886d04deca8d95e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1662795621027308417}
   m_SourcePrefab: {fileID: 100100000, guid: 03c29c71d25d85a48886d04deca8d95e, type: 3}
 --- !u!4 &377112905969810782 stripped
 Transform:
@@ -493,8 +496,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 893012345
   InScenePlacedSourceGlobalObjectIdHash: 893012345
-  DeferredDespawnTick: 0
-  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -502,8 +503,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &8184162263616901582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -516,7 +515,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa94f3656b411d7419e2e0d2c9b71788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   corpseSinkY: 0.5
   vanishDelay: 2
 --- !u!114 &1047057981156074821
@@ -543,20 +541,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
-  TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
@@ -574,7 +558,6 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &2361450276391167571
@@ -589,7 +572,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   TransitionStateInfoList:
   - IsCrossFadeExit: 0
     Layer: 0
@@ -611,7 +593,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b304306871a027e4d94f0a02e5d1ebff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   heroData: {fileID: 11400000, guid: abfec2eb642f80c498fe80ae6706800c, type: 2}
   starLevel: 1
   currentTile: {fileID: 0}
@@ -636,7 +617,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df96c4ae64345146990366e9f43af3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &4868857108914165621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -649,11 +629,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkRigidbodyBaseExpanded: 0
-  UseRigidBodyForMotion: 0
-  AutoUpdateKinematicState: 1
-  AutoSetKinematicOnDespawn: 1
 --- !u!114 &-7308371500641825361
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -666,7 +641,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
 --- !u!114 &2247000878304712963
 MonoBehaviour:
@@ -681,6 +655,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   traitTracker: {fileID: 0}
+--- !u!114 &1662795621027308417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1040356374170298340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55be3b429e847614992b498b81afb0d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &5549399197348769369 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3480699329000672020, guid: 03c29c71d25d85a48886d04deca8d95e, type: 3}

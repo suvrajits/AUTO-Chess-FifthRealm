@@ -13,7 +13,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
     public GoldManager GoldManager { get; private set; }
     public PlayerCardDeck PlayerDeck { get; private set; }
-    
+
 
     private Camera playerCamera;
     public PlayerShopState ShopState { get; private set; }
@@ -153,7 +153,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
         // Attempt to find and remove the card
         HeroCardInstance cardToRemove = null;
-        
+
         foreach (var card in PlayerDeck.cards)
         {
             if (card.baseHero.heroId == heroId && card.starLevel == starLevel)
@@ -203,7 +203,7 @@ public class PlayerNetworkState : NetworkBehaviour
 
         Debug.Log("👁️ Eliminated — entering spectator mode.");
         SetSpectatorMode(true);
-        
+
     }
     [ServerRpc]
     public void ClaimRewardServerRpc(int amount)
@@ -222,6 +222,26 @@ public class PlayerNetworkState : NetworkBehaviour
         }
         return aliveHeroes;
     }
+    [ServerRpc(RequireOwnership = false)]
+    public void RequestRepositionHeroServerRpc(ulong heroNetworkId, int newX, int newY)
+    {
+        if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(heroNetworkId, out var netObj)) return;
+
+        var hero = netObj.GetComponent<HeroUnit>();
+        if (hero == null || hero.OwnerClientId != OwnerClientId) return;
+
+        var targetTile = GridManager.Instance.GetLocalPlayerTileAt(newX, newY);
+        if (targetTile == null || targetTile.IsOccupied || !targetTile.IsOwnedBy(OwnerClientId)) return;
+
+        // ✅ Clear old tile
+        if (hero.currentTile != null)
+            hero.currentTile.RemoveUnit();
+
+        // ✅ Assign new tile
+        targetTile.AssignUnit(hero);
+        hero.SnapToTileY(targetTile);
+    }
+
 
 
 }

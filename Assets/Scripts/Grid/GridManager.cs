@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class GridManager : MonoBehaviour
 {
@@ -22,7 +23,7 @@ public class GridManager : MonoBehaviour
 
 
     // Fixed player colors per client ID
-    
+
     private void Awake()
     {
         Instance = this;
@@ -61,7 +62,7 @@ public class GridManager : MonoBehaviour
     private void GeneratePlayerGrid(ulong playerId, Vector3 offset)
     {
         Dictionary<Vector2Int, GridTile> tileMap = new();
-        
+
         for (int x = 0; x < gridSize; x++)
         {
             for (int z = 0; z < gridRows; z++)
@@ -116,5 +117,31 @@ public class GridManager : MonoBehaviour
 
         Debug.Log($"🟦 Grid visibility set to: {(visible ? "ON" : "OFF")}");
     }
+    public GridTile GetTileUnderWorldPosition(Vector3 position)
+    {
+        Ray ray = new Ray(position + Vector3.up * 10f, Vector3.down);
+        if (Physics.Raycast(ray, out RaycastHit hit, 20f, LayerMask.GetMask("Tile")))
+        {
+            return hit.collider.GetComponent<GridTile>();
+        }
+        return null;
+    }
+    public GridTile GetLocalPlayerTileAt(int x, int y)
+    {
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+
+        if (playerTileMaps.TryGetValue(clientId, out var tileMap))
+        {
+            Vector2Int coord = new Vector2Int(x, y);
+            if (tileMap.TryGetValue(coord, out GridTile tile))
+            {
+                return tile;
+            }
+        }
+
+        Debug.LogWarning($"❌ Tile at ({x},{y}) not found for local player {clientId}");
+        return null;
+    }
+
 
 }

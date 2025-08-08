@@ -494,6 +494,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
       insertIndex: -1
       addedObject: {fileID: -6645508898502532571}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6093512104484194226}
   m_SourcePrefab: {fileID: 100100000, guid: 6aac96f06352a0d4c85f9631bb13d252, type: 3}
 --- !u!95 &531786749321415395 stripped
 Animator:
@@ -579,8 +582,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   GlobalObjectIdHash: 317383806
   InScenePlacedSourceGlobalObjectIdHash: 0
-  DeferredDespawnTick: 0
-  Ownership: 1
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
   ActiveSceneSynchronization: 0
@@ -588,8 +589,6 @@ MonoBehaviour:
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
-  AllowOwnerToParent: 0
 --- !u!114 &9022899753672838051
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -602,7 +601,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa94f3656b411d7419e2e0d2c9b71788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   corpseSinkY: 0.5
   vanishDelay: 2
 --- !u!114 &7643153466250093789
@@ -629,7 +627,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b304306871a027e4d94f0a02e5d1ebff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   heroData: {fileID: 11400000, guid: a7f0a247fb1fb854fa9a20ee9cac24a5, type: 2}
   starLevel: 1
   currentTile: {fileID: 0}
@@ -654,7 +651,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6df96c4ae64345146990366e9f43af3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &8694242013779151968
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -667,7 +663,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8d0727d5ae3244e3b569694d3912374, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   TransitionStateInfoList:
   - IsCrossFadeExit: 0
     Layer: 0
@@ -689,20 +684,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkTransformExpanded: 0
-  AutoOwnerAuthorityTickOffset: 1
-  PositionInterpolationType: 0
-  RotationInterpolationType: 0
-  ScaleInterpolationType: 0
-  PositionLerpSmoothing: 1
-  PositionMaxInterpolationTime: 0.1
-  RotationLerpSmoothing: 1
-  RotationMaxInterpolationTime: 0.1
-  ScaleLerpSmoothing: 1
-  ScaleMaxInterpolationTime: 0.1
-  AuthorityMode: 0
-  TickSyncChildren: 0
   UseUnreliableDeltas: 0
   SyncPositionX: 1
   SyncPositionY: 1
@@ -720,7 +701,6 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
 --- !u!114 &8927680093336099054
@@ -735,11 +715,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  NetworkRigidbodyBaseExpanded: 0
-  UseRigidBodyForMotion: 0
-  AutoUpdateKinematicState: 1
-  AutoSetKinematicOnDespawn: 1
 --- !u!114 &-1288234953722372108
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -752,7 +727,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8044cc639ce2bbc419d54c5ee4bcd91f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
   poisonStackUIPrefab: {fileID: 4304183774239167572, guid: 619fda1abb3f09043b2d2cb2a1c15141, type: 3}
 --- !u!114 &-6645508898502532571
 MonoBehaviour:
@@ -767,3 +741,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   traitTracker: {fileID: 0}
+--- !u!114 &6093512104484194226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6542240709122820643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 55be3b429e847614992b498b81afb0d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
