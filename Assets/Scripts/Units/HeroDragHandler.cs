@@ -1,15 +1,16 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using Unity.Netcode;
+using UnityEngine.EventSystems;
 
 public class HeroDragHandler : MonoBehaviour
 {
     private Camera mainCamera;
-    private bool isDragging = false;
-    private Vector3 offset;
     private HeroUnit heroUnit;
-    private GridTile originalTile;
     private Rigidbody rb;
+
+    private Vector3 offset;
+    private GridTile originalTile;
+    private bool isDragging = false;
     private bool wasKinematic;
 
     private void Awake()
@@ -17,20 +18,66 @@ public class HeroDragHandler : MonoBehaviour
         mainCamera = Camera.main;
         heroUnit = GetComponent<HeroUnit>();
         rb = GetComponent<Rigidbody>();
-        if (rb != null)
-            wasKinematic = rb.isKinematic;
+        if (rb != null) wasKinematic = rb.isKinematic;
     }
 
-    void OnMouseDown()
+    void Update()
     {
-        if (!heroUnit.IsOwner || EventSystem.current.IsPointerOverGameObject())
-            return;
+        // Handle touch input
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
 
-        isDragging = true;
+            if (EventSystem.current.IsPointerOverGameObject(touch.fingerId))
+                return;
+
+            Vector3 touchWorld = GetTouchWorldPosition(touch.position);
+
+            switch (touch.phase)
+            {
+                case TouchPhase.Began:
+                    TryBeginDrag(touchWorld);
+                    break;
+
+                case TouchPhase.Moved:
+                case TouchPhase.Stationary:
+                    if (isDragging)
+                        UpdateDragPosition(touchWorld);
+                    break;
+
+                case TouchPhase.Ended:
+                case TouchPhase.Canceled:
+                    if (isDragging)
+                        EndDrag();
+                    break;
+            }
+        }
+        // Also support mouse for editor
+        else if (Input.GetMouseButtonDown(0))
+        {
+            if (EventSystem.current.IsPointerOverGameObject()) return;
+            TryBeginDrag(GetMouseWorldPosition());
+        }
+        else if (Input.GetMouseButton(0))
+        {
+            if (isDragging)
+                UpdateDragPosition(GetMouseWorldPosition());
+        }
+        else if (Input.GetMouseButtonUp(0))
+        {
+            if (isDragging)
+                EndDrag();
+        }
+    }
+
+    private void TryBeginDrag(Vector3 startPos)
+    {
+        if (!heroUnit.IsOwner) return;
+
         originalTile = heroUnit.currentTile;
-        offset = transform.position - GetMouseWorldPosition();
+        offset = transform.position - startPos;
+        isDragging = true;
 
-        // ✅ Disable physics during drag
         if (rb != null)
         {
             rb.isKinematic = true;
@@ -38,43 +85,32 @@ public class HeroDragHandler : MonoBehaviour
             rb.angularVelocity = Vector3.zero;
         }
 
-        // ✅ Show valid grid tiles
         GridManager.Instance.ShowAllTiles(true, pulse: true);
     }
 
-    void OnMouseDrag()
+    private void UpdateDragPosition(Vector3 worldPos)
     {
-        if (!isDragging) return;
-
-        Vector3 newPos = GetMouseWorldPosition() + offset;
-        newPos.y = transform.position.y; // Lock Y axis
+        Vector3 newPos = worldPos + offset;
+        newPos.y = transform.position.y; // Lock height
         transform.position = newPos;
     }
 
-    void OnMouseUp()
+    private void EndDrag()
     {
-        if (!isDragging) return;
         isDragging = false;
 
-        // ✅ Re-enable physics
         if (rb != null)
-        {
             rb.isKinematic = wasKinematic;
-        }
 
-        // ✅ Hide grid tiles
         GridManager.Instance.ShowAllTiles(false);
 
-        // 👇 Validate drop
         GridTile targetTile = GridManager.Instance.GetTileUnderWorldPosition(transform.position);
         if (targetTile == null || targetTile.IsOccupied || !targetTile.IsOwnedBy(NetworkManager.Singleton.LocalClientId))
         {
-            // ❌ Invalid → snap back
             heroUnit.SnapToTileY(originalTile);
             return;
         }
 
-        // ✅ Valid → send reposition request
         var player = PlayerNetworkState.GetLocalPlayer();
         if (player != null)
         {
@@ -89,10 +125,12 @@ public class HeroDragHandler : MonoBehaviour
     private Vector3 GetMouseWorldPosition()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, 100f, LayerMask.GetMask("Tile")))
-        {
-            return hit.point;
-        }
-        return Vector3.zero;
+        return Physics.Raycast(ray, out var hit, 100f, LayerMask.GetMask("Tile")) ? hit.point : Vector3.zero;
+    }
+
+    private Vector3 GetTouchWorldPosition(Vector2 screenPos)
+    {
+        Ray ray = mainCamera.ScreenPointToRay(screenPos);
+        return Physics.Raycast(ray, out var hit, 100f, LayerMask.GetMask("Tile")) ? hit.point : Vector3.zero;
     }
 }
