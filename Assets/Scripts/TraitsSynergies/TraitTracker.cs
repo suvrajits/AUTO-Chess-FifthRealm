@@ -12,7 +12,12 @@ public class TraitTracker : NetworkBehaviour
 
     public void RecalculateTraits(List<HeroUnit> currentUnits, int playerLevel)
     {
-        // Count traits
+        Debug.Log("🧮 Recalculating Traits");
+
+        // 🔁 Save previous bonuses to detect changes
+        var previousActiveBonuses = new Dictionary<TraitDefinition, TraitTierBonus>(activeBonuses);
+
+        // 🧮 Count traits from current units
         traitCounts.Clear();
         foreach (var unit in currentUnits)
         {
@@ -24,7 +29,7 @@ public class TraitTracker : NetworkBehaviour
             }
         }
 
-        // Determine trait tier bonuses
+        // 🧠 Recalculate bonuses
         activeBonuses.Clear();
         foreach (var trait in traitCounts.Keys)
         {
@@ -33,11 +38,33 @@ public class TraitTracker : NetworkBehaviour
                 .Where(t => t.requiredCount <= count)
                 .OrderByDescending(t => t.requiredCount)
                 .FirstOrDefault();
+
             if (bonus != null)
+            {
                 activeBonuses[trait] = bonus;
+
+                // ✅ Trait just got activated
+                if (!previousActiveBonuses.ContainsKey(trait))
+                {
+                    Debug.Log($"🧬 Trait Activated: <b>{trait.traitName}</b> for Player {OwnerClientId} at count {count}");
+                }
+                else if (previousActiveBonuses[trait].requiredCount != bonus.requiredCount)
+                {
+                    Debug.Log($"🔁 Trait Upgraded: <b>{trait.traitName}</b> → {bonus.requiredCount} (was {previousActiveBonuses[trait].requiredCount})");
+                }
+            }
         }
 
-        // Check for advanced synergies
+        // 🛑 Log deactivations
+        foreach (var trait in previousActiveBonuses.Keys)
+        {
+            if (!activeBonuses.ContainsKey(trait))
+            {
+                Debug.Log($"🛑 Trait Deactivated: <b>{trait.traitName}</b> for Player {OwnerClientId}");
+            }
+        }
+
+        // 🧠 Check advanced synergies
         activeAdvancedSynergies.Clear();
         foreach (var synergy in SynergyDatabase.Instance.AllAdvancedSynergies)
         {
@@ -48,15 +75,18 @@ public class TraitTracker : NetworkBehaviour
             }
         }
 
+        // 🔄 Notify listeners
         OnTraitsChanged?.Invoke();
 
-        Debug.Log("🧮 Recalculating Traits");
+        // 🧾 Debug breakdown
         foreach (var kvp in traitCounts)
             Debug.Log($"Trait: {kvp.Key.traitName}, Count: {kvp.Value}");
 
         foreach (var kvp in activeBonuses)
             Debug.Log($"✅ Active Trait Bonus: {kvp.Key.traitName} → {kvp.Value.requiredCount}");
     }
+
+
 
     public event Action OnTraitsChanged;
     public bool IsSynergyActive(string traitName)

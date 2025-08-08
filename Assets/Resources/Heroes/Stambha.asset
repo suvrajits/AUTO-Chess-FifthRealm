@@ -24,7 +24,7 @@ MonoBehaviour:
   description: 
   heroPrefab: {fileID: 1090314742711936182, guid: 083ce3f64cf0b874c90759b743e994fd, type: 3}
   traits:
-  - {fileID: 11400000, guid: 713f3e32df357a649a9f6ff36734dccb, type: 2}
+  - {fileID: 11400000, guid: 07ae414c627feed45bef83bd4883cb57, type: 2}
   - {fileID: 11400000, guid: c168d63bb89cc6e46b85080e033acad0, type: 2}
   unitType: 0
   heroClass: 4

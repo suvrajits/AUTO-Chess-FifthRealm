@@ -389,6 +389,11 @@ public class BattleGroundManager : NetworkBehaviour
         TeleportToBattleGrid(teamBUnits, false);
         TeleportPlayersToSpectatorSpot();
 
+        foreach (var unit in allBattleParticipants)
+        {
+            unit.GetComponent<TraitEffectHandler>()?.OnBattleStart();
+        }
+
         Debug.Log("🧠 [BattleGroundManager] InternalStartBattle completed, invoking battle in 2s");
         Invoke(nameof(InvokeBattleStart), 2f);
     }

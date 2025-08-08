@@ -25,7 +25,7 @@ MonoBehaviour:
   heroPrefab: {fileID: 1283152093216832500, guid: e4e6accebd93e004385b0d138e758d61, type: 3}
   traits:
   - {fileID: 11400000, guid: a5c7e9e035714cd4c888241a1b2d473b, type: 2}
-  - {fileID: 11400000, guid: b48024a433e4eaa4aa451179c79c3470, type: 2}
+  - {fileID: 11400000, guid: e7bc616ddf7bdad46acc42264326d171, type: 2}
   unitType: 1
   heroClass: 3
   attackDelay: 5.5

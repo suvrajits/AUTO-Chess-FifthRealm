@@ -3,31 +3,41 @@ using UnityEngine.UI;
 
 public class TraitIconPulseHandler : MonoBehaviour
 {
-    public float pulseSpeed = 2f;
-    public float pulseScale = 1.3f;
-    public bool isActive = false;
+    public float pulseSpeed = 3f;
+    public float minAlpha = 0.3f;
+    public float maxAlpha = 1f;
 
-    private Vector3 baseScale;
+    private Image image;
+    private bool isActive = false;
+    private Color originalColor;
 
     private void Awake()
     {
-        baseScale = transform.localScale;
+        image = GetComponent<Image>();
+        if (image != null)
+        {
+            originalColor = image.color;
+        }
     }
 
     private void Update()
     {
-        if (!isActive) return;
+        if (!isActive || image == null)
+            return;
 
-        float scale = 1f + Mathf.Sin(Time.time * pulseSpeed) * 0.15f;
-        transform.localScale = baseScale * scale;
+        float t = Mathf.Sin(Time.time * pulseSpeed) * 0.5f + 0.5f; // oscillate between 0 and 1
+        float alpha = Mathf.Lerp(minAlpha, maxAlpha, t);
+        image.color = new Color(originalColor.r, originalColor.g, originalColor.b, alpha);
     }
 
     public void SetActive(bool active)
     {
         isActive = active;
-        if (!isActive)
+
+        if (!isActive && image != null)
         {
-            transform.localScale = baseScale;
+            // Restore full alpha when disabled
+            image.color = new Color(originalColor.r, originalColor.g, originalColor.b, 1f);
         }
     }
 }

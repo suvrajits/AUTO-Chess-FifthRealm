@@ -1157,6 +1157,50 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2da0c512f12947e489f739169773d7ca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &559700749
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 559700751}
+  - component: {fileID: 559700750}
+  m_Layer: 0
+  m_Name: TouchInitializer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &559700750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559700749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05bf57a4fc928a541bbe6ba56897f6c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &559700751
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 559700749}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &605421300
 GameObject:
   m_ObjectHideFlags: 0
@@ -5527,7 +5571,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1471602014932065850, guid: 0020dffa4ca7dd349a5afcbc85cea7dc, type: 3}
       propertyPath: placementDuration
-      value: 20
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 6121011329106879665, guid: 0020dffa4ca7dd349a5afcbc85cea7dc, type: 3}
       propertyPath: GlobalObjectIdHash
@@ -5802,7 +5846,7 @@ PrefabInstance:
       objectReference: {fileID: 1049369592}
     - target: {fileID: 5130208770694686186, guid: 138669ca6a289f647a810b53384bb857, type: 3}
       propertyPath: countdownDuration
-      value: 60
+      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 6316537670004040274, guid: 138669ca6a289f647a810b53384bb857, type: 3}
       propertyPath: m_Name
@@ -6184,6 +6228,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: LobbySystems
       objectReference: {fileID: 0}
+    - target: {fileID: 1134906845653978851, guid: a4e82624d24ccba47a937e114e5d8974, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 2134378111763657503, guid: a4e82624d24ccba47a937e114e5d8974, type: 3}
       propertyPath: GlobalObjectIdHash
       value: 2667916699
@@ -6394,6 +6442,10 @@ PrefabInstance:
     - target: {fileID: 701866649816482714, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
       propertyPath: m_Name
       value: LobbyPanel
+      objectReference: {fileID: 0}
+    - target: {fileID: 701866649816482714, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1362942763198187808, guid: 18ad85aac74f6bd44b44c535bb92c83e, type: 3}
       propertyPath: m_Value
@@ -6916,3 +6968,4 @@ SceneRoots:
   - {fileID: 3534040738619814186}
   - {fileID: 643315233}
   - {fileID: 1811190827}
+  - {fileID: 559700751}

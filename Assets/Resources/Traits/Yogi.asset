@@ -20,10 +20,10 @@ MonoBehaviour:
   activationSound: {fileID: 0}
   tooltip: 
   tierBonuses:
-  - requiredCount: 3
+  - requiredCount: 2
     description: 
     tier: 1
-  - requiredCount: 6
+  - requiredCount: 4
     description: 
     tier: 2
   - requiredCount: 8

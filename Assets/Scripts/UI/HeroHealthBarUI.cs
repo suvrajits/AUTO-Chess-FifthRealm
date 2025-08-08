@@ -61,24 +61,42 @@ public class HeroHealthBarUI : MonoBehaviour
     {
         gameObject.SetActive(visible);
     }
-    private List<GameObject> traitIcons = new();
+    private Dictionary<TraitDefinition, GameObject> traitIconMap = new();
     public void InitTraitIcons(List<TraitDefinition> traits)
     {
-        // Clear old icons
-        foreach (var icon in traitIcons)
-            Destroy(icon);
-        traitIcons.Clear();
+        // ✅ Clear old icons
+        foreach (Transform child in traitIconsContainer)
+            Destroy(child.gameObject);
+        traitIconMap.Clear();
 
         foreach (var trait in traits)
         {
             GameObject iconGO = Instantiate(traitIconPrefab, traitIconsContainer);
+
+            // 🟨 Optional: Adjust icon scale (e.g., taller for clarity)
             iconGO.transform.localScale = new Vector3(1.3f, 6f, 1.3f);
 
             Image img = iconGO.GetComponent<Image>();
             if (img != null && trait.traitIcon != null)
                 img.sprite = trait.traitIcon;
 
-            traitIcons.Add(iconGO);
+            traitIconMap[trait] = iconGO;
+
+            // ✅ Enable pulse if trait is active
+            var pulse = iconGO.GetComponent<TraitIconPulseHandler>();
+            if (pulse != null && GetIsTraitActive(trait))
+                pulse.SetActive(true);
         }
     }
+    private bool GetIsTraitActive(TraitDefinition trait)
+    {
+        var hero = GetComponentInParent<HeroUnit>();
+        if (hero == null) return false;
+
+        var player = PlayerNetworkState.GetPlayerByClientId(hero.OwnerClientId);
+        if (player == null || player.TraitTracker == null) return false;
+
+        return player.TraitTracker.activeBonuses.ContainsKey(trait);
+    }
+
 }
