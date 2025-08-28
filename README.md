@@ -1,2 +1,2 @@
-# d2-dawn-of-war
-Dota 2 down of war
+<img width="1687" height="781" alt="image" src="https://github.com/user-attachments/assets/40cb07fd-305c-45db-b80f-8334e0584414" /># d2-dawn-of-war
+Fifth Realm – A mobile-first auto-battler POC built in Unity3D from scratch. Showcases my dual role as Game Product Leader & AI Product Manager, leveraging ChatGPT-4o, Meshy.AI, and other AI tools to design, code, and prototype AAA-quality systems: multiplayer, grids, traits, and shop economy.
